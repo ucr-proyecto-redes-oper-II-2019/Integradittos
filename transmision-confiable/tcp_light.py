@@ -16,6 +16,39 @@ mi_socket.bind(('',int(UDP_PORT)))#Recibe dos valores que uno es el host y el ot
 
 #mi_socket.listen(5)#Cantidad de peticiones que puede manejar un socket.(conexiones que puede tener en cola.)
 
+
+#Fabian e Isaac
+receiveNumber = 0 # Contador de paquetes para mantener el orden
+bandera = True
+#ventana = dict()
+inicioArrCir = 0
+
+def recibir():
+	# mi_socket.setblocking(0)#hacemos que la operacion sea nonblocking.
+	
+	while receiveNumber == 0:#Espera a que establezca conexion. con el paqute numero 0. 
+		paqueteRecibido = mi_socket.recvfrom(516)#Recibimos el paquete. 
+		if paqueteRecibido[0:3] == 0:#Leemos los primeros 4 bytes de vector 
+			receiveNumber++#Aumentamos nuestro RN
+	imagen = open("laImagen.jpg", "bw")#Abrimos un archivo donde vamos a guardar los
+	while bandera:#Aqui esperamos hasta recibir el ultimo. 
+		paqueteRecibido = mi_socket.recvfrom(516)#Recibimos paquete
+		bytes = paqueteRecibido[1:3]
+		int.from_bytes(bytes, byorder='big')#Convertimos los bytes a int.
+		if receiveNumber == bytes:#Leemos para saber que numero de paquete es 
+			imagen.write(paqueteRecibido[4:])
+			receiveNumber++
+			while recieveNumber == ventana.has_key(recieveNumber):
+				imagen.write(ventana.get(recieveNumber, default=0))
+				#ventana.pop(recieveNumber,None)
+				recieveNumber++
+		else:
+			if len(ventana) < 10:
+				bytes = paqueteRecibido[1:3]
+				int.from_bytes(bytes, byorder='big')
+				#ventana.
+
+#Hernan y Jim
 def enviar():
 	mi_socket.setblocking(0) #hacemos que la operacion sea nonblocking. 
 	while True:
