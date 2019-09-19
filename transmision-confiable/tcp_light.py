@@ -5,8 +5,9 @@ import select
 import ctypes #para el memset
 import time
 
-max_wait_time = 0.5
-sleep_time = 0.01
+DATA_MAX_SIZE = 1 + 4 + 512
+RECEIVE_TIMEOUT = 0.1
+FINAL_MESSAGE = gen_mensaje_final()
 
 #UDP_IP = raw_input("Escriba el numero de ip ")
 UDP_PORT = input("Escriba el numero de puerto: ")
@@ -15,6 +16,11 @@ mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#(Por defecto utiliz
 mi_socket.bind(('',int(UDP_PORT)))#Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
 
 #mi_socket.listen(5)#Cantidad de peticiones que puede manejar un socket.(conexiones que puede tener en cola.)
+
+def gen_mensaje_final():
+	msj_final = bytearray(DATA_MAX_SIZE)
+	msj_final[4] = 42
+	return msj_final
 
 
 #Fabian e Isaac
@@ -50,7 +56,14 @@ def recibir():
 
 #Hernan y Jim
 def enviar():
-	mi_socket.setblocking(0) #hacemos que la operacion sea nonblocking. 
+	# se aplica un timeout para el socket.
+	mi_socket.settimeout(RECEIVE_TIMEOUT)
+	
+	mensaje = bytearray(DATA_MAX_SIZE)
+	respuesta = bytearray(DATA_MAX_SIZE)
+	
+	mensaje_final = 
+	
 	while True:
 		ipPort = input("IP/Port: ") #lee una linea
 		ipPortLine = ipPort.split() #split a la linea
@@ -59,17 +72,16 @@ def enviar():
 		#print(ip, port)
 
 		#nocion de conexión
-		mensaje = bytearray(516) # 0 000 0...
+		mensaje = bytearray(DATA_MAX_SIZE) # 0 000 0...
 		mi_socket.sendto(mensaje,(ip, int(port))) #establecer conexión
 
 		in_file = open("in-small.jpg", "rb") #abrir imagen
 
-		packetCounter = 0 #para control
-		windowCounter = 0
+		#packetCounter = 0 #para control
+		#windowCounter = 0
+		
 		SN = 0
 		RN = 0
-
-		window = {} #ventana
 
 		image_slice = in_file.read(512) #lee 512 bytes de la imagen
 
@@ -84,14 +96,10 @@ def enviar():
 		    
 		    mi_socket.sendto(mensaje,(ip, int(port))) #enviar paquete
 		    
-		    respuesta = mi_socket.recvfrom(516)
-			
-			waited_time = 0
-			
-			while waited_time < max_wait_time && :
-				
-				waited_time += sleep_time
-				time.sleep( sleep_time_time )
+		    try:
+				respuesta, addr = mi_socket.recvfrom(DATA_MAX_SIZE)
+			except socket.timeout:
+				# no se recibio ningun paquete
 				
 			
 			#recibir próximo paquete a enviar y recibir su numero
@@ -101,21 +109,7 @@ def enviar():
 		    
 		    image_slice = in_file.read(512) #tomar siguiente porciòn de la imagen
 		in_file.close()
-
-
-		''' asi se comenta multilinea
-		input = select.select([sys.stdin],[],[],1)[0]
-		if 	input: 
-			value = sys.stdin.readline().rstrip()
-			if(value == "1"):
-				print "efe en el chat"
-				sys.exit(0)
-			else:
-				#print "you entered %s" % value
-				#le enviamos el mensaje al socket 
-				lista = value.split()
-				mi_socket.sendto(value,(lista[0], int(lista[1])))
-		'''
+		
 hilo1 = threading.Thread(target=enviar)#Definimos la tarea de nuestro hilo.
 
 
