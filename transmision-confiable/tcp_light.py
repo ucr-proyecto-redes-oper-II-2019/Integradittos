@@ -6,8 +6,13 @@ import ctypes #para el memset
 import time
 
 DATA_MAX_SIZE = 1 + 4 + 512
+SEND_TIMEOUT = 3 # en segundos
 RECEIVE_TIMEOUT = 0.1
 FINAL_MESSAGE = generar_mensaje_final()
+BUFFER_SIZE = 10
+SN = 0
+RN = 0
+end_of_image = False
 
 #UDP_IP = raw_input("Escriba el numero de ip ")
 UDP_PORT = input("Escriba el numero de puerto: ")
@@ -56,57 +61,50 @@ def recibir():
 
 #Hernan y Jim
 def enviar():
-	# se aplica un timeout para el socket.
-	mi_socket.settimeout(RECEIVE_TIMEOUT)
+	# socket non blocking
+	mi_socket.setblocking(0)
 
-	while True:
-		ipPort = input("IP/Port: ") #lee una linea
-		ipPortLine = ipPort.split() #split a la linea
-		ip = ipPortLine[0]
-		port = ipPortLine[1]
-		#print(ip, port)
-
-		#nocion de conexión
-		mensaje_por_enviar = bytearray(DATA_MAX_SIZE) # 0 000 0...
-		mi_socket.sendto(mensaje_por_enviar,(ip, int(port))) #establecer conexión
-
-		in_file = open("in-small.jpg", "rb") #abrir imagen
-
-		# indice del paquete que se está enviando
-		packet_counter = 0 
+	ipPort = input("IP/Port: ") #lee una linea
+	ipPortLine = ipPort.split() #split a la linea
+	ip = ipPortLine[0]
+	port = ipPortLine[1]
+	
+	# 0 000 0...
+	mensaje_por_enviar = bytearray(DATA_MAX_SIZE) 
+	# empaquetar establecer conexión	
+	mensaje_por_enviar[0] = 0
+	mensaje_por_enviar[1:3] = bytearray({0,0,0})
+	#enviar paquete
+	mi_socket.sendto(mensaje_por_enviar,(ip, int(port))) 
+	
+	while end_of_image:
+		timeout = time.time() + SEND_TIMEOUT   # en segundos
+		while time.time() < timeout ''' or ACK received ''' :		
+			# if ACK_received
+ 			# 	break
+ 			for msg in range (RN, SN)
+				# mi_socket.sendto(lista.getElemento(msg),(ip, int(port))) 
+				
 		
-		SN = 0
-		RN = 0
 
+def buffering():
+	in_file = open("in-small.jpg", "rb") #abrir imagen
+	while SN > RN:
 		image_slice = in_file.read(512) #lee 512 bytes de la imagen
+		if image_slice == ''
+			mensaje_por_enviar = bytearray(DATA_MAX_SIZE) # 0 000 0...
+			mensaje_por_enviar[0] = 0
+			mensaje_por_enviar[1:3] = SN.to_bytes(3, byteorder='big')
+			mensaje_por_enviar[4:4+len(image_slice)] = image_slice #copia la porcion de la imagen en el mensaje
+			#guardar en la posicion SN % BUFFER_SIZE el nuevo mensaje
+		else
+			end_of_image = True
+	in_file.close()
 
-		trabajo_pendiente = true
-
-		while image_slice: #mientras hayan partes de la imagen por enviar
-
-		    mensaje_por_enviar[4:4+len(image_slice)] = image_slice #copia la porcion de la imagen en el mensaje
-		    
-		    #setear encabezado
-		    mensaje_por_enviar[0] = 0x00
-		    mensaje_por_enviar[1:3] = SN.to_bytes(3, byteorder='big')
-		    
-		    mi_socket.sendto(mensaje_por_enviar,(ip, int(port))) #enviar paquete
-		    
-		    try:
-				respuesta, addr = mi_socket.recvfrom(DATA_MAX_SIZE)
-				answer_number = int.from_bytes(bytearray(respuesta[1:3]), byteorder='little') ############## Little endian
-
-				# if the receiver is asking for the next package:
-				if (answer_number == packet_counter + 1)
-					packet_counter += 1
-					image_slice = in_file.read(512)
-
-			except socket.timeout:
-				# no se recibio ningun paquete
-				# por esto, se vuelve a intentar enviar el paquete actual
-		in_file.close()
 		
-hilo_de_envio = threading.Thread(target=enviar)#Definimos la tarea de nuestro hilo.
+#hilo_de_empaquetizacion = threading.Thread(target=buffering) 	
+hilo_de_envio = threading.Thread(target=enviar)
+
 
 
 # "Main"
