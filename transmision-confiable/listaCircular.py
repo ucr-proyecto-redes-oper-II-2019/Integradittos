@@ -6,6 +6,7 @@ class listaCirular():
 	int inicio = 0 
 	int final = 0
 	int numeroDePaqueteActual = 0
+
 	#Se establece la posicion de inicio de la lista que este correspode al RN. 
 	def establecerInicio(numeroDePaqueteInicio):
 		numeroDePaqueteActual = numeroDePaqueteInicio		
@@ -13,11 +14,12 @@ class listaCirular():
 
 	#Inserta un elemento en la lista, datos(los 516 bytes del paquete) y numeroDePaqueteAInsertar(El numero del paquete que se va a insertar).
 	def insertar(datos ,int numeroDePaqueteAInsertar):#introducimos el nuevoPaquete
-		posicionParaInsertar = (numeroDePaquete - numeroDePaqueteActual) + inicio
+		posicionParaInsertar = (numeroDePaqueteAInsertar - numeroDePaqueteActual) + inicio
 		posicionParaInsertar = posicionParaInsertar - 10
 		listaCircular[posicionParaInsertar] = datos
 		if posicioParaInsertar > final:
 			final =  posicioParaInsertar 
+
 	#retorna el los datos del numero de paquete, numeroDePaquete si no se encuentra retorna -1
 	def getElemento(int numeroDePaquete)
 		posicionABuscar = ((numeroDePaquete - numeroDePaqueteActual) + inicio) - 10#Calculamos la posicion en la que deberia estar ese paquete en el array circular
