@@ -23,10 +23,10 @@ class listaCirular():
 	#retorna el los datos del numero de paquete, numeroDePaquete si no se encuentra retorna -1
 	def getElemento(int numeroDePaquete)
 		posicionABuscar = ((numeroDePaquete - numeroDePaqueteActual) + inicio) - 10#Calculamos la posicion en la que deberia estar ese paquete en el array circular
-		bytes = listaCircular[posicionABuscar]
-		bytes = bytes[1:3]#Sacamos los bytes donde se encuentra el numero de paquete.
-		int.from_bytes(bytes, byorder='big')
-		if bytes == numeroDePaquete:#comparamos que el numero de paquete deseado sea el que se encuentre en la posicion. 
+		dataBytes = listaCircular[posicionABuscar]
+		dataBytes = dataBytes[1:3]#Sacamos los bytes donde se encuentra el numero de paquete.
+		int.from_bytes(dataBytes, byorder='big')
+		if dataBytes == numeroDePaquete:#comparamos que el numero de paquete deseado sea el que se encuentre en la posicion. 
 			return listaCircular[posicionABuscar]
 		else: 
 			return -1

@@ -4,6 +4,7 @@ import sys
 import select
 import ctypes #para el memset
 import time
+import listaCircular
 
 DATA_MAX_SIZE = 1 + 4 + 512
 RECEIVE_TIMEOUT = 0.1
@@ -26,12 +27,11 @@ def generar_mensaje_final():
 #Fabian e Isaac
 receiveNumber = 0 # Contador de paquetes para mantener el orden
 bandera = True
-#ventana = dict()
-inicioArrCir = 0
+ventana = listaCircular()
 
 def recibir():
 	# mi_socket.setblocking(0)#hacemos que la operacion sea nonblocking.
-	
+	#Establecemos conexion. 	
 	while receiveNumber == 0:#Espera a que establezca conexion. con el paqute numero 0. 
 		paqueteRecibido = mi_socket.recvfrom(516)#Recibimos el paquete. 
 		if paqueteRecibido[0:3] == 0:#Leemos los primeros 4 bytes de vector 
@@ -39,9 +39,9 @@ def recibir():
 	imagen = open("laImagen.jpg", "bw")#Abrimos un archivo donde vamos a guardar los
 	while bandera:#Aqui esperamos hasta recibir el ultimo. 
 		paqueteRecibido = mi_socket.recvfrom(516)#Recibimos paquete
-		bytes = paqueteRecibido[1:3]
-		int.from_bytes(bytes, byorder='big')#Convertimos los bytes a int.
-		if receiveNumber == bytes:#Leemos para saber que numero de paquete es 
+		dataBytes = paqueteRecibido[1:3]
+		int.from_bytes(dataBytes, byorder='big')#Convertimos los bytes a int.
+		if receiveNumber == dataBytes:#Leemos para saber que numero de paquete es 
 			imagen.write(paqueteRecibido[4:])
 			receiveNumber++
 			while recieveNumber == ventana.has_key(recieveNumber):
@@ -50,8 +50,8 @@ def recibir():
 				recieveNumber++
 		else:
 			if len(ventana) < 10:
-				bytes = paqueteRecibido[1:3]
-				int.from_bytes(bytes, byorder='big')
+				dataBytes = paqueteRecibido[1:3]
+				int.from_bytes(dataBytes, byorder='big')
 				#ventana.
 
 #Hernan y Jim
