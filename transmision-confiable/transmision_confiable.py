@@ -6,14 +6,22 @@ import ctypes #para el memset
 import time
 import listaCircular
 
+# General
 DATA_MAX_SIZE = 1 + 4 + 512
-SEND_TIMEOUT = 3 # en segundos
-RECEIVE_TIMEOUT = 0.1
-FINAL_MESSAGE = generar_mensaje_final()
+#RECEIVE_TIMEOUT = 0.1
 BUFFER_SIZE = 10
-SN = 0
-RN = 0
+BUFFER_START = 0
+
+# Para envio
+SEND_TIMEOUT = 3 # en segundos
+SENDING_BUFFER = listaCircular()
+SENDING_BUFFER_COUNT = 0
+SENDING_BUFFER_LOCK = threading.Lock()
+SENDING_SN = 0
+SENDING_RN = 0
+FINAL_MESSAGE = generar_mensaje_final()
 end_of_image = False
+sending_complete = False
 
 #UDP_IP = raw_input("Escriba el numero de ip ")
 UDP_PORT = input("Escriba el numero de puerto: ")
@@ -63,16 +71,46 @@ def recibir():
 				ventana.insertar(paqueteRecibido, dataBytes)
 				
 
-#Hernan y Jim
+#Hernan y Jim		
+
+def sending_buffering():
+	in_file = open("in-small.jpg", "rb")
+	SENDING_BUFFER.establecerInicio(BUFFER_START)
+	while not end_of_image:
+		# si SN (tomemoslo como el # mayor de secuencia en el buffer de envio) 
+		# es mayor o igual al mensaje que falta de ACK (RN),
+		# y hay espacio en el buffer
+		if SN >= RN and SENDING_BUFFER_COUNT < BUFFER_SIZE:
+			#lee 512 bytes de la imagen
+			image_slice = in_file.read(512)
+			# si la operacion read(512) leyó '', es el fin del archivo
+			if image_slice != '':
+				# 0 000 0...
+				mensaje_por_enviar = bytearray(DATA_MAX_SIZE)
+				# setea el encabezado
+				mensaje_por_enviar[0] = 0
+				mensaje_por_enviar[1:3] = SN.to_bytes(3, byteorder='big')
+				# copia la porcion de la imagen en el mensaje
+				mensaje_por_enviar[4:4+len(image_slice)] = image_slice 
+				SENDING_BUFFER_LOCK.acquire() # region critica
+				# guarda el mensaje en el buffer
+				SENDING_BUFFER.insertar(mensaje_por_enviar, SN)
+				# aumentamos el SN y el contador del buffer
+				SN += 1
+				SENDING_BUFFER_COUNT += 1
+				SENDING_BUFFER_LOCK.release() # region critica
+			else:
+				end_of_image = True
+	in_file.close()
+
+
 def enviar():
 	# socket non blocking
 	mi_socket.setblocking(0)
-
 	ipPort = input("IP/Port: ") #lee una linea
 	ipPortLine = ipPort.split() #split a la linea
 	ip = ipPortLine[0]
 	port = ipPortLine[1]
-	
 	# 0 000 0...
 	mensaje_por_enviar = bytearray(DATA_MAX_SIZE) 
 	# empaquetar establecer conexión	
@@ -80,34 +118,28 @@ def enviar():
 	mensaje_por_enviar[1:3] = bytearray({0,0,0})
 	#enviar paquete
 	mi_socket.sendto(mensaje_por_enviar,(ip, int(port))) 
-	
-	while end_of_image:
+	while not sending_complete:
+		last_RN = SENDING_RN
 		timeout = time.time() + SEND_TIMEOUT   # en segundos
-		while time.time() < timeout ''' or ACK received ''' :		
-			# if ACK_received
- 			# 	break
+		# mientras no se haya acabado el timeout de envio y no hayan señales de vida del receptor (ACK)
+		while time.time() < timeout and last_RN == SENDING_RN:		
+ 			SENDING_BUFFER_LOCK.acquire() # region critica
  			for msg in range (RN, SN)
-				# mi_socket.sendto(lista.getElemento(msg),(ip, int(port))) 
-				
-		
+ 				# podria acabarse el timeout de envio y o recibir un ACK mientras se envian los paquetes
+ 				#if time.time() < timeout and last_RN == SENDING_RN:
+					mi_socket.sendto(lista.getElemento(msg),(ip, int(port))) 
+			SENDING_BUFFER_LOCK.release() # region critica	
 
-def buffering():
-	in_file = open("in-small.jpg", "rb") #abrir imagen
-	while SN > RN:
-		image_slice = in_file.read(512) #lee 512 bytes de la imagen
-		if image_slice == ''
-			mensaje_por_enviar = bytearray(DATA_MAX_SIZE) # 0 000 0...
-			mensaje_por_enviar[0] = 0
-			mensaje_por_enviar[1:3] = SN.to_bytes(3, byteorder='big')
-			mensaje_por_enviar[4:4+len(image_slice)] = image_slice #copia la porcion de la imagen en el mensaje
-			#guardar en la posicion SN % BUFFER_SIZE el nuevo mensaje
-		else
-			end_of_image = True
-	in_file.close()
+
+def recibir_ACK():
+	while not sending_complete:
+		ACK, addr = mi_socket.recvfrom(DATA_MAX_SIZE)
+		SENDING_RN = int.from_bytes(ACK[1:3], byorder='big')
 
 		
-#hilo_de_empaquetizacion = threading.Thread(target=buffering) 	
+hilo_de_buffering = threading.Thread(target=sending_buffering) 	
 hilo_de_envio = threading.Thread(target=enviar)
+hilo_de_recibir_ACK = threading.Thread(target=recibir_ACK)
 
 
 
