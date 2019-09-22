@@ -1,4 +1,4 @@
-import socket 
+-import socket 
 import threading 
 import sys 
 import select
@@ -41,23 +41,27 @@ def recibir():
 		paqueteRecibido = mi_socket.recvfrom(516)#Recibimos el paquete. 
 		if paqueteRecibido[0:3] == 0:#Leemos los primeros 4 bytes de vector 
 			receiveNumber++#Aumentamos nuestro RN
-	imagen = open("laImagen.jpg", "bw")#Abrimos un archivo donde vamos a guardar los
-	while bandera:#Aqui esperamos hasta recibir el ultimo. 
+			ventana.establecerInicio(receiveNumber)
+			
+	imagen = open("laImagen.jpg", "bw")#Abrimos un archivo donde vamos a guardar las imagenes. 
+	while bandera:#Aqui vamos a recibir la imagen. 
 		paqueteRecibido = mi_socket.recvfrom(516)#Recibimos paquete
-		dataBytes = paqueteRecibido[1:3]
+		dataBytes = paqueteRecibido[1:3]#Extraemos el numero de paquete. 
 		int.from_bytes(dataBytes, byorder='big')#Convertimos los bytes a int.
-		if receiveNumber == dataBytes:#Leemos para saber que numero de paquete es 
-			imagen.write(paqueteRecibido[4:])
+		if receiveNumber == dataBytes:#Si el paquete es el que estamos esperando. 
+			imagen.write(paqueteRecibido[4:])#Escribimos la imagen en el archivo. 
 			receiveNumber++
-			while recieveNumber == ventana.has_key(recieveNumber):
-				imagen.write(ventana.get(recieveNumber, default=0))
-				#ventana.pop(recieveNumber,None)
+			ventana.establecerInicio(receiveNumber)
+			while ventana.getElemento(receiveNumber) != -1):
+				imagen.write(ventana.getElemento(receiveNumber)[4:])
 				recieveNumber++
-		else:
-			if len(ventana) < 10:
-				dataBytes = paqueteRecibido[1:3]
-				int.from_bytes(dataBytes, byorder='big')
-				#ventana.
+				ventana.establecerInicio(receiveNumber)
+		else:#Sino lo guardamos en el buffer
+			dataBytes = paqueteRecibido[1:3]
+			int.from_bytes(dataBytes, byorder='big')
+			if  receiveNumber + 10 > dataBytes:#Si se encuentra dentro de la ventana. 
+				ventana.insertar(paqueteRecibido, dataBytes)
+				
 
 #Hernan y Jim
 def enviar():
