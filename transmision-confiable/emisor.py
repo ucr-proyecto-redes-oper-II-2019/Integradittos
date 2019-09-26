@@ -30,9 +30,9 @@ hilo_de_buffering = threading.Thread(target=sending_buffering)
 hilo_de_envio = threading.Thread(target=enviar_imagen)
 hilo_de_recibir_ACK = threading.Thread(target=recibir_ACK)
 
-def cargar_imagen():
+def cargar_imagen(archivo):
 	# Abrir imagen
-	in_file = open("in_small-jpg", "rb")
+	in_file = open(archivo, "rb")
 	# Mientras no se haya leido toda la imagen
 	while not end_of_image:
 		image_slice = in_file.read(512)
@@ -53,7 +53,7 @@ def enviar_seccion(image_slice):
 	# espera a que la capa inferior tome la porcion del bus
 	bytes_on_bus = true
 	while bytes_on_bus
-		pass
+		time.wait(.3)
 
 def sending_buffering():
 	SENDING_BUFFER.establecerInicio(BUFFER_START)
@@ -79,13 +79,7 @@ def sending_buffering():
 			bytes_on_bus = False
 
 
-def enviar_imagen():
-	# socket non blocking
-	mi_socket.setblocking(0)
-	ipPort = input("IP/Port: ") #lee una linea
-	ipPortLine = ipPort.split() #split a la linea
-	ip = ipPortLine[0]
-	port = ipPortLine[1]
+def enviar_imagen(ip, port):
 	# 0 000 0...
 	mensaje_por_enviar = bytearray(DATA_MAX_SIZE) 
 	# empaquetar establecer conexión	
@@ -93,6 +87,7 @@ def enviar_imagen():
 	mensaje_por_enviar[1:3] = bytearray({0,0,0})
 	#enviar paquete
 	mi_socket.sendto(mensaje_por_enviar,(ip, int(port))) 
+	#esperar ACK para el "handshake"
 	ACK, addr = mi_socket.recvfrom(DATA_MAX_SIZE)
 
 	while not sending_complete:
@@ -111,6 +106,9 @@ def recibir_ACK():
 	while not sending_complete:
 		ACK, addr = mi_socket.recvfrom(DATA_MAX_SIZE)
 		SN_min = int.from_bytes(ACK[1:3], byorder='big')
+		# si es un ack del asterisco, se completo el envio
+		if (ACK[4] == 42)
+			sending_complete = True
 
 def generar_mensaje_final():
 	msj_final = bytearray(DATA_MAX_SIZE)
@@ -121,8 +119,27 @@ def generar_mensaje_final():
 UDP_PORT = input("Escriba el numero de puerto: ")
 mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#(Por defecto utiliza tcp y ipv4)Nos genera un nuevo socket con los valores por default
 mi_socket.bind(('',int(UDP_PORT)))#Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
+# socket non blocking
+	mi_socket.setblocking(0)
+	ipPortFile = input("IP Port file: ") #lee una linea
+	ipPortFileLine = ipPortFile.split() #split a la linea
+	ip = ipPortLine[0]
+	port = ipPortLine[1]
+	archivo = archivo[2]
+
+# Threads
+hilo_de_carga_de_archivo = threading.Thread(target=cargar_imagen, args=(archivo,))
+hilo_de_buffering = threading.Thread(target=sending_buffering) 	
+hilo_de_envio = threading.Thread(target=enviar_imagen, args=(ip,port,))
+hilo_de_recibir_ACK = threading.Thread(target=recibir_ACK)
+
 hilo_de_carga_de_archivo.start()
 hilo_de_buffering.start()
 hilo_de_recibir_ACK.start()
-hilo_de_envio().start()
+hilo_de_envio.start()
+
+hilo_de_carga_de_archivo.join()
+hilo_de_buffering.join()
+hilo_de_recibir_ACK.join()
+hilo_de_envio.join()
 
