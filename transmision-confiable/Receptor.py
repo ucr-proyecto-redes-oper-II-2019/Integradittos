@@ -14,6 +14,7 @@ sn = 0#Send number
 rv = 0#Receiver number
 timeout = 0#variable que va a medir los tiempos de espera para mandar solicitudes.
 ventana = listaCircular()
+nombre_del_archivo = "laImagen.jpg"
 bandera = True#Mientras la bandera este en true el programa va a esperar recibir paquetes.
 direccion_ip_del_emisor = ""#La direccion ip del emisor.
 puerto_cliente = ""#Puerto del cliente :).
@@ -82,7 +83,7 @@ hilo_de_conformacion_de_recepcion = threading.Thread(target=confirmacionDeRecepc
 
 # Ejecucion del programa	
 
-nombre_del_archivo = "laImagen.jpg"
+
 #Iniciamos los hilos
 hilo_de_recepcion.start()
 hilo_de_conformacion_de_recepcion.start()
