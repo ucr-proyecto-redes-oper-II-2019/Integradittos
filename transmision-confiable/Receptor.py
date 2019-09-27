@@ -22,7 +22,7 @@ mensajeNuevo = False
 candado_critico = threading.Lock
 UDP_PORT = input("Escriba el numero de puerto: ")
 mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#(Por defecto utiliza tcp y ipv4)Nos genera un nuevo socket con los valores por default
-mi_socket.bind(('',int(UDP_PORT)))#Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
+mi_socket.bind(('', UDP_PORT))#Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
 
 def recibir():#Capa de comunicacion.
 	global rv
@@ -59,7 +59,7 @@ def confirmacionDeRecepcion():#Se encarga de enviar los ACK's
 		if mensajeNuevo:#Si se recibio un mensaje con el rv que se estaba esperando, se activa la bandera.
 			candado_critico.acquire()#Empezamos zona critica
 			mensaje = armarMensajeACK()
-			mi_socket.sendto(mensaje, (direccion_ip_del_emisor, int(UDP_PORT)))
+			mi_socket.sendto(mensaje, (direccion_ip_del_emisor, UDP_PORT))
 			mensaje_nuevo = False
 			candado_critico.release()#Fin de la zona critica.
 		tiempo_total = time() - tiempo_inicio
@@ -68,7 +68,7 @@ def confirmacionDeRecepcion():#Se encarga de enviar los ACK's
 def timeout(tiempo):
 	if tiempo > timeout:#Si el tiempo es mayor al time out debe enviar un paquete de recepcion
 		mensaje = armarMensajeACK()
-		mi_socket.sendto(mensaje, (direccion_ip_del_emisor, int(UDP_PORT)))#Falta que capturemos cual puero vamos a implementar.
+		mi_socket.sendto(mensaje, (direccion_ip_del_emisor, UDP_PORT))#Falta que capturemos cual puero vamos a implementar.
 
 def armarMensajeACK():#Metodo que arma los mensajes.
 	ack = bytearray(DATA_MAX_SIZE)
