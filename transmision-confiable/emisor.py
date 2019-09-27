@@ -25,7 +25,8 @@ sending_complete = False # se vuelve true al enviar todas las partes de la image
 bytes_on_bus = False # indica si hay una porcion de la imagen en el buss
 
 def cargar_imagen(archivo):
-    # Abrir imagen
+    global end_of_image
+    # abrir imagen
     in_file = open(archivo, "rb")
     # Mientras no se haya leido toda la imagen
     while not end_of_image:
