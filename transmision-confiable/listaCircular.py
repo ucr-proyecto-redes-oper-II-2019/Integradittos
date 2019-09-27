@@ -2,7 +2,7 @@
 #Fabian e Isaac
 class listaCircular:
 
-	listaCircular = [0,0,0,0,0,0,0,0,0,0]
+	listaCircular = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 	inicio = 0 
 	final = 0
 	numeroDePaqueteActual = 0
@@ -11,7 +11,7 @@ class listaCircular:
 	def establecerInicio(self, numeroDePaqueteInicio):
 		numeroDePaqueteActual = numeroDePaqueteInicio		
 		inicio = numeroDePaqueteInicio % 10
-	
+
 	#Inserta un elemento en la lista, datos(los 516 bytes del paquete) y numeroDePaqueteAInsertar(El numero del paquete que se va a insertar).
 	def insertar(self, datos ,numeroDePaqueteAInsertar):#introducimos el nuevoPaquete
 		if numeroDePaqueteAInsertar >= 10:#Si el paquete a insertar es mayor a 10 tenemos que aplicar el algoritmo para que la lista sea circular.

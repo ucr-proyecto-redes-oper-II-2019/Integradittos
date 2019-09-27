@@ -5,7 +5,7 @@ import sys
 import select
 import ctypes #para el memset
 import time
-import listaCircular
+from listaCircular import listaCircular
 from time import time
 
 #Fabian e Isaac.
@@ -20,10 +20,14 @@ puerto_cliente = ""#Puerto del cliente :).
 #estoy generando un servidor con sockets.
 mensajeNuevo = False
 candado_critico = threading.Lock
+UDP_PORT = input("Escriba el numero de puerto: ")
+mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#(Por defecto utiliza tcp y ipv4)Nos genera un nuevo socket con los valores por default
+mi_socket.bind(('',int(UDP_PORT)))#Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
+
 def recibir():#Capa de comunicacion.
 	while bandera:
 		paquete_recibido, direccion_ip_del_emisor = mi_socket.recvfrom(516)#Capturamos el datos y tambien la direccion del emisor.
-		datos_bytes = paquete_recibido[1:3]#extraemos el numero de paquete.
+		datos_bytes = paquete_recibido[1:4]#extraemos el numero de paquete.
 		int.from_bytes(datos_bytes, byteorder='big')
 		if rv == datos_bytes:#Si es igual al numero de paquete que estamos esperando.
 			almacenar(paquete_recibido[4:])#se lo debemos pasar a almacenar.
@@ -35,7 +39,7 @@ def recibir():#Capa de comunicacion.
 			mensajeNuevo = True#Se comunican a traves de banderas...
 			ventana.establecerInicio(rv)#Establecemos el nuevo inicio de la lista.
 		else:#lo guardamos en el buffer.
-			datos_bytes = paqueteRecibido[1:3]
+			datos_bytes = paquete_recibido[1:4]
 			int.from_bytes(datos_bytes, byteorder='big')
 			if rv + 10 > datos_bytes > rv:  #Si esta dentro de la ventana, lo guardamos.
 				ventana.insertar(paquete_recibido, datos_bytes)
@@ -70,15 +74,18 @@ def armarMensajeACK():#Metodo que arma los mensajes.
 	numeroDePaquete = rv
 	ack[1:3] = numeroDePaquete.tobytes(3, byteorder='big')#Pasamos el numero a bytes
 	return ack
-
+#Definimos los hilos principales.
+hilo_de_recepcion = threading.Thread(target=recibir())
+hilo_de_conformacion_de_recepcion = threading.Thread(target=confirmacionDeRecepcion())
 
 # Ejecucion del programa	
-UDP_PORT = input("Escriba el numero de puerto: ")
-mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#(Por defecto utiliza tcp y ipv4)Nos genera un nuevo socket con los valores por default
-mi_socket.bind(('',int(UDP_PORT)))#Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
+
 nombre_del_archivo = "laImagen.jpg"
+#Iniciamos los hilos
+hilo_de_recepcion.start()
+hilo_de_conformacion_de_recepcion.start()
 
-
+hilo_de_recepcion.join()#Hilo principal
 
 
 
