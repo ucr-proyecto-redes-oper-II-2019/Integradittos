@@ -1,5 +1,4 @@
 
-#Fabian e Isaac
 class listaCircular:
 
 	listaCircular = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]

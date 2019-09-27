@@ -49,7 +49,7 @@ def enviar_seccion(image_slice):
     # espera a que la capa inferior tome la porcion del bus
     bytes_on_bus = True
     while bytes_on_bus:
-        time.wait(.3)
+        time.sleep(.3)
 
 def sending_buffering():
     global SN_max
@@ -131,7 +131,7 @@ UDP_PORT = input("Escriba el numero de puerto: ")
 mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#(Por defecto utiliza tcp y ipv4)Nos genera un nuevo socket con los valores por default
 mi_socket.bind(('',int(UDP_PORT)))#Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
 # socket non blocking
-mi_socket.setblocking(0)
+#mi_socket.setblocking(0)
 ipPortFile = input("IP Port file: ") #lee una linea
 ipPortFileLine = ipPortFile.split() #split a la linea
 ip = ipPortFileLine[0]
