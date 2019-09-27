@@ -20,13 +20,8 @@ class Receptor:
 	direccion_ip_del_emisor = ""#La direccion ip del emisor.
 	puerto_cliente = ""#Puerto del cliente :).
 	#estoy generando un servidor con sockets. 
-	UDP_PORT = ""
-	mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#(Por defecto utiliza tcp y ipv4)Nos genera un nuevo socket con los valores por default
-	mi_socket.bind(('',int(UDP_PORT)))#Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
-	mensaje_nuevo = False
-	nombre_del_archivo = "laImagen.jpg"
-
-
+	mensajeNuevo = False 
+	
 	def _init__(self):
 		self.candado_critico = threading.Lock
 	def recibir(self):#Capa de comunicacion.
@@ -37,13 +32,12 @@ class Receptor:
 			if self.rv == datos_bytes:#Si es igual al numero de paquete que estamos esperando.
 				self.almacenar(paquete_recibido[4:])#se lo debemos pasar a almacenar.
 				self.rv += 1
-				self.ventana.establecerInicio(self.rv)#Establecemos el nuevo inicio de la lista.
 				paquete = self.ventana.getElemento(self.rv)
 				while paquete != -1: #Mientras el elemento que se quiera este en la lista.
 					self.almacenar(paquete[4:])#Le mandamos los bytes de la imagen.
 					self.rv += 1
-					self.ventana.establecerInicio(self.rv)#Establecemos el nuevo inicio de la lista.
 				mensajeNuevo = True#Se comunican a traves de banderas...
+				self.ventana.establecerInicio(self.rv)#Establecemos el nuevo inicio de la lista.
 			else:#lo guardamos en el buffer. 
 				datos_bytes = self.paqueteRecibido[1:3]
 				int.from_bytes(datos_bytes, byteorder='big')
@@ -82,9 +76,11 @@ class Receptor:
 		return ack 
 		
 	
-	
-	
-	
+# Ejecucion del programa	
+UDP_PORT = input("Escriba el numero de puerto: ")
+mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#(Por defecto utiliza tcp y ipv4)Nos genera un nuevo socket con los valores por default
+mi_socket.bind(('',int(UDP_PORT)))#Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
+nombre_del_archivo = "laImagen.jpg"
 	
 	
 	
