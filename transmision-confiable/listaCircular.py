@@ -28,6 +28,8 @@ class listaCircular:
 		else:
 			posicionABuscar = numeroDePaquete
 		dataBytes = self.listaCircular[posicionABuscar]
+		if dataBytes == 0:
+			return -1
 		dataBytes = dataBytes[1:4]#Sacamos los bytes donde se encuentra el numero de paquete.
 		dataBytes = int.from_bytes(dataBytes, byteorder='big')
 		#print("Estoy en la lista", dataBytes)

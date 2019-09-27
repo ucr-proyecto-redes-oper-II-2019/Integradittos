@@ -1,6 +1,5 @@
 import socket
 import threading
-import threading 
 import sys 
 import select
 import ctypes #para el memset
@@ -12,21 +11,25 @@ from time import time
 DATA_MAX_SIZE = 516
 sn = 0#Send number
 rv = 0#Receiver number
-timeout = 0#variable que va a medir los tiempos de espera para mandar solicitudes.
+tiempoFuera = 0.3#variable que va a medir los tiempos de espera para mandar solicitudes.
 ventana = listaCircular()
-nombre_del_archivo = "laImagen.jpg"
+nombre_del_archivo = "laImagen.bin"
 bandera = True#Mientras la bandera este en true el programa va a esperar recibir paquetes.
 direccion_ip_del_emisor = ""#La direccion ip del emisor.
 puerto_cliente = ""#Puerto del cliente :).
 #estoy generando un servidor con sockets.
 mensajeNuevo = False
-candado_critico = threading.Lock
+
 UDP_PORT = input("Escriba el numero de puerto: ")
 mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#(Por defecto utiliza tcp y ipv4)Nos genera un nuevo socket con los valores por default
 mi_socket.bind(('', int(UDP_PORT)))#Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
+#direccion, puerto = mi_socket.
 
 def recibir():#Capa de comunicacion.
 	global rv
+	global bandera
+	global direccion_ip_del_emisor
+	global mensajeNuevo
 	while bandera:
 		paquete_recibido, direccion_ip_del_emisor = mi_socket.recvfrom(516)#Capturamos el datos y tambien la direccion del emisor.
 		datos_bytes = paquete_recibido[1:4]#extraemos el numero de paquete.
@@ -39,12 +42,13 @@ def recibir():#Capa de comunicacion.
 				almacenar(paquete[4:])#Le mandamos los bytes de la imagen.
 				rv += 1
 			mensajeNuevo = True#Se comunican a traves de banderas...
+			print (mensajeNuevo)
 			ventana.establecerInicio(rv)#Establecemos el nuevo inicio de la lista.
 		else:#lo guardamos en el buffer.
 			datos_bytes = paquete_recibido[1:4]
-			int.from_bytes(datos_bytes, byteorder='big')
-			if rv + 10 > datos_bytes > rv:  #Si esta dentro de la ventana, lo guardamos.
-				ventana.insertar(paquete_recibido, datos_bytes)
+			enteroBytes = int.from_bytes(datos_bytes, byteorder='big')
+			if rv + 10 > enteroBytes > rv:  #Si esta dentro de la ventana, lo guardamos.
+				ventana.insertar(paquete_recibido, enteroBytes)
 
 def almacenar(datos):#Encargado de guardar el archivo(Capa superior).
 	global nombre_del_archivo
@@ -54,41 +58,57 @@ def almacenar(datos):#Encargado de guardar el archivo(Capa superior).
 	else:
 		imagen.write(datos)
 	imagen.close()
+
 def confirmacionDeRecepcion():#Se encarga de enviar los ACK's
+	global bandera
+	global direccion_ip_del_emisor
+	#global candado_critico
+	candado_critico = threading.Lock()
+	global mensajeNuevo
+	print("Hilo de confirmacion de recepcion")
 	while bandera:#Cuando el ciclo de recibir termine este tambien.
 		tiempo_inicio = time()
 		if mensajeNuevo:#Si se recibio un mensaje con el rv que se estaba esperando, se activa la bandera.
 			candado_critico.acquire()#Empezamos zona critica
 			mensaje = armarMensajeACK()
-			mi_socket.sendto(mensaje, (direccion_ip_del_emisor, int(UDP_PORT)))
+			print(direccion_ip_del_emisor)
+			mi_socket.sendto(mensaje, direccion_ip_del_emisor)
 			mensaje_nuevo = False
 			candado_critico.release()#Fin de la zona critica.
 		tiempo_total = time() - tiempo_inicio
 		timeout(tiempo_total)#Revisamos el timeout.
 
 def timeout(tiempo):
-	if tiempo > timeout:#Si el tiempo es mayor al time out debe enviar un paquete de recepcion
+	global tiempoFuera
+	if tiempo > tiempoFuera:#Si el tiempo es mayor al time out debe enviar un paquete de recepcion
+		print("Hola from timeacabado")
 		mensaje = armarMensajeACK()
-		mi_socket.sendto(mensaje, (direccion_ip_del_emisor, int(UDP_PORT)))#Falta que capturemos cual puero vamos a implementar.
+		mi_socket.sendto(mensaje, direccion_ip_del_emisor)#Falta que capturemos cual puero vamos a implementar.
 
 def armarMensajeACK():#Metodo que arma los mensajes.
+	global rv
+	global DATA_MAX_SIZE
+	print("Estoy armando el ack")
 	ack = bytearray(DATA_MAX_SIZE)
-	ack[0] = 1#Establecemos que es un mesaje de RV.
+	ack[0] = 0x01#Establecemos que es un mesaje de RV.
 	numeroDePaquete = rv
-	ack[1:3] = numeroDePaquete.tobytes(3, byteorder='big')#Pasamos el numero a bytes
+	ack[1:4] = numeroDePaquete.to_bytes(3, byteorder='big')#Pasamos el numero a bytes
 	return ack
+
 #Definimos los hilos principales.
-hilo_de_recepcion = threading.Thread(target=recibir())
-hilo_de_conformacion_de_recepcion = threading.Thread(target=confirmacionDeRecepcion())
+hilo_de_recepcion = threading.Thread(target=recibir)
+hilo_de_confirmacion_de_recepcion = threading.Thread(target=confirmacionDeRecepcion)
 
 # Ejecucion del programa	
 
 
 #Iniciamos los hilos
 hilo_de_recepcion.start()
-hilo_de_conformacion_de_recepcion.start()
+hilo_de_confirmacion_de_recepcion.start() 
 
 hilo_de_recepcion.join()#Hilo principal
+#hilo_de_confirmacion_de_recepcion.join()
+
 
 
 
