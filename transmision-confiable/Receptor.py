@@ -50,7 +50,7 @@ def almacenar(datos):#Encargado de guardar el archivo(Capa superior).
 		bandera = False #Para la ejecucion.
 	else:
 		imagen.write(datos)
-
+	imagen.close()
 def confirmacionDeRecepcion():#Se encarga de enviar los ACK's
 	while bandera:#Cuando el ciclo de recibir termine este tambien.
 		tiempo_inicio = time()
@@ -66,7 +66,7 @@ def confirmacionDeRecepcion():#Se encarga de enviar los ACK's
 def timeout(tiempo):
 	if tiempo > timeout:#Si el tiempo es mayor al time out debe enviar un paquete de recepcion
 		mensaje = armarMensajeACK()
-		mi_socket.sendto(ack,(direccion_ip_del_emisor, int(port)))#Falta que capturemos cual puero vamos a implementar.
+		mi_socket.sendto(ack,(direccion_ip_del_emisor, int(UDP_PORT)))#Falta que capturemos cual puero vamos a implementar.
 
 def armarMensajeACK():#Metodo que arma los mensajes.
 	ack = bytearray(DATA_MAX_SIZE)
