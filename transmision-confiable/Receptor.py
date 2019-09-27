@@ -9,8 +9,6 @@ import listaCircular
 from time import time
 
 #Fabian e Isaac.
-
-class Receptor:
 DATA_MAX_SIZE = 516
 sn = 0#Send number
 rv = 0#Receiver number
