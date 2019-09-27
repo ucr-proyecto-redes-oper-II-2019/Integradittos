@@ -28,7 +28,7 @@ class Receptor:
 
 
 	def _init__(self):
-
+		self.candado_critico = threading.Lock
 	def recibir(self):#Capa de comunicacion.
 		while self.bandera:
 			paquete_recibido, self.direccion_ip_del_emisor = self.mi_socket.recvfrom(516)#Capturamos el datos y tambien la direccion del emisor.
@@ -61,8 +61,11 @@ class Receptor:
 		while self.bandera:#Cuando el ciclo de recibir termine este tambien.
 			tiempo_inicio = time()
 			if self.mensajeNuevo:#Si se recibio un mensaje con el rv que se estaba esperando, se activa la bandera.
+				self.candado_critico.acquire()#Empezamos zona critica
 				mensaje = self.armarMensajeACK()
 				self.mi_socket.sendto(mensaje,(self.direccion_ip_del_emisor, int(self.port)))
+				self.mensaje_nuevo = False
+				self.candado_critico.release()#Fin de la zona critica.
 			tiempo_total = time() - tiempo_inicio
 			self.timeout(tiempo_total)#Revisamos el timeout.
 			
