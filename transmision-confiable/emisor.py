@@ -42,6 +42,7 @@ def cargar_imagen(archivo):
     in_file.close()
 
 def enviar_seccion(image_slice):
+	global SENDING_BUS
     # pone la porcion de la imagen en el bus
     SENDING_BUS = image_slice
     # espera a que la capa inferior tome la porcion del bus
@@ -50,6 +51,13 @@ def enviar_seccion(image_slice):
         time.wait(.3)
 
 def sending_buffering():
+	global SN_max
+	global SN_min
+	global SENDING_BUFFER_COUNT
+	global BUFFER_SIZE
+	global SENDING_BUS
+	global SENDING_BUFFER_LOCK
+	global bytes_on_bus
     SENDING_BUFFER.establecerInicio(BUFFER_START)
     while not end_of_image:
         # si SN_max es mayor o igual al mensaje que falta de ACK (SN_min),
@@ -62,7 +70,7 @@ def sending_buffering():
             mensaje_por_enviar[0] = 0
             mensaje_por_enviar[1:3] = SN_max.to_bytes(3, byteorder='big')
             # copia la porcion de la imagen en el mensaje
-            mensaje_por_enviar[4:4+len(image_slice)] = SENDING_BUS
+            mensaje_por_enviar[4:4+512s] = SENDING_BUS
             SENDING_BUFFER_LOCK.acquire() # region critica
             # guarda el mensaje en el buffer
             SENDING_BUFFER.insertar(mensaje_por_enviar, SN_max)
@@ -74,6 +82,11 @@ def sending_buffering():
 
 
 def enviar_imagen(ip, port):
+	global SN_max
+	global SN_min
+	global DATA_MAX_SIZE
+	global SENDING_BUFFER_LOCK
+	global sending_complete
     # 0 000 0...
     mensaje_por_enviar = bytearray(DATA_MAX_SIZE)
     # empaquetar establecer conexión
@@ -97,6 +110,9 @@ def enviar_imagen(ip, port):
             SENDING_BUFFER_LOCK.release() # region critica
 
 def recibir_ACK():
+	global DATA_MAX_SIZE
+	global SN_min
+	global sending_complete
     while not sending_complete:
         ACK, addr = mi_socket.recvfrom(DATA_MAX_SIZE)
         SN_min = int.from_bytes(ACK[1:4], byteorder='big')
