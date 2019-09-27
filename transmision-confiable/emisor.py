@@ -29,7 +29,7 @@ def cargar_imagen(archivo):
     # abrir imagen
     in_file = open(archivo, "rb")
     # Mientras no se haya leido toda la imagen
-    while not end_of_image:
+    while not end_of_image:   
         image_slice = in_file.read(512)
         # si es una seccion normal, se envia
         if image_slice != '':
@@ -44,6 +44,7 @@ def cargar_imagen(archivo):
 
 def enviar_seccion(image_slice):
     global SENDING_BUS
+    global bytes_on_bus
     # pone la porcion de la imagen en el bus
     SENDING_BUS = image_slice
     # espera a que la capa inferior tome la porcion del bus
@@ -61,10 +62,11 @@ def sending_buffering():
     global bytes_on_bus
     SENDING_BUFFER.establecerInicio(BUFFER_START)
     while not end_of_image:
+        #print(SN_max, SN_min, SENDING_BUFFER_COUNT, BUFFER_SIZE, bytes_on_bus)
         # si SN_max es mayor o igual al mensaje que falta de ACK (SN_min),
         # y hay espacio en el buffer
         # y hay bytes en el bus
-        if SN_max >= SN_min and SENDING_BUFFER_COUNT < BUFFER_SIZE and bytes_on_bus:
+        if SN_max >= SN_min and SENDING_BUFFER_COUNT <= BUFFER_SIZE and bytes_on_bus:
             # 0 000 0...
             mensaje_por_enviar = bytearray(DATA_MAX_SIZE)
             # setea el encabezado
@@ -94,10 +96,10 @@ def enviar_imagen(ip, port):
     mensaje_por_enviar[0] = 0
     mensaje_por_enviar[1:3] = bytearray({0,0,0})
     #enviar paquete
-    mi_socket.sendto(mensaje_por_enviar,(ip, int(port)))
+    #mi_socket.sendto(mensaje_por_enviar,(ip, int(port)))
     #esperar ACK para el "handshake"
-    ACK, addr = mi_socket.recvfrom(DATA_MAX_SIZE)
-
+    #ACK, addr = mi_socket.recvfrom(DATA_MAX_SIZE)
+    #print("Handshake!")
     while not sending_complete:
         last_SN_min = SN_min
         timeout = time.time() + SEND_TIMEOUT   # en segundos
@@ -120,11 +122,6 @@ def recibir_ACK():
         # si es un ack del asterisco, se completo el envio
         if (ACK[4] == 42):
             sending_complete = True
-
-def generar_mensaje_final():
-    msj_final = bytearray(DATA_MAX_SIZE)
-    msj_final[4] = 42
-    return msj_final
 
 # Ejecucion del programa
 UDP_PORT = input("Escriba el numero de puerto: ")
