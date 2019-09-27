@@ -29,7 +29,7 @@ def recibir():#Capa de comunicacion.
 	while bandera:
 		paquete_recibido, direccion_ip_del_emisor = mi_socket.recvfrom(516)#Capturamos el datos y tambien la direccion del emisor.
 		datos_bytes = paquete_recibido[1:4]#extraemos el numero de paquete.
-		int.from_bytes(datos_bytes, byteorder='big')
+		datos_bytes = int.from_bytes(datos_bytes, byteorder='big')
 		if rv == datos_bytes:#Si es igual al numero de paquete que estamos esperando.
 			almacenar(paquete_recibido[4:])#se lo debemos pasar a almacenar.
 			rv += 1
