@@ -1,4 +1,4 @@
--import socket 
+import socket 
 import threading 
 import sys 
 import select
@@ -24,12 +24,6 @@ end_of_image = False # se vuelve True al leer toda la imagen
 sending_complete = False # se vuelve true al enviar todas las partes de la imagen con exito
 bytes_on_bus = False # indica si hay una porcion de la imagen en el buss
 
-# Threads
-hilo_de_carga_de_archivo = threading.Thread(target=cargar_imagen)
-hilo_de_buffering = threading.Thread(target=sending_buffering) 	
-hilo_de_envio = threading.Thread(target=enviar_imagen)
-hilo_de_recibir_ACK = threading.Thread(target=recibir_ACK)
-
 def cargar_imagen(archivo):
 	# Abrir imagen
 	in_file = open(archivo, "rb")
@@ -51,8 +45,8 @@ def enviar_seccion(image_slice):
 	# pone la porcion de la imagen en el bus
 	SENDING_BUS = image_slice
 	# espera a que la capa inferior tome la porcion del bus
-	bytes_on_bus = true
-	while bytes_on_bus
+	bytes_on_bus = rue
+	while bytes_on_bus:
 		time.wait(.3)
 
 def sending_buffering():
@@ -88,6 +82,7 @@ def enviar_imagen(ip, port):
 	#enviar paquete
 	mi_socket.sendto(mensaje_por_enviar,(ip, int(port))) 
 	#esperar ACK para el "handshake"
+	ACK, adidr = mi_socket.recvfrom(DATA_MAX_SIZE)
 	ACK, addr = mi_socket.recvfrom(DATA_MAX_SIZE)
 
 	while not sending_complete:
@@ -96,16 +91,16 @@ def enviar_imagen(ip, port):
 		# mientras no se haya acabado el timeout de envio y no hayan señales de vida del receptor (ACK)
 		while time.time() < timeout and last_SN_min == SN_min:		
  			SENDING_BUFFER_LOCK.acquire() # region critica
- 			for msg in range (SN_min, SN_max)
+ 			for msg in range (SN_min, SN_max):
  				# podria acabarse el timeout de envio y o recibir un ACK mientras se envian los paquetes
  				#if time.time() < timeout and last_SN_min == SN_min:
-					mi_socket.sendto(lista.getElemento(msg),(ip, int(port))) 
+				mi_socket.sendto(lista.getElemento(msg),(ip, int(port))) 
 			SENDING_BUFFER_LOCK.release() # region critica	
 
 def recibir_ACK():
 	while not sending_complete:
 		ACK, addr = mi_socket.recvfrom(DATA_MAX_SIZE)
-		SN_min = int.from_bytes(ACK[1:3], byorder='big')
+		SN_min = int.from_bytes(ACK[1:4], byteorder='big')
 		# si es un ack del asterisco, se completo el envio
 		if (ACK[4] == 42)
 			sending_complete = True
