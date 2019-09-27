@@ -4,7 +4,7 @@ import sys
 import select
 import ctypes
 import time
-import listaCircular
+from listaCircular import listaCircular
 
 # General
 DATA_MAX_SIZE = 1 + 4 + 512
@@ -82,7 +82,6 @@ def enviar_imagen(ip, port):
     #enviar paquete
     mi_socket.sendto(mensaje_por_enviar,(ip, int(port)))
     #esperar ACK para el "handshake"
-    ACK, adidr = mi_socket.recvfrom(DATA_MAX_SIZE)
     ACK, addr = mi_socket.recvfrom(DATA_MAX_SIZE)
 
     while not sending_complete:
@@ -102,7 +101,7 @@ def recibir_ACK():
         ACK, addr = mi_socket.recvfrom(DATA_MAX_SIZE)
         SN_min = int.from_bytes(ACK[1:4], byteorder='big')
         # si es un ack del asterisco, se completo el envio
-        if (ACK[4] == 42)
+        if (ACK[4] == 42):
             sending_complete = True
 
 def generar_mensaje_final():
@@ -115,12 +114,12 @@ UDP_PORT = input("Escriba el numero de puerto: ")
 mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#(Por defecto utiliza tcp y ipv4)Nos genera un nuevo socket con los valores por default
 mi_socket.bind(('',int(UDP_PORT)))#Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
 # socket non blocking
-    mi_socket.setblocking(0)
-    ipPortFile = input("IP Port file: ") #lee una linea
-    ipPortFileLine = ipPortFile.split() #split a la linea
-    ip = ipPortLine[0]
-    port = ipPortLine[1]
-    archivo = archivo[2]
+mi_socket.setblocking(0)
+ipPortFile = input("IP Port file: ") #lee una linea
+ipPortFileLine = ipPortFile.split() #split a la linea
+ip = ipPortFileLine[0]
+port = ipPortFileLine[1]
+archivo = ipPortFileLine[2]
 
 # Threads
 hilo_de_carga_de_archivo = threading.Thread(target=cargar_imagen, args=(archivo,))
