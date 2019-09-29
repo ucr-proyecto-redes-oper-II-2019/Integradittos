@@ -25,11 +25,14 @@ mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#(Por defecto utiliz
 mi_socket.bind(('', int(UDP_PORT)))#Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
 #direccion, puerto = mi_socket.
 
+imagen = open(nombre_del_archivo, "bw")#Abrimos archivo donde vamos a guardar la imagen.
+
 def recibir():#Capa de comunicacion.
 	global rv
 	global bandera
 	global direccion_ip_del_emisor
 	global mensajeNuevo
+	global ventana
 	while bandera:
 		paquete_recibido, direccion_ip_del_emisor = mi_socket.recvfrom(516)#Capturamos el datos y tambien la direccion del emisor.
 		datos_bytes = paquete_recibido[1:4]#extraemos el numero de paquete.
@@ -42,9 +45,9 @@ def recibir():#Capa de comunicacion.
 				almacenar(paquete[4:])#Le mandamos los bytes de la imagen.
 				rv += 1
 			mensajeNuevo = True#Se comunican a traves de banderas...
-			print (mensajeNuevo)
 			ventana.establecerInicio(rv)#Establecemos el nuevo inicio de la lista.
 		else:#lo guardamos en el buffer.
+			print("SALVATIERRA PURA MIERDA!!!")
 			datos_bytes = paquete_recibido[1:4]
 			enteroBytes = int.from_bytes(datos_bytes, byteorder='big')
 			if rv + 10 > enteroBytes > rv:  #Si esta dentro de la ventana, lo guardamos.
@@ -52,12 +55,15 @@ def recibir():#Capa de comunicacion.
 
 def almacenar(datos):#Encargado de guardar el archivo(Capa superior).
 	global nombre_del_archivo
-	imagen = open(nombre_del_archivo, "bw")#Abrimos archivo donde vamos a guardar la imagen.
+	global imagen
+	global bandera
 	if datos[0] == '*':#Podemos hacer que retorne un False en lugar de jugar con esa variable global.
 		bandera = False #Para la ejecucion.
+		print("me llego el asterisco")
+		imagen.close()
 	else:
 		imagen.write(datos)
-	imagen.close()
+	
 
 def confirmacionDeRecepcion():#Se encarga de enviar los ACK's
 	global bandera
@@ -65,13 +71,11 @@ def confirmacionDeRecepcion():#Se encarga de enviar los ACK's
 	#global candado_critico
 	candado_critico = threading.Lock()
 	global mensajeNuevo
-	print("Hilo de confirmacion de recepcion")
 	while bandera:#Cuando el ciclo de recibir termine este tambien.
 		tiempo_inicio = time()
 		if mensajeNuevo:#Si se recibio un mensaje con el rv que se estaba esperando, se activa la bandera.
 			candado_critico.acquire()#Empezamos zona critica
 			mensaje = armarMensajeACK()
-			print(direccion_ip_del_emisor)
 			mi_socket.sendto(mensaje, direccion_ip_del_emisor)
 			mensaje_nuevo = False
 			candado_critico.release()#Fin de la zona critica.
@@ -81,17 +85,16 @@ def confirmacionDeRecepcion():#Se encarga de enviar los ACK's
 def timeout(tiempo):
 	global tiempoFuera
 	if tiempo > tiempoFuera:#Si el tiempo es mayor al time out debe enviar un paquete de recepcion
-		print("Hola from timeacabado")
 		mensaje = armarMensajeACK()
 		mi_socket.sendto(mensaje, direccion_ip_del_emisor)#Falta que capturemos cual puero vamos a implementar.
 
 def armarMensajeACK():#Metodo que arma los mensajes.
 	global rv
 	global DATA_MAX_SIZE
-	print("Estoy armando el ack")
 	ack = bytearray(DATA_MAX_SIZE)
 	ack[0] = 0x01#Establecemos que es un mesaje de RV.
 	numeroDePaquete = rv
+	print("Estoy armando el ack: % d" %(rv))
 	ack[1:4] = numeroDePaquete.to_bytes(3, byteorder='big')#Pasamos el numero a bytes
 	return ack
 

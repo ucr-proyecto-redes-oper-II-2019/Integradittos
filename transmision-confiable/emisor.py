@@ -37,8 +37,9 @@ def cargar_imagen(archivo):
         else:
             # si es el final de imagen se envia un *
             fin_de_imagen = bytearray(512)
-            fin_de_imagen[0] = 42 # un *
+            fin_de_imagen[0] = '*' # un *
             enviar_seccion(fin_de_imagen)
+            print("Meti el asterisco")
             end_of_image = True # se han leido todas las porciones de la imagen
     in_file.close()
 
@@ -66,15 +67,16 @@ def sending_buffering():
         # si SN_max es mayor o igual al mensaje que falta de ACK (SN_min),
         # y hay espacio en el buffer
         # y hay bytes en el bus
-        if SN_max >= SN_min and SENDING_BUFFER_COUNT <= BUFFER_SIZE and bytes_on_bus:
+        if SN_max >= SN_min and SENDING_BUFFER_COUNT < BUFFER_SIZE and bytes_on_bus and (SN_max - SN_min) < 9:
             # 0 000 0...
             mensaje_por_enviar = bytearray(DATA_MAX_SIZE)
             # setea el encabezado
             mensaje_por_enviar[0] = 0
-            mensaje_por_enviar[1:3] = SN_max.to_bytes(3, byteorder='big')
+            mensaje_por_enviar[1:4] = SN_max.to_bytes(3, byteorder='big')
             # copia la porcion de la imagen en el mensaje
             mensaje_por_enviar[4:4+512] = SENDING_BUS
             SENDING_BUFFER_LOCK.acquire() # region critica
+            #print("Insertando paquete numero: % d" %(SN_max))
             # guarda el mensaje en el buffer
             SENDING_BUFFER.insertar(mensaje_por_enviar, SN_max)
             # aumentamos el SN_max y el contador del buffer
@@ -93,8 +95,8 @@ def enviar_imagen(ip, port):
     # 0 000 0...
     mensaje_por_enviar = bytearray(DATA_MAX_SIZE)
     # empaquetar establecer conexión
-    mensaje_por_enviar[0] = 0
-    mensaje_por_enviar[1:3] = bytearray({0,0,0})
+    #mensaje_por_enviar[0] = 0
+    #mensaje_por_enviar[1:3] = bytearray({0,0,0})
     #enviar paquete
     #mi_socket.sendto(mensaje_por_enviar,(ip, int(port)))
     #esperar ACK para el "handshake"
@@ -102,25 +104,46 @@ def enviar_imagen(ip, port):
     #print("Handshake!")
     while not sending_complete:
         last_SN_min = SN_min
+        
+        iterador_ventana = SN_min
+        final_ventana = SN_max
+
         timeout = time.time() + SEND_TIMEOUT   # en segundos
         # mientras no se haya acabado el timeout de envio y no hayan señales de vida del receptor (ACK)
         while time.time() < timeout and last_SN_min == SN_min:
+        	SENDING_BUFFER_LOCK.acquire() # region critica
+        	if(iterador_ventana < final_ventana):
+        		print("Enviando paquete numero: % d" %(iterador_ventana))
+        		mi_socket.sendto(SENDING_BUFFER.getElemento(iterador_ventana), (ip, int(port)))
+        		iterador_ventana += 1
+        	SENDING_BUFFER_LOCK.release() # region critica
+
+        	'''
             SENDING_BUFFER_LOCK.acquire() # region critica
             for msg in range (SN_min, SN_max):
                 # podria acabarse el timeout de envio y o recibir un ACK mientras se envian los paquetes
                 #if time.time() < timeout and last_SN_min == SN_min:
                 mi_socket.sendto(SENDING_BUFFER.getElemento(msg), (ip, int(port)))
             SENDING_BUFFER_LOCK.release() # region critica
+            '''
 
 def recibir_ACK():
+    global SENDING_BUFFER
     global DATA_MAX_SIZE
     global SN_min
     global sending_complete
+    global SENDING_BUFFER_COUNT
+    ultimo_ACK = -1
     while not sending_complete:
         ACK, addr = mi_socket.recvfrom(DATA_MAX_SIZE)
         SN_min = int.from_bytes(ACK[1:4], byteorder='big')
+        if(ultimo_ACK < SN_min):
+        	if(ultimo_ACK != -1):
+        		SENDING_BUFFER.establecerInicio(SN_min)
+        		SENDING_BUFFER_COUNT -= (SN_min - ultimo_ACK)
+        	ultimo_ACK = SN_min
         # si es un ack del asterisco, se completo el envio
-        if (ACK[4] == 42):
+        if (ACK[4] == '*'):
             sending_complete = True
 
 # Ejecucion del programa
