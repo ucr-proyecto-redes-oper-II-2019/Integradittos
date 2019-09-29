@@ -14,7 +14,7 @@ class listaCircular:
 	#Inserta un elemento en la lista, datos(los 516 bytes del paquete) y numeroDePaqueteAInsertar(El numero del paquete que se va a insertar).
 	def insertar(self, datos ,numeroDePaqueteAInsertar):#introducimos el nuevoPaquete
 		posicionParaInsertar = ((numeroDePaqueteAInsertar - self.numeroDePaqueteActual) + self.inicio) % 10
-		print("Inicio: % d, numPaqActual % d, Insertando: % d" %(numeroDePaqueteAInsertar, self.numeroDePaqueteActual, posicionParaInsertar))
+		#print("Inicio: % d, numPaqActual % d, Insertando: % d" %(numeroDePaqueteAInsertar, self.numeroDePaqueteActual, posicionParaInsertar))
 		posicionParaInsertar = ((numeroDePaqueteAInsertar - self.numeroDePaqueteActual) + self.inicio) % 10
 		self.listaCircular[posicionParaInsertar] = datos#Insertamos los bytes
 		if posicionParaInsertar > self.final:
@@ -24,12 +24,13 @@ class listaCircular:
 	def getElemento(self, numeroDePaquete):
 		posicionABuscar = ((numeroDePaquete - self.numeroDePaqueteActual) + self.inicio) % 10#Calculamos la posicion en la que deberia estar ese paquete en el array circular
 		dataBytes = self.listaCircular[posicionABuscar]
-		if dataBytes == 0:
+		if dataBytes == 0:#Si hay un 0 quiere decir que no se ha insertado nada en el buffer.
 			return -1
-		dataBytes = dataBytes[1:4]#Sacamos los bytes donde se encuentra el numero de paquete.
-		dataBytes = int.from_bytes(dataBytes, byteorder='big')
-		if dataBytes == numeroDePaquete:#comparamos que el numero de paquete deseado sea el que se encuentre en la posicion. 
-			return self.listaCircular[posicionABuscar]#Devolvemos el paquete completo.
-		else: 
-			return -1
+		else:
+			dataBytes = dataBytes[1:4]#Sacamos los bytes donde se encuentra el numero de paquete.
+			dataBytes = int.from_bytes(dataBytes, byteorder='big')
+			if dataBytes == numeroDePaquete:#comparamos que el numero de paquete deseado sea el que se encuentre en la posicion.
+				return self.listaCircular[posicionABuscar]#Devolvemos el paquete completo.
+			else:#sino se encuentra en la lista.
+				return -1
 
