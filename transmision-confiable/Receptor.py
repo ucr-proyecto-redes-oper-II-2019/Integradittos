@@ -13,7 +13,7 @@ sn = 0#Send number
 rv = 0#Receiver number
 tiempoFuera = 0.3#variable que va a medir los tiempos de espera para mandar solicitudes.
 ventana = listaCircular()
-nombre_del_archivo = "laImagen.bin"
+nombre_del_archivo = "laImagen.jpg"
 bandera = True#Mientras la bandera este en true el programa va a esperar recibir paquetes.
 direccion_ip_del_emisor = ""#La direccion ip del emisor.
 puerto_cliente = ""#Puerto del cliente :).
@@ -47,7 +47,6 @@ def recibir():#Capa de comunicacion.
 			mensajeNuevo = True#Se comunican a traves de banderas...
 			ventana.establecerInicio(rv)#Establecemos el nuevo inicio de la lista.
 		else:#lo guardamos en el buffer.
-			print("SALVATIERRA PURA MIERDA!!!")
 			datos_bytes = paquete_recibido[1:4]
 			enteroBytes = int.from_bytes(datos_bytes, byteorder='big')
 			if rv + 10 > enteroBytes > rv:  #Si esta dentro de la ventana, lo guardamos.
@@ -57,9 +56,8 @@ def almacenar(datos):#Encargado de guardar el archivo(Capa superior).
 	global nombre_del_archivo
 	global imagen
 	global bandera
-	if datos[0] == '*':#Podemos hacer que retorne un False en lugar de jugar con esa variable global.
+	if datos[0] == 42 and datos[1] == 0:#Podemos hacer que retorne un False en lugar de jugar con esa variable global.
 		bandera = False #Para la ejecucion.
-		print("me llego el asterisco")
 		imagen.close()
 	else:
 		imagen.write(datos)
@@ -77,7 +75,7 @@ def confirmacionDeRecepcion():#Se encarga de enviar los ACK's
 			candado_critico.acquire()#Empezamos zona critica
 			mensaje = armarMensajeACK()
 			mi_socket.sendto(mensaje, direccion_ip_del_emisor)
-			mensaje_nuevo = False
+			mensajeNuevo = False
 			candado_critico.release()#Fin de la zona critica.
 		tiempo_total = time() - tiempo_inicio
 		timeout(tiempo_total)#Revisamos el timeout.
@@ -94,7 +92,6 @@ def armarMensajeACK():#Metodo que arma los mensajes.
 	ack = bytearray(DATA_MAX_SIZE)
 	ack[0] = 0x01#Establecemos que es un mesaje de RV.
 	numeroDePaquete = rv
-	print("Estoy armando el ack: % d" %(rv))
 	ack[1:4] = numeroDePaquete.to_bytes(3, byteorder='big')#Pasamos el numero a bytes
 	return ack
 
