@@ -14,21 +14,15 @@ class listaCircular:
 
 	#Inserta un elemento en la lista, datos(los 516 bytes del paquete) y numeroDePaqueteAInsertar(El numero del paquete que se va a insertar).
 	def insertar(self, datos ,numeroDePaqueteAInsertar):#introducimos el nuevoPaquete
-		if numeroDePaqueteAInsertar >= 10:#Si el paquete a insertar es mayor a 10 tenemos que aplicar el algoritmo para que la lista sea circular.
-			posicionParaInsertar = ((numeroDePaqueteAInsertar - self.numeroDePaqueteActual) + self.inicio) % 10
-		else:#Sino dejamos el numero de paqueta original
-			posicionParaInsertar = numeroDePaqueteAInsertar
+		posicionParaInsertar = ((numeroDePaqueteAInsertar - self.numeroDePaqueteActual) + self.inicio) % 10
 		print("Inicio: % d, numPaqActual % d, Insertando: % d" %(numeroDePaqueteAInsertar, self.numeroDePaqueteActual, posicionParaInsertar))
 		self.listaCircular[posicionParaInsertar] = datos#Insertamos los bytes
 		if posicionParaInsertar > self.final:
-			self.final =  posicionParaInsertar 
+			self.final = posicionParaInsertar
 
 	#retorna el los datos del numero de paquete, numeroDePaquete si no se encuentra retorna -1
 	def getElemento(self, numeroDePaquete):
-		if numeroDePaquete >= 10:
-			posicionABuscar = ((numeroDePaquete - self.numeroDePaqueteActual) + self.inicio) % 10#Calculamos la posicion en la que deberia estar ese paquete en el array circular
-		else:
-			posicionABuscar = numeroDePaquete
+		posicionABuscar = ((numeroDePaquete - self.numeroDePaqueteActual) + self.inicio) % 10#Calculamos la posicion en la que deberia estar ese paquete en el array circular
 		dataBytes = self.listaCircular[posicionABuscar]
 		if dataBytes == 0:
 			return -1
