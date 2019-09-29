@@ -32,14 +32,13 @@ def cargar_imagen(archivo):
     while not end_of_image:   
         image_slice = in_file.read(512)
         # si es una seccion normal, se envia
-        if image_slice != '':
+        if image_slice:
             enviar_seccion(image_slice)
         else:
             # si es el final de imagen se envia un *
             fin_de_imagen = bytearray(512)
-            fin_de_imagen[0] = '*' # un *
+            fin_de_imagen[0] = 42 # un *
             enviar_seccion(fin_de_imagen)
-            print("Meti el asterisco")
             end_of_image = True # se han leido todas las porciones de la imagen
     in_file.close()
 
@@ -75,6 +74,8 @@ def sending_buffering():
             mensaje_por_enviar[1:4] = SN_max.to_bytes(3, byteorder='big')
             # copia la porcion de la imagen en el mensaje
             mensaje_por_enviar[4:4+512] = SENDING_BUS
+            if mensaje_por_enviar[0] == 42 and mensaje_por_enviar[1] == 0:
+            	print("Envié  el asterisco")
             SENDING_BUFFER_LOCK.acquire() # region critica
             #print("Insertando paquete numero: % d" %(SN_max))
             # guarda el mensaje en el buffer
@@ -143,7 +144,7 @@ def recibir_ACK():
         		SENDING_BUFFER_COUNT -= (SN_min - ultimo_ACK)
         	ultimo_ACK = SN_min
         # si es un ack del asterisco, se completo el envio
-        if (ACK[4] == '*'):
+        if (ACK[4] == 42):
             sending_complete = True
 
 # Ejecucion del programa
