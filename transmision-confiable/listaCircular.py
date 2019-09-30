@@ -14,8 +14,6 @@ class listaCircular:
 	#Inserta un elemento en la lista, datos(los 516 bytes del paquete) y numeroDePaqueteAInsertar(El numero del paquete que se va a insertar).
 	def insertar(self, datos ,numeroDePaqueteAInsertar):#introducimos el nuevoPaquete
 		posicionParaInsertar = ((numeroDePaqueteAInsertar - self.numeroDePaqueteActual) + self.inicio) % 10
-		#print("Inicio: % d, numPaqActual % d, Insertando: % d" %(numeroDePaqueteAInsertar, self.numeroDePaqueteActual, posicionParaInsertar))
-		posicionParaInsertar = ((numeroDePaqueteAInsertar - self.numeroDePaqueteActual) + self.inicio) % 10
 		self.listaCircular[posicionParaInsertar] = datos#Insertamos los bytes
 		if posicionParaInsertar > self.final:
 			self.final = posicionParaInsertar
