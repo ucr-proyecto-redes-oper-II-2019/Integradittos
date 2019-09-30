@@ -5,7 +5,6 @@ import select
 import ctypes #para el memset
 import time
 from listaCircular import listaCircular
-from time import time
 
 #Fabian e Isaac.
 DATA_MAX_SIZE = 516
@@ -70,14 +69,14 @@ def confirmacionDeRecepcion():#Se encarga de enviar los ACK's
 	candado_critico = threading.Lock()
 	global mensajeNuevo
 	while bandera:#Cuando el ciclo de recibir termine este tambien.
-		tiempo_inicio = time()
+		tiempo_inicio = time.time()
 		if mensajeNuevo:#Si se recibio un mensaje con el rv que se estaba esperando, se activa la bandera.
 			candado_critico.acquire()#Empezamos zona critica
 			mensaje = armarMensajeACK()
 			mi_socket.sendto(mensaje, direccion_ip_del_emisor)
 			mensajeNuevo = False
 			candado_critico.release()#Fin de la zona critica.
-		tiempo_total = time() - tiempo_inicio
+		tiempo_total = time.time() - tiempo_inicio
 		timeout(tiempo_total)#Revisamos el timeout.
 
 def timeout(tiempo):
@@ -95,9 +94,22 @@ def armarMensajeACK():#Metodo que arma los mensajes.
 	ack[1:4] = numeroDePaquete.to_bytes(3, byteorder='big')#Pasamos el numero a bytes
 	return ack
 
+def loading():
+	global bandera
+	hilera = ["\r◴ ","\r◷ ","\r◶ ","\r◵ "]
+	cont = 0
+	while bandera:
+		print("% s" %(hilera[cont]), end = '')
+		time.sleep(.2)
+		cont += 1
+		if cont == 4:
+			cont = 0
+	print("") 
+
 #Definimos los hilos principales.
 hilo_de_recepcion = threading.Thread(target=recibir)
 hilo_de_confirmacion_de_recepcion = threading.Thread(target=confirmacionDeRecepcion)
+hilo_de_loading = threading.Thread(target=loading)
 
 # Ejecucion del programa	
 
@@ -105,10 +117,7 @@ hilo_de_confirmacion_de_recepcion = threading.Thread(target=confirmacionDeRecepc
 #Iniciamos los hilos
 hilo_de_recepcion.start()
 hilo_de_confirmacion_de_recepcion.start() 
+hilo_de_loading.start()
 
 hilo_de_recepcion.join()#Hilo principal
 #hilo_de_confirmacion_de_recepcion.join()
-
-
-
-

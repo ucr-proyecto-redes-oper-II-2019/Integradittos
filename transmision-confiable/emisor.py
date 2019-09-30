@@ -167,7 +167,18 @@ def recibir_ACK():
         		SENDING_BUFFER.establecerInicio(SN_min)
         		SENDING_BUFFER_COUNT -= (SN_min - ultimo_ACK)
         	ultimo_ACK = SN_min
-        
+
+def loading():
+	global sending_complete
+	hilera = ["\r◴ ","\r◷ ","\r◶ ","\r◵ "]
+	cont = 0
+	while not sending_complete:
+		print("% s" %(hilera[cont]), end = '')
+		time.sleep(.2)
+		cont += 1
+		if cont == 4:
+			cont = 0
+	print("")   
 
 # Ejecucion del programa
 UDP_PORT = input("Escriba el numero de puerto: ")
@@ -186,11 +197,13 @@ hilo_de_carga_de_archivo = threading.Thread(target=cargar_imagen, args=(archivo,
 hilo_de_buffering = threading.Thread(target=sending_buffering) 	
 hilo_de_envio = threading.Thread(target=enviar_imagen, args=(ip,port,))
 hilo_de_recibir_ACK = threading.Thread(target=recibir_ACK)
+hilo_de_loading = threading.Thread(target=loading)
 
 hilo_de_carga_de_archivo.start()
 hilo_de_buffering.start()
 hilo_de_recibir_ACK.start()
 hilo_de_envio.start()
+hilo_de_loading.start()
 
 hilo_de_carga_de_archivo.join()
 hilo_de_buffering.join()
