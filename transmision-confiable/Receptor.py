@@ -14,6 +14,7 @@ tiempoFuera = 0.3#variable que va a medir los tiempos de espera para mandar soli
 ventana = listaCircular()
 nombre_del_archivo = "laImagen.jpg"
 bandera = True#Mientras la bandera este en true el programa va a esperar recibir paquetes.
+banderaFinalizar = False
 direccion_ip_del_emisor = ""#La direccion ip del emisor.
 puerto_cliente = ""#Puerto del cliente :).
 #estoy generando un servidor con sockets.
@@ -55,8 +56,10 @@ def almacenar(datos):#Encargado de guardar el archivo(Capa superior).
 	global nombre_del_archivo
 	global imagen
 	global bandera
+	global banderaFinalizar
 	if datos[0] == 42 and datos[1] == 0:#Podemos hacer que retorne un False en lugar de jugar con esa variable global.
-		bandera = False #Para la ejecucion.
+		#print("Recibimos un asterisco rv= % d " %(rv))
+		banderaFinalizar = True #Para la ejecucion.
 		imagen.close()
 	else:
 		imagen.write(datos)
@@ -65,6 +68,7 @@ def almacenar(datos):#Encargado de guardar el archivo(Capa superior).
 def confirmacionDeRecepcion():#Se encarga de enviar los ACK's
 	global bandera
 	global direccion_ip_del_emisor
+	global banderaFinalizar 
 	#global candado_critico
 	candado_critico = threading.Lock()
 	global mensajeNuevo
@@ -76,6 +80,9 @@ def confirmacionDeRecepcion():#Se encarga de enviar los ACK's
 			mi_socket.sendto(mensaje, direccion_ip_del_emisor)
 			mensajeNuevo = False
 			candado_critico.release()#Fin de la zona critica.
+		if banderaFinalizar:
+			bandera = False 
+		 	
 		tiempo_total = time.time() - tiempo_inicio
 		timeout(tiempo_total)#Revisamos el timeout.
 
@@ -91,6 +98,7 @@ def armarMensajeACK():#Metodo que arma los mensajes.
 	ack = bytearray(DATA_MAX_SIZE)
 	ack[0] = 0x01#Establecemos que es un mesaje de RV.
 	numeroDePaquete = rv
+	#print("Enviando el ack= % d " %(numeroDePaquete))
 	ack[1:4] = numeroDePaquete.to_bytes(3, byteorder='big')#Pasamos el numero a bytes
 	return ack
 
