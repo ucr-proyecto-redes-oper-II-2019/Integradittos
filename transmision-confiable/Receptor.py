@@ -20,7 +20,7 @@ puerto_cliente = ""#Puerto del cliente :).
 #estoy generando un servidor con sockets.
 mensajeNuevo = False
 
-UDP_PORT = input("Escriba el numero de puerto: ")
+UDP_PORT = input("Escriba el puerto de recepcion: ")
 mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#(Por defecto utiliza tcp y ipv4)Nos genera un nuevo socket con los valores por default
 mi_socket.bind(('', int(UDP_PORT)))#Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
 #direccion, puerto = mi_socket.
@@ -98,26 +98,13 @@ def armarMensajeACK():#Metodo que arma los mensajes.
 	ack = bytearray(DATA_MAX_SIZE)
 	ack[0] = 0x01#Establecemos que es un mesaje de RV.
 	numeroDePaquete = rv
-	#print("Enviando el ack= % d " %(numeroDePaquete))
+	print("Enviando el ack: % d " %(numeroDePaquete))
 	ack[1:4] = numeroDePaquete.to_bytes(3, byteorder='big')#Pasamos el numero a bytes
 	return ack
-
-def loading():
-	global bandera
-	hilera = ["\r◴ ","\r◷ ","\r◶ ","\r◵ "]
-	cont = 0
-	while bandera:
-		print("% s" %(hilera[cont]), end = '')
-		time.sleep(.2)
-		cont += 1
-		if cont == 4:
-			cont = 0
-	print("") 
 
 #Definimos los hilos principales.
 hilo_de_recepcion = threading.Thread(target=recibir)
 hilo_de_confirmacion_de_recepcion = threading.Thread(target=confirmacionDeRecepcion)
-hilo_de_loading = threading.Thread(target=loading)
 
 # Ejecucion del programa	
 
@@ -125,7 +112,6 @@ hilo_de_loading = threading.Thread(target=loading)
 #Iniciamos los hilos
 hilo_de_recepcion.start()
 hilo_de_confirmacion_de_recepcion.start() 
-hilo_de_loading.start()
 
 hilo_de_recepcion.join()#Hilo principal
 #hilo_de_confirmacion_de_recepcion.join()

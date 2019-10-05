@@ -123,6 +123,7 @@ def enviar_imagen(ip, port):
         while time.time() < timeout and last_SN_min == SN_min:
         	SENDING_BUFFER_LOCK.acquire() # region critica
         	if(iterador_ventana < final_ventana):
+        		#print("Enviando paquete: % d" %(iterador_ventana))
         		mi_socket.sendto(SENDING_BUFFER.getElemento(iterador_ventana), (ip, int(port)))
         		iterador_ventana += 1
         	SENDING_BUFFER_LOCK.release() # region critica
@@ -158,6 +159,7 @@ def recibir_ACK():
 
         # se toma el num de secuencia del mensaje
         SN_min = int.from_bytes(ACK[1:4], byteorder='big')
+        print("Recibi ACK: % d" %(SN_min))
         # si es un ack del asterisco, se completo el envio
         if end_of_image and SN_min == finishing_ACK:
             sending_complete = True
@@ -166,27 +168,15 @@ def recibir_ACK():
         	if(ultimo_ACK != -1):
         		SENDING_BUFFER.establecerInicio(SN_min)
         		SENDING_BUFFER_COUNT -= (SN_min - ultimo_ACK)
-        	ultimo_ACK = SN_min
-
-def loading():
-	global sending_complete
-	hilera = ["\r◴ ","\r◷ ","\r◶ ","\r◵ "]
-	cont = 0
-	while not sending_complete:
-		print("% s" %(hilera[cont]), end = '')
-		time.sleep(.2)
-		cont += 1
-		if cont == 4:
-			cont = 0
-	print("")   
+        	ultimo_ACK = SN_min  
 
 # Ejecucion del programa
-UDP_PORT = input("Escriba el numero de puerto: ")
+UDP_PORT = input("Escriba el puerto para ACKs: ")
 mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#(Por defecto utiliza tcp y ipv4)Nos genera un nuevo socket con los valores por default
 mi_socket.bind(('',int(UDP_PORT)))#Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
 # socket non blocking
 mi_socket.settimeout(10)
-ipPortFile = input("IP Port file: ") #lee una linea
+ipPortFile = input("Ingrese: IP Puerto archivo: ") #lee una linea
 ipPortFileLine = ipPortFile.split() #split a la linea
 ip = ipPortFileLine[0]
 port = ipPortFileLine[1]
@@ -197,13 +187,11 @@ hilo_de_carga_de_archivo = threading.Thread(target=cargar_imagen, args=(archivo,
 hilo_de_buffering = threading.Thread(target=sending_buffering) 	
 hilo_de_envio = threading.Thread(target=enviar_imagen, args=(ip,port,))
 hilo_de_recibir_ACK = threading.Thread(target=recibir_ACK)
-hilo_de_loading = threading.Thread(target=loading)
 
 hilo_de_carga_de_archivo.start()
 hilo_de_buffering.start()
 hilo_de_recibir_ACK.start()
 hilo_de_envio.start()
-hilo_de_loading.start()
 
 hilo_de_carga_de_archivo.join()
 hilo_de_buffering.join()
