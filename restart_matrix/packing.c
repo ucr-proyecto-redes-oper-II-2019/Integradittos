@@ -49,13 +49,35 @@ int pack_process(long file_count, char * file_names[], FILE * archivo_proceso)
 		fclose(file);
 	}
 
-	return 0;
-}
-
 /*
  *
  */
 int unpack_process(FILE * archivo_proceso)
 {
+	int cantidad_de_archivos = 0;
+	int cantidad_de_bytes_archivo = 0; 
+	char * nombre_del_archivo;
+	FILE * file; 
+	Bytes datos archivo; 
+	//Leemos la cantidad de archivos el primer long que hay en el archivo, que es el numero de archivos que hay 
+	fread(&cantidad_de_archivos, sizeof(long), 1, archivo_proceso);
+	for(int indice = 0; indice < cantidad_de_archivos; indice++)
+	{
+		//Leemos el nombre del archivo. 
+		fread(&nombre_del_archivo, sizeof(char), F_NAME_SIZE, archivo_proceso); 
+		//Leemos la cantidad de bytes que pesa el archivo.
+		fread(&cantidad_de_bytes_archivo, sizeof(long), 1, archivo_proceso);
+		//Abrimos el archivo. 
+		file = fopen(nombre_del_archivo, "wb");
+		//Pasamos los datos al archivo.
+		char one_byte;
+		for(size_t byte; byte < cantidad_de_bytes_archivo; ++byte)
+		{
+			fread(&one_byte, sizeof(char), 1, archivo_proceso);
+			fwrite(&one_byte, sizeof(char), 1, file);
+		}
+
+		fclose(file);
+	}	
 	return 0;
 }
