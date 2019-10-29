@@ -83,7 +83,7 @@ void catcher(int signal)
 {
     // Evita que el ciclo en main continúe ejecutándose
     sin_interrumpir = 0;
-    exit(0); 
+    
 }
 
 
@@ -93,7 +93,7 @@ int main(void) {
   FILE *fdata, *fout, *fexec;
   int dim, n, i, j, iters, totalprod;
   double A[15][15], B[15][15], I[15][15], Temp[15][15], det, sdet, c;
-
+  int bandera = 1; 
 /* --- Instrucciones ---*/
   // se asigna la subrutina catcher() a la interrupción
   signal(SIGINT, &catcher);
@@ -163,17 +163,29 @@ int main(void) {
 	primeraParte: 
 		for (i = indice; i<n; i++) {
 		   mult(I, A, Temp, dim);
-		   printf("Mult  \n"); 
-		   imprima(I); 
 		   scalar(I, dim, c);
-		   imprima(I);
-		   indice = i; 
+		   indice = i;
+		   if(sin_interrumpir == 0)
+		   {
+				// guarda los datos de ejecución
+				fwrite(&iters, sizeof(int), 1, fexec);
+				fwrite(&totalprod, sizeof(int), 1, fexec);
+				goto fin; 
+		   }
 		}
 	indice = 0; 	
 	segundaParte: 
 		for (i = indice; i<n; i++) {
 		   mult(I, B, Temp, dim);
 		   scalar(I, dim, c);
+		   indice = i;
+		   if(sin_interrumpir == 0)
+		   {
+				// guarda los datos de ejecución
+				fwrite(&iters, sizeof(int), 1, fexec);
+				fwrite(&totalprod, sizeof(int), 1, fexec);
+				goto fin; 
+		   }
 		}
 	terceraParte: 
 		if (verify(I, dim)) {
@@ -193,15 +205,16 @@ int main(void) {
   }
 
   // Abre el archivo de ejecución en modo (sobre)escritura en binario.
-  fexec = fopen("execution", "wb");
-  if( fexec == NULL ) {
-      perror("Error opening execution file: ");
-      return(-1);
-   }
-   // guarda los datos de ejecución
-   fwrite(&iters, sizeof(int), 1, fexec);
-   fwrite(&totalprod, sizeof(int), 1, fexec);
-   fclose(fexec);
+  fin: 
+	  fexec = fopen("execution", "wb");
+	  if( fexec == NULL ) {
+		  perror("Error opening execution file: ");
+		  return(-1);
+	   }
+	   // guarda los datos de ejecución
+	   fwrite(&iters, sizeof(int), 1, fexec);
+	   fwrite(&totalprod, sizeof(int), 1, fexec);
+	   fclose(fexec);
 
   
   return(0);
