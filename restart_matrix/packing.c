@@ -50,7 +50,8 @@ int pack_process(long file_count, char * file_names[], FILE * archivo_proceso)
 	}
 
 /*
- *
+ *Metodo que "Desempaca" informacion de un archivo. 
+ *@param archivo_proceso Archivo que contiene informacion concatenada.
  */
 int unpack_process(FILE * archivo_proceso)
 {
@@ -76,7 +77,6 @@ int unpack_process(FILE * archivo_proceso)
 			fread(&one_byte, sizeof(char), 1, archivo_proceso);
 			fwrite(&one_byte, sizeof(char), 1, file);
 		}
-
 		fclose(file);
 	}	
 	return 0;

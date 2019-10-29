@@ -83,6 +83,7 @@ void catcher(int signal)
 {
     // Evita que el ciclo en main continúe ejecutándose
     sin_interrumpir = 0;
+    exit(0); 
 }
 
 
@@ -139,38 +140,56 @@ int main(void) {
   imprima(B, dim);
   
   ident(I, dim);
-  
+  fexec = fopen("execution", "wb");
   //iters = 0;
   //totalprod = 0;
-  while (sin_interrumpir) {
+  while (1) {
+	
+	int indice = 0; 
+  	if( fexec == NULL ) {
+      	perror("Error opening execution file: ");
+      		return(-1);
+   	}
+   // guarda los datos de ejecución
+   	fwrite(&iters, sizeof(int), 1, fexec);
+   	fwrite(&totalprod, sizeof(int), 1, fexec);
+	    printf("Iteracion actual %d\n", iters+1);
 	fout  = fopen("trace.txt", "a");
     if( fout == NULL ) {
        perror("Error opening trace.txt: ");
        return(-1);
     }
-    n = rand() % 6 + 1;
-	for (i=0; i<n; i++) {
-	   mult(I, A, Temp, dim);
-	   scalar(I, dim, c);
-    }
-	for (i=0; i<n; i++) {
-	   mult(I, B, Temp, dim);
-	   scalar(I, dim, c);
-    }
-    if (verify(I, dim)) {
-		iters++;
-		totalprod += 2*n;
-		fprintf(fout, "Iteracion %d verificada OK: productos = %d, \ttotalprod = %d\n",
-		        iters, 2*n, totalprod);
-		printf("Completadas %d iteraciones\n", iters);
-	}
-	else {
-	    printf("Iter %d presenta error. Se cancela el programa\n", iters+1);
-	    fprintf(fout, "Iter %d presenta error. Se cancela el programa\n", iters+1);
-	    exit(1);
-	}
-    fclose(fout);
-	usleep(100000);
+    n = rand() % 6 + 1; 
+	primeraParte: 
+		for (i = indice; i<n; i++) {
+		   mult(I, A, Temp, dim);
+		   printf("Mult  \n"); 
+		   imprima(I); 
+		   scalar(I, dim, c);
+		   imprima(I);
+		   indice = i; 
+		}
+	indice = 0; 	
+	segundaParte: 
+		for (i = indice; i<n; i++) {
+		   mult(I, B, Temp, dim);
+		   scalar(I, dim, c);
+		}
+	terceraParte: 
+		if (verify(I, dim)) {
+			iters++;
+			totalprod += 2*n;
+			fprintf(fout, "Iteracion %d verificada OK: productos = %d, \ttotalprod = %d\n",
+					iters, 2*n, totalprod);
+			printf("Completadas %d iteraciones\n", iters);
+		}
+		else {
+			printf("Iter %d presenta error. Se cancela el programa\n", iters+1);
+			fprintf(fout, "Iter %d presenta error. Se cancela el programa\n", iters+1);
+			exit(1);
+		}
+		fclose(fout);
+		usleep(100000);
   }
 
   // Abre el archivo de ejecución en modo (sobre)escritura en binario.
