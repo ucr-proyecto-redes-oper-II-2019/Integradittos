@@ -48,6 +48,7 @@ int pack_process(long file_count, char * file_names[], FILE * archivo_proceso)
 
 		fclose(file);
 	}
+}
 
 /*
  *Metodo que "Desempaca" informacion de un archivo. 
@@ -59,7 +60,7 @@ int unpack_process(FILE * archivo_proceso)
 	int cantidad_de_bytes_archivo = 0; 
 	char * nombre_del_archivo;
 	FILE * file; 
-	Bytes datos archivo; 
+	//B ytes datos archivo; 
 	//Leemos la cantidad de archivos el primer long que hay en el archivo, que es el numero de archivos que hay 
 	fread(&cantidad_de_archivos, sizeof(long), 1, archivo_proceso);
 	for(int indice = 0; indice < cantidad_de_archivos; indice++)
@@ -80,4 +81,8 @@ int unpack_process(FILE * archivo_proceso)
 		fclose(file);
 	}	
 	return 0;
+}
+int main()
+{
+
 }
