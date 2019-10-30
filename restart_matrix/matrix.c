@@ -4,7 +4,7 @@
 #include <math.h>
 #include <time.h>
 #include <signal.h>
-
+#DEFINE TAMANOMATRIX 1800
 int sin_interrumpir = 1;
 
 /* ----- Subrutinas y funciones ----------- */
@@ -76,17 +76,42 @@ int verify(double X[15][15], int dim) {
 	 }
 	 return(1);
 }
+void guardar(int matrix[][], int iters, int totalprod, int numero_de_etiqueta, int indice, int n)
+{
+	// lee los datos de ejecución ya guardados
+	fwrite(&iters, sizeof(int), 1, fexec);
+	fwrite(&totalprod, sizeof(int), 1, fexec);
+	fwrite(&matrix, TAMANOMATRIX, 1, fexec);
+	fwrite(&numero_de_etiqueta, sizeof(int), 1, fexec);
+	fwrite(&indice, sizeof(int), 1, fexec);
+	fwrite(&n, sizeof(int), 1, fexec);
+	//fclose(fexec);
+}
 /* -----------------*/
-
 // Función que atrapa la senal SIGINT
 void catcher(int signal)
 {
     // Evita que el ciclo en main continúe ejecutándose
     sin_interrumpir = 0;
-    
 }
-
-
+void brincar(int numero_de_etiqueta)
+{
+	if(numero_de_etiqueta = 1)
+	{
+		goto primeraParte; 
+	}
+	else
+	{
+		if(numero_de_etiqueta = 2)
+		{
+			goto segundaParte;
+		}
+		else
+		{
+			goto terceraParte;
+		}
+	}
+}
 /* --------------------------MAIN---------------------------------*/
 int main(void) {
 /* ----- Variables -----*/
@@ -94,6 +119,7 @@ int main(void) {
   int dim, n, i, j, iters, totalprod;
   double A[15][15], B[15][15], I[15][15], Temp[15][15], det, sdet, c;
   int bandera = 1; 
+  int numero_de_etiqueta = 0; 
 /* --- Instrucciones ---*/
   // se asigna la subrutina catcher() a la interrupción
   signal(SIGINT, &catcher);
@@ -103,8 +129,6 @@ int main(void) {
       perror("Error opening matrices.dat: ");
       return(-1);
    }
-
-
    // Intenta abrir el archivo de ejecución para leer (en binario)
     fexec = fopen("execution", "rb");
 
@@ -114,9 +138,29 @@ int main(void) {
     	// lee los datos de ejecución ya guardados
         fread(&iters, sizeof(int), 1, fexec);
         fread(&totalprod, sizeof(int), 1, fexec);
+		fread(&I, TAMANOMATRIX,1 , fexec);
+		fread(&numero_de_etiqueta, sizeof(int), 1, fexec);
+		fread(&indice, sizeof(int), 1, fexec);
+		fread(&n, sizeof(int), 1, fexec);
         fclose(fexec);
-    }
+		fout  = fopen("trace.txt", "w");
+	  if( fout == NULL ) {
+		  perror("Error opening trace.txt: ");
+		  return(-1);
+	   }
+	  fclose(fout);
+	  fscanf(fdata, "%d %lf", &dim, &det);  
+	  lea(fdata, A, dim);
+	  lea(fdata, B, dim);
+	  fclose(fdata);
 
+	  sdet = sqrt(det);
+	  c = 1.0/sdet;
+	  srand(time(0));
+	  
+	  fexec = fopen("execution", "wb");
+	  brincar(numero_de_etiqueta);      
+    }
   fout  = fopen("trace.txt", "w");
   if( fout == NULL ) {
       perror("Error opening trace.txt: ");
@@ -143,12 +187,12 @@ int main(void) {
   fexec = fopen("execution", "wb");
   //iters = 0;
   //totalprod = 0;
-  while (1) {
-	
+  while (1) 
+  {
 	int indice = 0; 
   	if( fexec == NULL ) {
       	perror("Error opening execution file: ");
-      		return(-1);
+      	return(-1);
    	}
    // guarda los datos de ejecución
    	fwrite(&iters, sizeof(int), 1, fexec);
@@ -160,34 +204,34 @@ int main(void) {
        return(-1);
     }
     n = rand() % 6 + 1; 
-	primeraParte: 
+	
+	primeraParte:
+		numero_de_etiqueta = 1; 
 		for (i = indice; i<n; i++) {
 		   mult(I, A, Temp, dim);
 		   scalar(I, dim, c);
 		   indice = i;
 		   if(sin_interrumpir == 0)
 		   {
-				// guarda los datos de ejecución
-				fwrite(&iters, sizeof(int), 1, fexec);
-				fwrite(&totalprod, sizeof(int), 1, fexec);
+				guardar(I, iters, totalprod)
 				goto fin; 
 		   }
 		}
 	indice = 0; 	
-	segundaParte: 
+	segundaParte:
+		numero_de_etiqueta = 2; 
 		for (i = indice; i<n; i++) {
 		   mult(I, B, Temp, dim);
 		   scalar(I, dim, c);
 		   indice = i;
 		   if(sin_interrumpir == 0)
 		   {
-				// guarda los datos de ejecución
-				fwrite(&iters, sizeof(int), 1, fexec);
-				fwrite(&totalprod, sizeof(int), 1, fexec);
+				guardar(I, iters, totalprod)
 				goto fin; 
 		   }
 		}
-	terceraParte: 
+	terceraParte:
+		numero_de_etiqueta = 3; 
 		if (verify(I, dim)) {
 			iters++;
 			totalprod += 2*n;
@@ -212,8 +256,7 @@ int main(void) {
 		  return(-1);
 	   }
 	   // guarda los datos de ejecución
-	   fwrite(&iters, sizeof(int), 1, fexec);
-	   fwrite(&totalprod, sizeof(int), 1, fexec);
+	   guardar(I, iter, totalprod); 
 	   fclose(fexec);
 
   
