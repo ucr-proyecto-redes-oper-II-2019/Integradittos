@@ -6,7 +6,10 @@
 #define F_NAME_SIZE 255
 
 /*
- *
+ * Concatena los archivos dados en file_names en uno solo
+ * @param file_count cantidad de archivos a concetenar
+ * @param flne_names arreglo con lo nombres del archivo
+ * #param archivo_proceso file descriptor del archivo con la concatenación
  */
 int pack_process(long file_count, char * file_names[], FILE * archivo_proceso)
 {
@@ -48,6 +51,8 @@ int pack_process(long file_count, char * file_names[], FILE * archivo_proceso)
 
 		fclose(file);
 	}
+	return 0;
+}
 
 /*
  *Metodo que "Desempaca" informacion de un archivo. 
@@ -59,7 +64,6 @@ int unpack_process(FILE * archivo_proceso)
 	int cantidad_de_bytes_archivo = 0; 
 	char * nombre_del_archivo;
 	FILE * file; 
-	Bytes datos archivo; 
 	//Leemos la cantidad de archivos el primer long que hay en el archivo, que es el numero de archivos que hay 
 	fread(&cantidad_de_archivos, sizeof(long), 1, archivo_proceso);
 	for(int indice = 0; indice < cantidad_de_archivos; indice++)
