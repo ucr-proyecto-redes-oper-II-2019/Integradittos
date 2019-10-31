@@ -12,18 +12,29 @@ BUFFER_SIZE = 10
 BUFFER_START = 0
 
 # Para envio
-SEND_TIMEOUT = 3 # en segundos
-SENDING_BUFFER = listaCircular() #buffer
-SENDING_BUS = bytearray(512) # bus para enviar las partes de la imagen a capa inferior
-SENDING_BUFFER_COUNT = 0 # contador de mensajes en el buffer
-SENDING_BUFFER_LOCK = threading.Lock() # mutex del buffer
+# en segundos
+SEND_TIMEOUT = 3 
+# ventana
+SENDING_BUFFER = listaCircular()
+# bus para enviar las partes de la imagen a capa inferior
+SENDING_BUS = bytearray(512) 
+# contador de mensajes en el buffer
+SENDING_BUFFER_COUNT = 0 
+# mutex del buffer
 SN_max = 0
+SENDING_BUFFER_LOCK = threading.Lock() 
 SN_min = 0
-#FINAL_MESSAGE = generar_mensaje_final() #se está haciendo en la capa superior por ahora
-end_of_image = False # se vuelve True al leer toda la imagen
-sending_complete = False # se vuelve true al enviar todas las partes de la imagen con exito
-bytes_on_bus = False # indica si hay una porcion de la imagen en el bus
-finishing_ACK = 0 # variable usada para determinar cual es el numero de secuencia del ACK final
+#FINAL_MESSAGE = generar_mensaje_final()
+# se vuelve True al leer toda la imagen
+end_of_image = False 
+# se vuelve true al enviar todas las partes de la imagen con exito
+sending_complete = False 
+# indica si hay una porcion de la imagen en el bus
+bytes_on_bus = False 
+# variable usada para determinar cual es el numero de secuencia del ACK final
+finishing_ACK = 0 
+# tiempo en segundos que el emisor va a esperar un ACK
+receiver_timeout = 10
 
 def cargar_imagen(archivo):
     global end_of_image
@@ -90,6 +101,7 @@ def sending_buffering():
     fin_de_imagen[0] = 42 # un *
     mensaje_final[4:4+512] = fin_de_imagen
     finishing_ACK = SN_max
+    print("Envié paquete final (Sn = % d)" %(SN_max))
     SENDING_BUFFER_LOCK.acquire() # region critica
     SENDING_BUFFER.insertar(mensaje_final, SN_max)
     SN_max += 1
@@ -161,7 +173,7 @@ def recibir_ACK():
         SN_min = int.from_bytes(ACK[1:4], byteorder='big')
         print("Recibi ACK: % d" %(SN_min))
         # si es un ack del asterisco, se completo el envio
-        if end_of_image and SN_min == finishing_ACK:
+        if end_of_image and SN_min >= finishing_ACK:
             sending_complete = True
         # si el nuevo SN_min es diferente al ultimo, actualizamos el inicio de la ventana
         if(ultimo_ACK < SN_min):
@@ -171,16 +183,23 @@ def recibir_ACK():
         	ultimo_ACK = SN_min  
 
 # Ejecucion del programa
-UDP_PORT = input("Escriba el puerto para ACKs: ")
+
+if len(sys.argv) != 5:
+	print("Uso: python3 Emisor.py IP_destino Puerto_destino archivo Puerto_local")
+	sys.exit()
+
+UDP_PORT = sys.argv[4]
 mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#(Por defecto utiliza tcp y ipv4)Nos genera un nuevo socket con los valores por default
 mi_socket.bind(('',int(UDP_PORT)))#Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
 # socket non blocking
-mi_socket.settimeout(10)
-ipPortFile = input("Ingrese: IP Puerto archivo: ") #lee una linea
-ipPortFileLine = ipPortFile.split() #split a la linea
-ip = ipPortFileLine[0]
-port = ipPortFileLine[1]
-archivo = ipPortFileLine[2]
+mi_socket.settimeout(receiver_timeout)
+
+#ipPortFile = input("Ingrese: IP Puerto archivo: ") #lee una linea
+#ipPortFileLine = ipPortFile.split() #split a la linea
+
+ip = sys.argv[1]
+port = sys.argv[2]
+archivo = sys.argv[3]
 
 # Threads
 hilo_de_carga_de_archivo = threading.Thread(target=cargar_imagen, args=(archivo,))

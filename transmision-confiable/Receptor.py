@@ -12,7 +12,7 @@ sn = 0#Send number
 rv = 0#Receiver number
 tiempoFuera = 0.3#variable que va a medir los tiempos de espera para mandar solicitudes.
 ventana = listaCircular()
-nombre_del_archivo = "laImagen.jpg"
+nombre_del_archivo = "archivo_recibido"
 bandera = True#Mientras la bandera este en true el programa va a esperar recibir paquetes.
 banderaFinalizar = False
 direccion_ip_del_emisor = ""#La direccion ip del emisor.
@@ -20,7 +20,12 @@ puerto_cliente = ""#Puerto del cliente :).
 #estoy generando un servidor con sockets.
 mensajeNuevo = False
 
-UDP_PORT = input("Escriba el puerto de recepcion: ")
+if len(sys.argv) != 3:
+	print("Uso: python3 Receptor.py puerto nombre_archivo")
+	sys.exit()
+
+nombre_del_archivo = sys.argv[2]
+UDP_PORT = sys.argv[1]
 mi_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#(Por defecto utiliza tcp y ipv4)Nos genera un nuevo socket con los valores por default
 mi_socket.bind(('', int(UDP_PORT)))#Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
 #direccion, puerto = mi_socket.
@@ -58,7 +63,7 @@ def almacenar(datos):#Encargado de guardar el archivo(Capa superior).
 	global bandera
 	global banderaFinalizar
 	if datos[0] == 42 and datos[1] == 0:#Podemos hacer que retorne un False en lugar de jugar con esa variable global.
-		#print("Recibimos un asterisco rv= % d " %(rv))
+		print("Recibimos un asterisco rv= % d " %(rv))
 		banderaFinalizar = True #Para la ejecucion.
 		imagen.close()
 	else:
