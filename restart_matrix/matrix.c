@@ -100,7 +100,8 @@ int main(void) {
 /* ----- Variables -----*/
 	int indice = 0; 
 	FILE *fdata, *fout, *fexec;
-	int dim, n, i, j, iters, totalprod;
+	int dim, iters, n, i, j, totalprod;
+	iters = 0;
 	double A[15][15], B[15][15], I[15][15], Temp[15][15], det, sdet, c;
 	int bandera = 1; 
 	int numero_de_etiqueta = 0; 
@@ -135,7 +136,7 @@ int main(void) {
 			perror("Error opening trace.txt: ");
 			return(-1);
 		}
-		imprima(I, 15);
+		//imprima(I, 15);
 		
 		fclose(fout);
 		fscanf(fdata, "%d %lf", &dim, &det);  
@@ -147,6 +148,8 @@ int main(void) {
 		printf("Hola este es el valor de c %f \n", c);
 		srand(time(0));	  
 		fexec = fopen("execution", "wb");
+		ident(I, dim);
+		imprima(I, 15);
 		if(numero_de_etiqueta = 1)
 		{
 			goto primeraParte; 
@@ -169,7 +172,7 @@ int main(void) {
       return(-1);
    }
   fclose(fout);
-  fscanf(fdata, "%d %lf", &dim, &det);  
+  fscanf(fdata, "%d %lf", &dim, &det); 
   lea(fdata, A, dim);
   lea(fdata, B, dim);
   fclose(fdata);
@@ -187,7 +190,7 @@ int main(void) {
   //iters = 0;
   //totalprod = 0;
   partePrincipal:
-   ident(I, dim);
+
   while (1) 
   {
 	
