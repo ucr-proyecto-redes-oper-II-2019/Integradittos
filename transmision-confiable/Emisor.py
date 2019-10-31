@@ -7,7 +7,7 @@ import time
 from listaCircular import listaCircular
 
 # General
-DATA_MAX_SIZE = 1 + 4 + 512
+DATA_MAX_SIZE = 1 + 3 + 512
 BUFFER_SIZE = 10
 BUFFER_START = 0
 
@@ -101,7 +101,7 @@ def sending_buffering():
     fin_de_imagen[0] = 42 # un *
     mensaje_final[4:4+512] = fin_de_imagen
     finishing_ACK = SN_max
-    print("Envié paquete final (Sn = % d)" %(SN_max))
+    print("Inserté paquete final (Sn = % d)" %(SN_max))
     SENDING_BUFFER_LOCK.acquire() # region critica
     SENDING_BUFFER.insertar(mensaje_final, SN_max)
     SN_max += 1

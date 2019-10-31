@@ -1,10 +1,36 @@
 #include <libgen.h> // para basename()
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 
 #define F_NAME_SIZE 255
+
+
+/*
+ * Ejecuta un comando para otorgar permiso de ejecución al programa
+ * @param file_name nombre del archivo.
+ */
+int exec_privilege(char * file_name)
+{
+	char comando[512];
+	strcpy(comando, "chmod u+x ./");
+   	strcat(comando, file_name);
+   	
+   	printf("%s\n", comando);
+
+	// Invocamos el comando para enviar el archivo
+	int sys_error = system(comando);
+
+	if( sys_error == -1 )
+	{
+		printf("No existe el archivo ejecutable.\n");
+		return -1;
+	}
+	
+	return 0;
+}
 
 /*
  * Concatena los archivos dados en file_names en uno solo
@@ -93,7 +119,14 @@ int unpack_process(FILE * archivo_proceso)
 		char file_data[cantidad_de_bytes_archivo];
 		fread(file_data, sizeof(char), cantidad_de_bytes_archivo, archivo_proceso);
 		fwrite(file_data, sizeof(char), cantidad_de_bytes_archivo, file); 
+		
 		fclose(file);
+		
+		// 	Si se desempaquetó l primer archivo, se da permisos de ejecución al ejecutable (primer archivo)
+		// pues es el ejecutable
+		if(indice == 0)
+			exec_privilege(nombre_del_archivo);
 	}	
 	return 0;
 }
+
