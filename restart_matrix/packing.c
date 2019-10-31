@@ -70,6 +70,7 @@ int unpack_process(FILE * archivo_proceso)
 	long cantidad_de_bytes_archivo = 0; 
 	char nombre_del_archivo[F_NAME_SIZE];
 	FILE * file; 
+
 	//Leemos la cantidad de archivos el primer long que hay en el archivo, que es el numero de archivos que hay 
 	fread(&cantidad_de_archivos, sizeof(long), 1, archivo_proceso);
 	printf("Cantidad de archivos recibidos: %ld\n", cantidad_de_archivos);
@@ -95,4 +96,8 @@ int unpack_process(FILE * archivo_proceso)
 		fclose(file);
 	}	
 	return 0;
+}
+int main()
+{
+
 }
