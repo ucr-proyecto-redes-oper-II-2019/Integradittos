@@ -97,7 +97,3 @@ int unpack_process(FILE * archivo_proceso)
 	}	
 	return 0;
 }
-int main()
-{
-
-}
