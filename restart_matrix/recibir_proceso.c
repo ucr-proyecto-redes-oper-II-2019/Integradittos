@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
 
 	// Se intenta abrir el archivo que contiene
 	// los archivos necesarios para restartear el proceso
-	archivo_proceso = fopen(nombre_archivo, "wb");
+	archivo_proceso = fopen(nombre_archivo, "rb");
 	if( archivo_proceso == NULL ) {
 		perror("Error abriendo archivo: ");
 		return(-1);

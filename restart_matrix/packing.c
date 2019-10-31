@@ -1,3 +1,4 @@
+#include <libgen.h> // para basename()
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -38,16 +39,21 @@ int pack_process(long file_count, char * file_names[], FILE * archivo_proceso)
 		rewind(file);
 
 		// Se escriben: nombre, tamaño y archivo
-		fwrite(file_names[index], sizeof(char),F_NAME_SIZE, archivo_proceso);
+		char * file_base_name = basename(file_names[index]);
+		fwrite(file_base_name, sizeof(char),F_NAME_SIZE, archivo_proceso);
 		fwrite(&file_size, sizeof(long), 1, archivo_proceso);
+		printf("Se empaquetó %s: %ld bytes\n", file_base_name, file_size);
 		// Se escribe el archivo byte por byte (podría ser mas eficiente
 		// con aritmetica modular)
-		char one_byte;
-		for(size_t byte; byte < file_size; ++byte)
-		{
-			fread(&one_byte, sizeof(char), 1, file);
-			fwrite(&one_byte, sizeof(char), 1, archivo_proceso);
-		}
+		//char one_byte;
+		//for(size_t byte; byte < file_size; ++byte)
+		//{
+		//	fread(&one_byte, sizeof(char), 1, file);
+		//	fwrite(&one_byte, sizeof(char), 1, archivo_proceso);
+		//}
+		char file_data[file_size];
+		fread(file_data, sizeof(char), file_size, file);
+		fwrite(file_data, sizeof(char), file_size, archivo_proceso);
 
 		fclose(file);
 	}
@@ -60,27 +66,32 @@ int pack_process(long file_count, char * file_names[], FILE * archivo_proceso)
  */
 int unpack_process(FILE * archivo_proceso)
 {
-	int cantidad_de_archivos = 0;
-	int cantidad_de_bytes_archivo = 0; 
-	char * nombre_del_archivo;
+	long cantidad_de_archivos = 0;
+	long cantidad_de_bytes_archivo = 0; 
+	char nombre_del_archivo[F_NAME_SIZE];
 	FILE * file; 
 	//Leemos la cantidad de archivos el primer long que hay en el archivo, que es el numero de archivos que hay 
 	fread(&cantidad_de_archivos, sizeof(long), 1, archivo_proceso);
+	printf("Cantidad de archivos recibidos: %ld\n", cantidad_de_archivos);
 	for(int indice = 0; indice < cantidad_de_archivos; indice++)
 	{
 		//Leemos el nombre del archivo. 
-		fread(&nombre_del_archivo, sizeof(char), F_NAME_SIZE, archivo_proceso); 
+		fread(nombre_del_archivo, sizeof(char), F_NAME_SIZE, archivo_proceso); 
 		//Leemos la cantidad de bytes que pesa el archivo.
 		fread(&cantidad_de_bytes_archivo, sizeof(long), 1, archivo_proceso);
+		printf("Desempaquetando %s: %ld bytes\n", nombre_del_archivo, cantidad_de_bytes_archivo);
 		//Abrimos el archivo. 
 		file = fopen(nombre_del_archivo, "wb");
 		//Pasamos los datos al archivo.
-		char one_byte;
-		for(size_t byte; byte < cantidad_de_bytes_archivo; ++byte)
-		{
-			fread(&one_byte, sizeof(char), 1, archivo_proceso);
-			fwrite(&one_byte, sizeof(char), 1, file);
-		}
+		//char one_byte;
+		//for(size_t byte; byte < cantidad_de_bytes_archivo; ++byte)
+		//{
+		//	fread(&one_byte, sizeof(char), 1, archivo_proceso);
+		//	fwrite(&one_byte, sizeof(char), 1, file);
+		//}
+		char file_data[cantidad_de_bytes_archivo];
+		fread(file_data, sizeof(char), cantidad_de_bytes_archivo, archivo_proceso);
+		fwrite(file_data, sizeof(char), cantidad_de_bytes_archivo, file); 
 		fclose(file);
 	}	
 	return 0;
