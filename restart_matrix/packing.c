@@ -4,8 +4,10 @@
 #include <string.h>
 #include <unistd.h>
 
-
-#define F_NAME_SIZE 255
+// Constantes para el número de bytes en los campos 
+#define F_NAME_SIZE 36
+#define N_FILE_SIZE 1
+#define FILE_BYTES_SIZE sizeof(int)
 
 
 /*
@@ -42,7 +44,7 @@ int pack_process(long file_count, char * file_names[], FILE * archivo_proceso)
 {
 	// El primer campo del archivo con para reanudar el proceso
 	// es la cantidad de archivos a enviar
-	fwrite(&file_count, sizeof(long), 1, archivo_proceso);
+	fwrite(&file_count, N_FILE_SIZE, 1, archivo_proceso);
 
 	// Los campos siguientes son archivos, con el formato:
 	// nombre (255B) | tamaño X en Bytes (8B) | archivo (X B)
@@ -67,7 +69,7 @@ int pack_process(long file_count, char * file_names[], FILE * archivo_proceso)
 		// Se escriben: nombre, tamaño y archivo
 		char * file_base_name = basename(file_names[index]);
 		fwrite(file_base_name, sizeof(char),F_NAME_SIZE, archivo_proceso);
-		fwrite(&file_size, sizeof(long), 1, archivo_proceso);
+		fwrite(&file_size, FILE_BYTES_SIZE, 1, archivo_proceso);
 		printf("Se empaquetó %s: %ld bytes\n", file_base_name, file_size);
 		// Se escribe el archivo byte por byte (podría ser mas eficiente
 		// con aritmetica modular)
@@ -98,14 +100,14 @@ int unpack_process(FILE * archivo_proceso)
 	FILE * file; 
 
 	//Leemos la cantidad de archivos el primer long que hay en el archivo, que es el numero de archivos que hay 
-	fread(&cantidad_de_archivos, sizeof(long), 1, archivo_proceso);
+	fread(&cantidad_de_archivos, N_FILE_SIZE, 1, archivo_proceso);
 	printf("Cantidad de archivos recibidos: %ld\n", cantidad_de_archivos);
 	for(int indice = 0; indice < cantidad_de_archivos; indice++)
 	{
 		//Leemos el nombre del archivo. 
 		fread(nombre_del_archivo, sizeof(char), F_NAME_SIZE, archivo_proceso); 
 		//Leemos la cantidad de bytes que pesa el archivo.
-		fread(&cantidad_de_bytes_archivo, sizeof(long), 1, archivo_proceso);
+		fread(&cantidad_de_bytes_archivo, FILE_BYTES_SIZE, 1, archivo_proceso);
 		printf("Desempaquetando %s: %ld bytes\n", nombre_del_archivo, cantidad_de_bytes_archivo);
 		//Abrimos el archivo. 
 		file = fopen(nombre_del_archivo, "wb");
