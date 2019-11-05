@@ -5,8 +5,8 @@
 #include <unistd.h>
 
 // Constantes para el número de bytes en los campos 
-#define F_NAME_SIZE 36
-#define N_FILE_SIZE 1
+#define F_NAME_SIZE 64
+#define N_FILE_SIZE sizeof(int)
 #define FILE_BYTES_SIZE sizeof(int)
 
 

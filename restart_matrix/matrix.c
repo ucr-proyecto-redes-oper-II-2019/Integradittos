@@ -84,7 +84,7 @@ void guardar(FILE * fexec, double matrix[15][15], int iters, int totalprod, int 
 	//fwrite(&matrix, sizeof(double), 15*15, fexec);
 	fwrite(&indice, sizeof(int), 1, fexec);
 	fwrite(&n, sizeof(int), 1, fexec);
-	imprima(matrix, 15);
+	//imprima(matrix, 15);
 	//fclose(fexec);
 }
 /* -----------------*/
@@ -149,7 +149,7 @@ int main(void) {
 		srand(time(0));	  
 		fexec = fopen("execution", "wb");
 		ident(I, dim);
-		imprima(I, 15);
+		//imprima(I, 15);
 		if(numero_de_etiqueta = 1)
 		{
 			goto primeraParte; 
@@ -178,7 +178,7 @@ int main(void) {
   fclose(fdata);
   sdet = sqrt(det);
   c = 1.0/sdet;
-  printf("Hola este es el valor de c2 %f \n", c);
+
   srand(time(0));
   printf("Leidos: dim=%d, det=%lf, sdet=%lf\n", dim, det, sdet);
   printf("\nMatriz A leida:\n");
