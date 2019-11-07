@@ -38,17 +38,17 @@ def recibir():#Capa de comunicacion.
 	global direccion_ip_del_emisor
 	global mensajeNuevo
 	global ventana
-	while bandera:
+	while not banderaFinalizar:
 		paquete_recibido, direccion_ip_del_emisor = mi_socket.recvfrom(516)#Capturamos el datos y tambien la direccion del emisor.
 		datos_bytes = paquete_recibido[1:4]#extraemos el numero de paquete.
 		datos_bytes = int.from_bytes(datos_bytes, byteorder='big')
 		if rv == datos_bytes:#Si es igual al numero de paquete que estamos esperando.
-			almacenar(paquete_recibido[4:])#se lo debemos pasar a almacenar.
 			rv += 1
+			almacenar(paquete_recibido[4:])#se lo debemos pasar a almacenar.
 			paquete = ventana.getElemento(rv)
 			while paquete != -1: #Mientras el elemento que se quiera este en la lista.
-				almacenar(paquete[4:])#Le mandamos los bytes de la imagen.
 				rv += 1
+				almacenar(paquete[4:])#Le mandamos los bytes de la imagen.
 			mensajeNuevo = True#Se comunican a traves de banderas...
 			ventana.establecerInicio(rv)#Establecemos el nuevo inicio de la lista.
 		else:#lo guardamos en el buffer.
@@ -62,32 +62,33 @@ def almacenar(datos):#Encargado de guardar el archivo(Capa superior).
 	global imagen
 	global bandera
 	global banderaFinalizar
+	global candado_critico
+	candado_critico.acquire()
 	if datos[0] == 42 and datos[1] == 0:#Podemos hacer que retorne un False en lugar de jugar con esa variable global.
 		print("Recibimos un asterisco rv= % d " %(rv))
 		banderaFinalizar = True #Para la ejecucion.
 		imagen.close()
 	else:
 		imagen.write(datos)
-	
+	candado_critico.release()
 
 def confirmacionDeRecepcion():#Se encarga de enviar los ACK's
 	global bandera
 	global direccion_ip_del_emisor
 	global banderaFinalizar 
-	#global candado_critico
+	global candado_critico
 	candado_critico = threading.Lock()
 	global mensajeNuevo
 	while bandera:#Cuando el ciclo de recibir termine este tambien.
+		candado_critico.acquire()#Empezamos zona critica
 		tiempo_inicio = time.time()
+		if banderaFinalizar:
+			bandera = False 
 		if mensajeNuevo:#Si se recibio un mensaje con el rv que se estaba esperando, se activa la bandera.
-			candado_critico.acquire()#Empezamos zona critica
 			mensaje = armarMensajeACK()
 			mi_socket.sendto(mensaje, direccion_ip_del_emisor)
 			mensajeNuevo = False
-			candado_critico.release()#Fin de la zona critica.
-		if banderaFinalizar:
-			bandera = False 
-		 	
+		candado_critico.release()#Fin de la zona critica.
 		tiempo_total = time.time() - tiempo_inicio
 		timeout(tiempo_total)#Revisamos el timeout.
 
