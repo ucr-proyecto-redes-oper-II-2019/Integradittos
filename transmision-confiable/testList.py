@@ -2,7 +2,8 @@ from listaCircular import listaCircular
 
 
 lista = listaCircular()
-lista.establecerInicio(0)
+#lista.init(10)
+lista.establecer_inicio(0)
 for x in range (0,12):
 	print("Insertando: %d" % (x) )
 	paquete = bytearray(4)# [][][][] un paquete de 4 bytes.
@@ -12,7 +13,7 @@ for x in range (0,12):
 	#print(paquete)
 for x in range (0,9):
 	numBytes = bytearray(4)
-	numBytes = lista.getElemento(x)
+	numBytes = lista.get_elemento(x)
 	print(numBytes)
 	if numBytes != -1:
 		num = int.from_bytes(numBytes[1:4], byteorder='big')

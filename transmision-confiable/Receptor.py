@@ -65,7 +65,7 @@ def recibir():  # Capa de comunicacion.
         if rv == datos_bytes:  # Si es igual al numero de paquete que estamos esperando.
             rv += 1
             almacenar(paquete_recibido[INICIO_DE_DATOS:])  # se lo debemos pasar a almacenar.
-            paquete = ventana.getElemento(rv)
+            paquete = ventana.get_elemento(rv)
             while paquete != -1:  # Mientras el elemento que se quiera este en la lista.
                 rv += 1
                 almacenar(paquete[INICIO_DE_DATOS:])  # Le mandamos los bytes de la imagen.
