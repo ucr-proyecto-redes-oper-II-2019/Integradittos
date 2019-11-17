@@ -82,12 +82,8 @@ class AssemblePackageFactory:
             :return: lista de paquetes que se le debe enviar al que solicito el request.
         """
         numeroDeServicio = 201
-        packageRequestACK = bytearray(self.DATA_MAX_SIZE)
         listaDePaquetesConnectACK = []
-        numeroDeServicio = 206
-        estaOcupado = 0
-        estaLibre = 1
-        numeroRequest, idNodoAInstanciar, tareaARealizar, prioridad, datos = self.unpackPackage(paqueteConnect)
+        numeroRequest, inicioConfirmacionRespuesta, tareaARealizar, prioridad, datos = self.unpackPackage(paqueteConnect)
         # Despues de realizar to do el proceso de de reserve de nodos, para este punto debo contar con el ip y el ppuerto del verde, ademas del ID que se negocio con los demas naranjas.
         for i in listaVecinos:
             listaDePaquetesConnectACK.append(self.assemblePackage(numeroRequest, idNodoAInstanciar, numeroDeServicio, self.tamIPyPuerto, i)) #Aqui falta que lisrt
