@@ -9,7 +9,6 @@ class AssemblePackageFactory:
     tamInicioConfirmacioRespuesta = 2
     tamTareaARealizar = 1
     tamPrioridad = 2
-
     tamIPyPuerto = 8
 
     def assemblePackage(self, numeroDeRequest, inicioConfirmacionRespuesta, tareaARealizar, tamanoCuerpoPrioridad, datos = 0):
