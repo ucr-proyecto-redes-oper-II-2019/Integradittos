@@ -20,6 +20,7 @@ class OrangeNode:
 		# Estas listas deberían ser atrributos de instancia
 		self.freeNodeList = []
 		self.orangeNodesList = []
+		self.graphDictionary = dict()
 		tcplService = tcpl.TCPL()
 
 	# Inicia el nodo, creando hilos e iniciando objetos/estructuras necesarias
@@ -37,12 +38,11 @@ class OrangeNode:
 	# subrutina para cargar el grafo, asì como llenar la lista dde nodos verdes libres
 	# freeNodeList()
 	def loadGreenGraph(filePath):
-		graphFile = open (filePath, 'r') 
+		graphFile = open(filePath, 'r')
 		readLine = graphFile.readline()
 
 		# Diccionario vacío
 		graphDictionary = dict()
-
 		while readLine:
 			# Separa la línea leída usando comas
 			splitLine = readLine.split(",")
@@ -51,7 +51,7 @@ class OrangeNode:
 			# Creamos una lista de nodo/vecinos para cada nodo
 			graphDictionary[currentNodeId] = list()
 			# El primero de la lista que precede a sus vecinos
-			graphDictionary[currentNodeId].append( GreenNodeToken(currentNodeId) )
+			graphDictionary[currentNodeId].append( GreenNodeToken(currentNodeId))
 			# Los nodos adyacentes son los demás
 			adyacentNodes = list()
 			for nodeId in splitLine[1:]:
@@ -78,24 +78,38 @@ class OrangeNode:
 
 		return ipList
 
+	def loadOrangeNeighboring(self, orangeNodes):
+		listOrangeNodes = []
+		listaDeIpsYpuertos = orangeNodes.split()
+		for i in range(0, len(listaDeIpsYpuertos), 2):
+			listOrangeNodes.append([listaDeIpsYpuertos[i], listaDeIpsYpuertos[i + 1]])
+		return listOrangeNodes
 	
 	''' INTERFACE '''
 
 	def checkNodeNumber(self, nodeNumber):
 		"""Si devuelve un True es que el nodo ya ha sido instanciado. """
-		pass
+		listaNodosVerdes = self.graphDictionary.get(nodeNumber)
+		return listaNodosVerdes[0].state
 
-	def instantiateNode(self, numeroDeNodo):
+
+	def instantiateNode(self, numeroDeNodo, ip, port):
+		listaNodosVerdes = self.graphDictionary.get(numeroDeNodo)
+		listaNodosVerdes[0].ip = ip
+		listaNodosVerdes[0].port = port
+		listaNodosVerdes[0].state = True
 		pass
 
 	# Subrutina que atiende requests y actúa según la que recibe
 	# Debe correr en otro hilo
 	def attendRequests(self):
+
 		pass
 
 	# Envía el nombre a un nodo verde cuándo se logró ser instanciado, además de su
 	# lista de vecinos
 	def sendGreenInfo(self):
+
 		pass
 
 
@@ -111,6 +125,3 @@ class OrangeNode:
 	# SE RECIBA LA RESPUESTA DE TODOS LOS NARANJAS SE DEBE HACER POR MEDIO DE LISTAS
 	# INTERNAS DEL NODO NARANJA (teniendo cuidado con que si no hay respuesta de un nodo
 	# naranja, puede que este no este arriba)
-
-
-

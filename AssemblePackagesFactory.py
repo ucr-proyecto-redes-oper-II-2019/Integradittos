@@ -89,5 +89,6 @@ class AssemblePackageFactory:
         return listaDePaquetesConnectACK
 
     def assemblePackageConfirmPos(self):
-
+        pass
     def assemblePackageInstanciado(self):
+        pass
