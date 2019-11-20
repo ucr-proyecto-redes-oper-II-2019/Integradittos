@@ -1,4 +1,4 @@
-¿from AssemblePackagesFactory import AssemblePackageFactory
+from AssemblePackagesFactory import AssemblePackageFactory
 import tcpl.tcpl # en carpeta inferior
 
 # Objeto usado para representar los nodos verdes en la lista de adyancencia
@@ -11,7 +11,8 @@ class GreenNodeToken:
         self.state = state
 
 class OrangeNode:
-    PUERTO = "6666"
+    # deberia ser un atributo de instancia (ver constructor)
+    #PUERTO = "6666"
     DATA_MAX_SIZE = 1009
     POSNUMEROSERVICIO = 6
     CONNECT = 200
@@ -24,12 +25,23 @@ class OrangeNode:
     DISCONNECTACK = 220
     REMOVE = 220
     REMOVEACK = 221
-    def __init__(self, id):
+    WAITFORACKDELAY = 0.5
+    WAITFORACKTIMEOUT = 5
+
+    def __init__(self, id, port):
         self.id = id
+        self.tcplService = tcpl.TCPL()
         # Estas listas deberían ser atrributos de instancia
         self.freeNodeList = []
         self.orangeNodesList = []
-        self.tcplService = tcpl.TCPL()
+        # Lista de nombres de nodos esperando por ser instanciados
+        self.instantiatingList = []
+        self.localPort = port
+        ''' Lista (dict) utilizada para llevar registro de cuáles solicitudes
+         naranja - naranja han sido confirmadas, por ejemplo, aumentar
+         la entrada [546] de la solicitud REQUESTPOS con ese mismo número
+        cuando se reciba un REQUESTPOSACK '''
+        self.confirmationCounters = dict()
 
 
     # Inicia el nodo, creando hilos e iniciando objetos/estructuras necesarias
@@ -37,20 +49,21 @@ class OrangeNode:
     # ToDo: TCPL requiere su propio hilo
     def start(self):
         self.loadOrangeNeighboring("PONERAQUIRUTABONITAENUNACONSTANTE!!!")
-        self.tcplService.start(self.PUERTO)
+        self.tcplService.start(self.localPort)
         threadReceiving = threading.thread(target = self.popPackage)
+        ''' esto es en otra subrutina
         while 1:
-            package = self.popPackage()
+            package = self.popPackage() '''
         pass
 
-    # Construye el grafo de nodos verdes para un nodo naranja a partir del
-    # archivo csv en la ruta filePath.
-    # Retorna un diccionario donde la llave indica el número de un nodo y
-    # el valor corresponde a la lista de números de los nodos adyacentes.
+    ''' Construye el grafo de nodos verdes para un nodo naranja a partir del
+    archivo csv en la ruta filePath.
+    Retorna un diccionario donde la llave indica el número de un nodo y
+    el valor corresponde a la lista de números de los nodos adyacentes.
 
-    # ToDo: crear una subrutina o implementar en el cosntructor que se llame esta
-    # subrutina para cargar el grafo, asì como llenar la lista dde nodos verdes libres
-    # freeNodeList()
+    ToDo: crear una subrutina o implementar en el cosntructor que se llame esta
+    subrutina para cargar el grafo, asì como llenar la lista dde nodos verdes libres
+    freeNodeList() '''
     def loadGreenGraph(filePath):
         graphFile = open (filePath, 'r')
         readLine = graphFile.readline()
@@ -118,8 +131,13 @@ class OrangeNode:
             package = self.tcplService.receivePackage()
 
 
-    def attendRequests(package):
+    def attendRequests(package, ipPort):
         numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamCuerpoPrioridad, datos = AssemblePackageFactory.unPack(package)
+        
+        ''' Para REQUESTPOS es mas facil si la subrutina genera el número de nodo las veces
+        que sean necesarias y retorna la instanciada. Por esto no estara "position" como parámetro de la 
+        funcion. '''
+
         if numeroDeServicio == self.REQUESTPOS:
             #Si es un request service se debe sacar un nodo verde no instanciado
             #preguntar a los demas si no lo tienen instancido
@@ -142,6 +160,18 @@ class OrangeNode:
         for i in range(0, len(listaDeIpsYpuertos), 2):
             self.listOrangeNodes.append([listaDeIpsYpuertos[i], listaDeIpsYpuertos[i+1]])
 
+    '''
+    Genera un numero de nodo verde entre los disponibles
+    Si hay nodos disponibles retorna uno generado aleatoriamente,
+    De lo contrario retorna 0
+    '''
+    def getAvailableGreenNum(self):
+		while len(self.freeNodeList):
+			nodeNumIndex = random.randInt(1, len(self.freeNodeList))
+			if not freeNodeList[nodeNumIndex] in instantiatingList:
+				return freeNodeList[nodeNumIndex]
+		return 0
+
     # ... subrutinas que sean necesarias para envío de mensajes (usando TCPL)
     # como:
     # -preguntar si un nodo ha sido instanciado (REQUEST_POS)
@@ -155,5 +185,131 @@ class OrangeNode:
     # INTERNAS DEL NODO NARANJA (teniendo cuidado con que si no hay respuesta de un nodo
     # naranja, puede que este no este arriba)
 
+	# Pregunta si un nodo ha sido instanciado a los de más nodos naranjas
+	# retorna la posición instanciada
+	def requestPos(self, ipPort):
+	"""
+	Pregunta si un nodo ha sido instanciado a los de más nodos naranjas
+	@:param ipPort Ip broadcast
+	@:return: La posición instanciada para el nodo verde
+	"""
+		requested = False
+		while not requested:
+			# Crear paquete para REQUEST_POS
+			# Generar un numero aleatorio entre los disponibles
+			position = self.getAvailableGreen()
 
+			# Si se generó un 0, no hay nodos disponibles, retornamos fallo
+			if position == 0:
+				return 0
+
+			# Se ensambla el paquete
+			requestPosPacket = assemblePackageRequestPos(position, self.id)
+			requestNum = int.from_bytes(receivedPacket[0:4], byteorder='big')
+
+			self.confirmationCounters[requestNum] = 0
+
+			# Enviamos la solicitud a todos los naranjas
+			for node in self.orangeNodesList:
+				# hacer broadcast
+
+			timeout = time.time() + WAITFORACKTIMEOUT   # en segundo
+			# esperar confirmación de todos (si tardan mas de determinado tiempo)
+			while requestNum in confirmationCounters\
+			and self.confirmationCounters[requestNum] < len(orangeNodesList)\
+			and time.time() < timeout:
+				''' Acá se espera a que el hilo que recibe request aumente el contador
+				respectivo para saber si todos confirmaron, pero si se eliminó la entrada,
+				es porque otro naranja no aceptó el request pos '''
+
+				# Utilizamos un pequeño delay para el ciclo
+				sleep(self.WAITFORACKDELAY)
+
+			''' Si se aceptó el request pos, se puede proseguir
+			notar que si no se obtuvo respuesta de todos pero tampoco una denegación,
+			se instancia. '''
+			if requestNum in confirmationCounters:
+				requested = True
+				confirmationCounters.pop(requestNum)
+			else:
+				return 0
+
+		# Si se instanció la posición, lo sacamos de la lista de disponible y retornamos
+		if confirmPos(self, position, ipPort):
+			freeNodeList.pop(position)
+			return position
+
+
+
+
+	def requestPosACK(self, position, ipPort, packageRequest):
+	"""
+		Envia un ACK indicando si una posición ya está instanciada o no
+		@:param position posición que se determinará si esta usada o no
+		@:param ipPort Ip y peurto al que se devuelve el ACK
+		@:param packageRequest paquete request sobre el cuál se devuelve el ACK
+	"""
+		# Revisamos si no está instanciado ( y no se está intentando instanciar)
+		if position in freeNodeList and not (position in instantiatingList):
+			instantiated = False
+		else:
+			instantiated = True
+
+		# Ensamblamos y enviamos el paquete según el estado de esa posición
+		ackPacket = assemblePackageRequestPosACK(packageRequest, instantiated)
+		tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
+
+
+
+	# Anuncia a lo demás nodos naranajs la instanciación de un nodo verde
+	# Retornta True si todos confirmaron
+	def confirmPos(self, position, ipPort):
+	"""
+	Anuncia a lo demás nodos naranajs la instanciación de un nodo verde
+	@:param position posición a confirmar
+	@param ipPort ip broadcast
+	@:return: True si se confirmó la posición por parte de los demás naranjas
+	"""
+		confirmed = False
+		while not confirmed:
+			# Crear paquete para CONFIRM_POS
+
+			# Se ensambla el paquete
+			requestPosPacket = assemblePackageRequestPos(position, ipPort)
+			requestNum = int.from_bytes(receivedPacket[0:4], byteorder='big')
+
+			self.confirmationCounters[requestNum] = 0
+
+			# Enviamos la solicitud a todos los naranjas
+			for node in self.orangeNodesList:
+				# hacer broadcast
+
+			timeout = time.time() + WAITFORACKTIMEOUT   # en segundo
+			# esperar confirmación de todos (si tardan mas de determinado tiempo)
+			while requestNum in confirmationCounters\
+			and self.confirmationCounters[requestNum] < len(orangeNodesList)\
+			and time.time() < timeout:
+				''' Acá se espera a que el hilo que recibe request aumente el contador
+				respectivo para saber si todos confirmaron, pero si se eliminó la entrada,
+				es porque otro naranja no aceptó el request pos '''
+
+				# Utilizamos un pequeño delay para el ciclo
+				sleep(self.WAITFORACKDELAY)
+
+			# Si se aceptó el request pos, se puede proseguir
+			if requestNum in confirmationCounters:
+				confirmed = True
+				confirmationCounters.pop(requestNum)
+		return True
+
+
+	def confirmPosACK(self, position, ipPort):
+	"""
+	Envia un ACK confirmando la instanciación de una posición
+	@:param position posición a confirmar
+	@:param ipPort ip del nodo que hizo el request
+	"""
+		# Ensamblamos y enviamos el ACK (ya se debio agregar la posicion de instanciado)
+		ackPacket = assemblePackageConfirmPos(position, ipPort)
+		tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
 
