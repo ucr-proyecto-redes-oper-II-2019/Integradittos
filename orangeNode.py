@@ -172,18 +172,6 @@ class OrangeNode:
 				return freeNodeList[nodeNumIndex]
 		return 0
 
-    # ... subrutinas que sean necesarias para envío de mensajes (usando TCPL)
-    # como:
-    # -preguntar si un nodo ha sido instanciado (REQUEST_POS)
-    # -reportar si un nodo está instanciado o no (REQUEST_POS_ACK)
-    # -anunciar una instanciación (CONFIRM_POS)
-    # -confirmar una instanciación (CONFIRM_POS_ACK)
-    #
-    # OJO: HAY UN THREAD RESPONSABLE DE RECIBIR TODAS LAS SOLICITUDES, ENTONCES, SI
-    # POR EJEMPLO SE ENVÍO UN REQUEST_POS A TODOS LOS NARANJAS, EL CONTROL DE QUE
-    # SE RECIBA LA RESPUESTA DE TODOS LOS NARANJAS SE DEBE HACER POR MEDIO DE LISTAS
-    # INTERNAS DEL NODO NARANJA (teniendo cuidado con que si no hay respuesta de un nodo
-    # naranja, puede que este no este arriba)
 
 	# Pregunta si un nodo ha sido instanciado a los de más nodos naranjas
 	# retorna la posición instanciada
