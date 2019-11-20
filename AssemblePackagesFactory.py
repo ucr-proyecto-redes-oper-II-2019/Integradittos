@@ -1,3 +1,5 @@
+import random
+
 
 class AssemblePackageFactory:
     DATA_MAX_SIZE = 1009
@@ -10,7 +12,7 @@ class AssemblePackageFactory:
     tamTareaARealizar = 1
     tamPrioridad = 2
     tamIPyPuerto = 8
-
+    randomMaximo = 65000
     def assemblePackage(self, numeroDeRequest, inicioConfirmacionRespuesta, tareaARealizar, tamanoCuerpoPrioridad, datos = 0):
         """
             Subrutina que arma un paquete
@@ -59,7 +61,7 @@ class AssemblePackageFactory:
         estaLibre = 1
         numeroRequest, idNodoAInstanciar, tareaARealizar, prioridad, datos= self.unpackPackage(packageRequest)
         if estaInstanciado is True:
-            packageRequestACK = self.assemblePackage(numeroRequest, estaOcupado, numeroDeServicio,0, 0)
+            packageRequestACK = self.assemblePackage(numeroRequest, estaOcupado, numeroDeServicio, 0, 0)
         else:
             packageRequestACK = self.assemblePackage(numeroRequest, estaLibre, numeroDeServicio, 0, 0)
         return packageRequestACK
@@ -70,7 +72,7 @@ class AssemblePackageFactory:
             :return: paquete requestPos ya ensamblado.
         """
         numeroDeServicio = 205
-        return self.assemblePackage(numeroDeServicio, numeroDeNodoAInstanciar, nodoNaranjaID, 0, 0)
+        return self.assemblePackage(random.randrange(self.randomMaximo), numeroDeNodoAInstanciar,numeroDeServicio , nodoNaranjaID, 0)
 
     def assemblePackageConnectACK(self, paqueteConnect, idNodoAInstanciar, listaVecinos):
         """
@@ -88,7 +90,11 @@ class AssemblePackageFactory:
             listaDePaquetesConnectACK.append(self.assemblePackage(numeroRequest, idNodoAInstanciar, numeroDeServicio, self.tamIPyPuerto, i)) #Aqui falta que lisrt
         return listaDePaquetesConnectACK
 
-    def assemblePackageConfirmPos(self):
-        pass
+    def assemblePackageConfirmPos(self, nodoReservado, ipAndPort):
+        numeroDeServicio = 210
+        tamanoIP = 4
+        tamanoPort = 2
+        return self.assemblePackage(random.randrange(self.randomMaximo), nodoReservado, numeroDeServicio, tamanoIP+tamanoPort, ipAndPort)
+
     def assemblePackageInstanciado(self):
         pass

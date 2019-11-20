@@ -1,3 +1,5 @@
+import threading
+
 from AssemblePackagesFactory import AssemblePackageFactory
 import tcpl.tcpl # en carpeta inferior
 
@@ -21,12 +23,16 @@ class OrangeNode:
 		self.freeNodeList = []
 		self.orangeNodesList = []
 		self.graphDictionary = dict()
-		tcplService = tcpl.TCPL()
+		self.tcplService = tcpl.TCPL()
 
 	# Inicia el nodo, creando hilos e iniciando objetos/estructuras necesarias
 
 	# ToDo: TCPL requiere su propio hilo
 	def start(self):
+		tcplThread = threading.Thread(target=self.tcpL.startService())
+		tcplThread.start()
+		self.loadOrangeNeighboring("")
+
 		pass
 
 	# Construye el grafo de nodos verdes para un nodo naranja a partir del
