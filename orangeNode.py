@@ -111,6 +111,7 @@ class OrangeNode:
 
     def checkNodeNumber(self, nodeNumber):
         """Si devuelve un True es que el nodo ya ha sido instanciado. """
+        self.lis
         pass
 
     def instantiateNode(self, numeroDeNodo):
@@ -125,10 +126,10 @@ class OrangeNode:
     # lista de vecinos
     def sendGreenInfo(self):
         pass
-    def popPackage()
-        package
+    def popPackage(self):
         while 1:
             package = self.tcplService.receivePackage()
+
 
 
     def attendRequests(package, ipPort):
@@ -141,14 +142,20 @@ class OrangeNode:
         if numeroDeServicio == self.REQUESTPOS:
             #Si es un request service se debe sacar un nodo verde no instanciado
             #preguntar a los demas si no lo tienen instancido
-             AssemblePackageFactory.assemblePackageRequestACK()
+            self.requestPosACK(inicioConfirmacionRespuesta, self.orangeNodesList[tamCuerpoPrioridad], package)
         elif numeroDeServicio == self.REQUESTPOSACK:
             #Confirma que un id de nodo verde no esta usado.
+            #Algun tipo de contador para cuando reciba los
+            self.confirmationCounters[numeroDeRequest] = self.confirmationCounters[numeroDeRequest] + 1
         elif numeroDeServicio == self.CONFIRMPOS:
             #Debe armar un corfirm pos ack
+            self.freeNodeList.remove(inicioConfirmacionRespuesta) #removemos el nodo que ya fue instanciado
+            pass
         elif numeroDeServicio == self.CONFIRMPOSACK:
+            pass
             #dependiendo si ya me confirmaron todos los nodos
         elif numeroDeServicio == self.CONNECT:
+            pass
             #Tenemos que buscar ID
             #Hacemos request pos para los demas
 
@@ -166,138 +173,138 @@ class OrangeNode:
     De lo contrario retorna 0
     '''
     def getAvailableGreenNum(self):
-		while len(self.freeNodeList):
-			nodeNumIndex = random.randInt(1, len(self.freeNodeList))
-			if not freeNodeList[nodeNumIndex] in instantiatingList:
-				return freeNodeList[nodeNumIndex]
-		return 0
+        while len(self.freeNodeList):
+            nodeNumIndex = random.randInt(1, len(self.freeNodeList))
+            if not freeNodeList[nodeNumIndex] in instantiatingList:
+                return freeNodeList[nodeNumIndex]
+        return 0
 
 
-	# Pregunta si un nodo ha sido instanciado a los de más nodos naranjas
-	# retorna la posición instanciada
-	def requestPos(self, ipPort):
-	"""
-	Pregunta si un nodo ha sido instanciado a los de más nodos naranjas
-	@:param ipPort Ip broadcast
-	@:return: La posición instanciada para el nodo verde
-	"""
-		requested = False
-		while not requested:
-			# Crear paquete para REQUEST_POS
-			# Generar un numero aleatorio entre los disponibles
-			position = self.getAvailableGreen()
+    # Pregunta si un nodo ha sido instanciado a los de más nodos naranjas
+    # retorna la posición instanciada
+    def requestPos(self, ipPort):
+    """
+    Pregunta si un nodo ha sido instanciado a los de más nodos naranjas
+    @:param ipPort Ip broadcast
+    @:return: La posición instanciada para el nodo verde
+    """
+        requested = False
+        while not requested:
+            # Crear paquete para REQUEST_POS
+            # Generar un numero aleatorio entre los disponibles
+            position = self.getAvailableGreen()
 
-			# Si se generó un 0, no hay nodos disponibles, retornamos fallo
-			if position == 0:
-				return 0
+            # Si se generó un 0, no hay nodos disponibles, retornamos fallo
+            if position == 0:
+                return 0
 
-			# Se ensambla el paquete
-			requestPosPacket = assemblePackageRequestPos(position, self.id)
-			requestNum = int.from_bytes(receivedPacket[0:4], byteorder='big')
+            # Se ensambla el paquete
+            requestPosPacket = assemblePackageRequestPos(position, self.id)
+            requestNum = int.from_bytes(receivedPacket[0:4], byteorder='big')
 
-			self.confirmationCounters[requestNum] = 0
+            self.confirmationCounters[requestNum] = 0
 
-			# Enviamos la solicitud a todos los naranjas
-			for node in self.orangeNodesList:
-				# hacer broadcast
+            # Enviamos la solicitud a todos los naranjas
+            for node in self.orangeNodesList:
+                # hacer broadcast
 
-			timeout = time.time() + WAITFORACKTIMEOUT   # en segundo
-			# esperar confirmación de todos (si tardan mas de determinado tiempo)
-			while requestNum in confirmationCounters\
-			and self.confirmationCounters[requestNum] < len(orangeNodesList)\
-			and time.time() < timeout:
-				''' Acá se espera a que el hilo que recibe request aumente el contador
-				respectivo para saber si todos confirmaron, pero si se eliminó la entrada,
-				es porque otro naranja no aceptó el request pos '''
+            timeout = time.time() + WAITFORACKTIMEOUT   # en segundo
+            # esperar confirmación de todos (si tardan mas de determinado tiempo)
+            while requestNum in confirmationCounters\
+            and self.confirmationCounters[requestNum] < len(orangeNodesList)\
+            and time.time() < timeout:
+                ''' Acá se espera a que el hilo que recibe request aumente el contador
+                respectivo para saber si todos confirmaron, pero si se eliminó la entrada,
+                es porque otro naranja no aceptó el request pos '''
 
-				# Utilizamos un pequeño delay para el ciclo
-				sleep(self.WAITFORACKDELAY)
+                # Utilizamos un pequeño delay para el ciclo
+                sleep(self.WAITFORACKDELAY)
 
-			''' Si se aceptó el request pos, se puede proseguir
-			notar que si no se obtuvo respuesta de todos pero tampoco una denegación,
-			se instancia. '''
-			if requestNum in confirmationCounters:
-				requested = True
-				confirmationCounters.pop(requestNum)
-			else:
-				return 0
+            ''' Si se aceptó el request pos, se puede proseguir
+            notar que si no se obtuvo respuesta de todos pero tampoco una denegación,
+            se instancia. '''
+            if requestNum in confirmationCounters:
+                requested = True
+                confirmationCounters.pop(requestNum)
+            else:
+                return 0
 
-		# Si se instanció la posición, lo sacamos de la lista de disponible y retornamos
-		if confirmPos(self, position, ipPort):
-			freeNodeList.pop(position)
-			return position
-
-
-
-
-	def requestPosACK(self, position, ipPort, packageRequest):
-	"""
-		Envia un ACK indicando si una posición ya está instanciada o no
-		@:param position posición que se determinará si esta usada o no
-		@:param ipPort Ip y peurto al que se devuelve el ACK
-		@:param packageRequest paquete request sobre el cuál se devuelve el ACK
-	"""
-		# Revisamos si no está instanciado ( y no se está intentando instanciar)
-		if position in freeNodeList and not (position in instantiatingList):
-			instantiated = False
-		else:
-			instantiated = True
-
-		# Ensamblamos y enviamos el paquete según el estado de esa posición
-		ackPacket = assemblePackageRequestPosACK(packageRequest, instantiated)
-		tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
+        # Si se instanció la posición, lo sacamos de la lista de disponible y retornamos
+        if confirmPos(self, position, ipPort):
+            freeNodeList.pop(position)
+            return position
 
 
 
-	# Anuncia a lo demás nodos naranajs la instanciación de un nodo verde
-	# Retornta True si todos confirmaron
-	def confirmPos(self, position, ipPort):
-	"""
-	Anuncia a lo demás nodos naranajs la instanciación de un nodo verde
-	@:param position posición a confirmar
-	@param ipPort ip broadcast
-	@:return: True si se confirmó la posición por parte de los demás naranjas
-	"""
-		confirmed = False
-		while not confirmed:
-			# Crear paquete para CONFIRM_POS
 
-			# Se ensambla el paquete
-			requestPosPacket = assemblePackageRequestPos(position, ipPort)
-			requestNum = int.from_bytes(receivedPacket[0:4], byteorder='big')
+    def requestPosACK(self, position, ipPort, packageRequest):
+    """
+        Envia un ACK indicando si una posición ya está instanciada o no
+        @:param position posición que se determinará si esta usada o no
+        @:param ipPort Ip y peurto al que se devuelve el ACK
+        @:param packageRequest paquete request sobre el cuál se devuelve el ACK
+    """
+        # Revisamos si no está instanciado ( y no se está intentando instanciar)
+        if position in freeNodeList and not (position in instantiatingList):
+            instantiated = False
+        else:
+            instantiated = True
 
-			self.confirmationCounters[requestNum] = 0
-
-			# Enviamos la solicitud a todos los naranjas
-			for node in self.orangeNodesList:
-				# hacer broadcast
-
-			timeout = time.time() + WAITFORACKTIMEOUT   # en segundo
-			# esperar confirmación de todos (si tardan mas de determinado tiempo)
-			while requestNum in confirmationCounters\
-			and self.confirmationCounters[requestNum] < len(orangeNodesList)\
-			and time.time() < timeout:
-				''' Acá se espera a que el hilo que recibe request aumente el contador
-				respectivo para saber si todos confirmaron, pero si se eliminó la entrada,
-				es porque otro naranja no aceptó el request pos '''
-
-				# Utilizamos un pequeño delay para el ciclo
-				sleep(self.WAITFORACKDELAY)
-
-			# Si se aceptó el request pos, se puede proseguir
-			if requestNum in confirmationCounters:
-				confirmed = True
-				confirmationCounters.pop(requestNum)
-		return True
+        # Ensamblamos y enviamos el paquete según el estado de esa posición
+        ackPacket = assemblePackageRequestPosACK(packageRequest, instantiated)
+        tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
 
 
-	def confirmPosACK(self, position, ipPort):
-	"""
-	Envia un ACK confirmando la instanciación de una posición
-	@:param position posición a confirmar
-	@:param ipPort ip del nodo que hizo el request
-	"""
-		# Ensamblamos y enviamos el ACK (ya se debio agregar la posicion de instanciado)
-		ackPacket = assemblePackageConfirmPos(position, ipPort)
-		tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
+
+    # Anuncia a lo demás nodos naranajs la instanciación de un nodo verde
+    # Retornta True si todos confirmaron
+    def confirmPos(self, position, ipPort):
+    """
+    Anuncia a lo demás nodos naranajs la instanciación de un nodo verde
+    @:param position posición a confirmar
+    @param ipPort ip broadcast
+    @:return: True si se confirmó la posición por parte de los demás naranjas
+    """
+        confirmed = False
+        while not confirmed:
+            # Crear paquete para CONFIRM_POS
+
+            # Se ensambla el paquete
+            requestPosPacket = assemblePackageRequestPos(position, ipPort)
+            requestNum = int.from_bytes(receivedPacket[0:4], byteorder='big')
+
+            self.confirmationCounters[requestNum] = 0
+
+            # Enviamos la solicitud a todos los naranjas
+            for node in self.orangeNodesList:
+                # hacer broadcast
+
+            timeout = time.time() + WAITFORACKTIMEOUT   # en segundo
+            # esperar confirmación de todos (si tardan mas de determinado tiempo)
+            while requestNum in confirmationCounters\
+            and self.confirmationCounters[requestNum] < len(orangeNodesList)\
+            and time.time() < timeout:
+                ''' Acá se espera a que el hilo que recibe request aumente el contador
+                respectivo para saber si todos confirmaron, pero si se eliminó la entrada,
+                es porque otro naranja no aceptó el request pos '''
+
+                # Utilizamos un pequeño delay para el ciclo
+                sleep(self.WAITFORACKDELAY)
+
+            # Si se aceptó el request pos, se puede proseguir
+            if requestNum in confirmationCounters:
+                confirmed = True
+                confirmationCounters.pop(requestNum)
+        return True
+
+
+    def confirmPosACK(self, position, ipPort):
+    """
+    Envia un ACK confirmando la instanciación de una posición
+    @:param position posición a confirmar
+    @:param ipPort ip del nodo que hizo el request
+    """
+        # Ensamblamos y enviamos el ACK (ya se debio agregar la posicion de instanciado)
+        ackPacket = assemblePackageConfirmPos(position, ipPort)
+        tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
 
