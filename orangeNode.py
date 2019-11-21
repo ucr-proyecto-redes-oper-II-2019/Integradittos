@@ -37,6 +37,8 @@ class OrangeNode:
         # Lista de nombres de nodos esperando por ser instanciados
         self.instantiatingList = []
         self.localPort = port
+		self.adyacentNodes
+		
         ''' Lista (dict) utilizada para llevar registro de cuáles solicitudes
          naranja - naranja han sido confirmadas, por ejemplo, aumentar
          la entrada [546] de la solicitud REQUESTPOS con ese mismo número
@@ -150,7 +152,16 @@ class OrangeNode:
         elif numeroDeServicio == self.CONFIRMPOS:
             #Debe armar un corfirm pos ack
             self.freeNodeList.remove(inicioConfirmacionRespuesta) #removemos el nodo que ya fue instanciado
-            pass
+			ip += str(int(datos[0]).to_bytes(1, byteorder='big')) + "."
+			ip += str(int(datos[1]).to_bytes(1, byteorder='big')) + "."
+            ip += str(int(datos[2]).to_bytes(1, byteorder='big')) + "."
+			ip += str(int(datos[3]).to_bytes(1, byteorder='big'))
+			puerto = str(int(datos[4:]).to_bytes(2, byteorder='big'))
+			self.adyacentNodes.get(inicioConfirmacionRespuesta)[0].ip = ip
+			self.adyacentNodes.get(inicioConfirmacionRespuesta)[0].port = port
+			self.adyacentNodes.get(inicioConfirmacionRespuesta)[0].state = True 
+			AssemblePackageFactory.assemblePackageConfirmPosACK(1)
+			pass
         elif numeroDeServicio == self.CONFIRMPOSACK:
             pass
             #dependiendo si ya me confirmaron todos los nodos
@@ -242,14 +253,8 @@ class OrangeNode:
         Envia un ACK indicando si una posición ya está instanciada o no
         @:param position posición que se determinará si esta usada o no
         @:param ipPort Ip y peurto al que se devuelve el ACK
-        @:param packageRequest paquete request sobre el cuál se devuelve el ACK
-    """
-        # Revisamos si no está instanciado ( y no se está intentando instanciar)
-        if position in freeNodeList and not (position in instantiatingList):
-            instantiated = False
-        else:
-            instantiated = True
-
+               instantiated = True
+	"""
         # Ensamblamos y enviamos el paquete según el estado de esa posición
         ackPacket = assemblePackageRequestPosACK(packageRequest, instantiated)
         tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])

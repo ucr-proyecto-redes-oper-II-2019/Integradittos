@@ -6,14 +6,14 @@ class AssemblePackageFactory:
     numberRequestPos = 0
     inicioConfirmacionRespuestaPos = 4
     tareaARealizarPos = 6
-    tamCuerpoPrioridad = 7
+    prioridad = 7
     tamNumeroRequest = 4
     tamInicioConfirmacioRespuesta = 2
     tamTareaARealizar = 1
     tamPrioridad = 2
     tamIPyPuerto = 8
     randomMaximo = 65000
-    def assemblePackage(self, numeroDeRequest, inicioConfirmacionRespuesta, tareaARealizar, tamanoCuerpoPrioridad, datos = 0):
+    def assemblePackage(self, numeroDeRequest, inicioConfirmacionRespuesta, tareaARealizar, tamanoPrioridad, datos = 0):
         """
             Subrutina que arma un paquete
             @:param numeroDeRequest numero random que identifica una request.
@@ -31,8 +31,7 @@ class AssemblePackageFactory:
             self.tamTareaARealizar, byteorder='big')
         paqueteRequestPos[self.tamCuerpoPrioridad : self.tamCuerpoPrioridad + self.tamPrioridad] = tamanoCuerpoPrioridad.to_bytes(
             self.tamPrioridad, byteorder='big')
-        paqueteRequestPos[self.tamCuerpoPrioridad + self.tamPrioridad : ] = datos.to_bytes(
-            self.tamPrioridad, byteorder='big')
+        paqueteRequestPos[self.tamCuerpoPrioridad + self.tamPrioridad : ] = datos
         return paqueteRequestPos
 
     def unpackPackage(self, paquete):
@@ -45,7 +44,7 @@ class AssemblePackageFactory:
         inicioConfirmacionRespuesta = int.from_bytes(paquete[self.inicioConfirmacionRespuestaPos:self.tareaARealizarPos], byteorder='big')
         numeroDeServicio = int.from_bytes(paquete[self.tareaARealizarPos:self.tamCuerpoPrioridad], byteorder='big')
         tamanoCuerpoPrioridad = int.from_bytes(paquete[self.tamCuerpoPrioridad:self.tamCuerpoPrioridad + self.tamPrioridad], byteorder='big')
-        datos = int.from_bytes(paquete[self.tamCuerpoPrioridad + self.tamPrioridad:], byteorder='big')
+        datos = paquete[self.tamCuerpoPrioridad + self.tamPrioridad:]
         return numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamanoCuerpoPrioridad, datos
 
     def assemblePackageRequestACK(self, packageRequest, estaInstanciado):
@@ -63,15 +62,7 @@ class AssemblePackageFactory:
         if estaInstanciado is True:
             packageRequestACK = self.assemblePackage(numeroRequest, estaOcupado, numeroDeServicio, 0, 0)
         else:
-            packageRequestACK = self.assemblePackage(numeroRequest, estaLibre, numeroDeServicio, 0, 0)
-        return packageRequestACK
-
-    def assemblePackageRequestPos(self, numeroDeNodoAInstanciar, nodoNaranjaID):
-        """
-            Subrutina que ensambla un paquete de request_pos
-            :return: paquete requestPos ya ensamblado.
-        """
-        numeroDeServicio = 205
+            packageRequestACK = self.assemblePackage(numenumeroDeServicio
         return self.assemblePackage(random.randrange(self.randomMaximo), numeroDeNodoAInstanciar,numeroDeServicio , nodoNaranjaID, 0)
 
     def assemblePackageConnectACK(self, paqueteConnect, idNodoAInstanciar, listaVecinos):
@@ -98,3 +89,7 @@ class AssemblePackageFactory:
 
     def assemblePackageInstanciado(self):
         pass
+
+    def assemblePackageConfirmPosACK(self, id): 
+        numeroDeServicio = 211
+        return self.assemblePackage(random, id, numeroDeServicio, 0)
