@@ -208,6 +208,9 @@ class OrangeNode:
             # Si se generó un 0, no hay nodos disponibles, retornamos fallo
             if position == 0:
                 return 0
+			
+			# Agregar paquete a lista de nodos instanciandose
+			self.instantiatingList.append(position)
 
             # Se ensambla el paquete
             requestPosPacket = assemblePackageRequestPos(position, self.id)
@@ -222,6 +225,7 @@ class OrangeNode:
             timeout = time.time() + WAITFORACKTIMEOUT   # en segundo
             # esperar confirmación de todos (si tardan mas de determinado tiempo)
             while requestNum in confirmationCounters\
+			and position in self.instantiatingList\
             and self.confirmationCounters[requestNum] < len(orangeNodesList)\
             and time.time() < timeout:
                 ''' Acá se espera a que el hilo que recibe request aumente el contador
@@ -234,15 +238,16 @@ class OrangeNode:
             ''' Si se aceptó el request pos, se puede proseguir
             notar que si no se obtuvo respuesta de todos pero tampoco una denegación,
             se instancia. '''
-            if requestNum in confirmationCounters:
+            if requestNum in confirmationCounters and position in self.instantiatingList:
                 requested = True
                 confirmationCounters.pop(requestNum)
             else:
                 return 0
 
         # Si se instanció la posición, lo sacamos de la lista de disponible y retornamos
-        if confirmPos(self, position, ipPort):
-            freeNodeList.pop(position)
+        if confirmPos(position, ipPort):
+            self.freeNodeList.pop(position)
+			self.instantiatingList.pop(position)
             return position
 
 
@@ -253,8 +258,26 @@ class OrangeNode:
         Envia un ACK indicando si una posición ya está instanciada o no
         @:param position posición que se determinará si esta usada o no
         @:param ipPort Ip y peurto al que se devuelve el ACK
+<<<<<<< HEAD
                instantiated = True
 	"""
+=======
+        @:param packageRequest paquete request sobre el cuál se devuelve el ACK
+    """
+		priority = int.from_bytes(packageRequest[7:9], byteorder='big')
+        ''' Revisamos si no está instanciado, no se está intentando instanciar y 
+		el request tiene mayor prioridad. '''
+        if (position in freeNodeList) and not (position in instantiatingList) and (priority > self.id):
+            instantiated = False
+        else:
+            instantiated = True
+		
+		''' Si este nodo tiene menor prioridad y se está instanciando esa misma posición, 
+		debe sacar el nodo de la lista de instanciamiento. '''
+		if priority > self.id and position in self.instantiatingList:
+			self.instantiatingList.pop(position)
+
+>>>>>>> master
         # Ensamblamos y enviamos el paquete según el estado de esa posición
         ackPacket = assemblePackageRequestPosACK(packageRequest, instantiated)
         tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
@@ -265,7 +288,7 @@ class OrangeNode:
     # Retornta True si todos confirmaron
     def confirmPos(self, position, ipPort):
     """
-    Anuncia a lo demás nodos naranajs la instanciación de un nodo verde
+    Anuncia a lo demás nodos naranjas la instanciación de un nodo verde
     @:param position posición a confirmar
     @param ipPort ip broadcast
     @:return: True si se confirmó la posición por parte de los demás naranjas
