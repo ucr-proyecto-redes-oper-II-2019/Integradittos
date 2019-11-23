@@ -320,6 +320,8 @@ class OrangeNode:
 
             # Enviamos la solicitud a todos los naranjas
             for node in self.orangeNodesList:
+                ip, puerto = node
+                self.tcplService.sendPackage(requestPosPacket, ip, puerto)
                 # hacer broadcast
 
             timeout = time.time() + WAITFORACKTIMEOUT   # en segundo
