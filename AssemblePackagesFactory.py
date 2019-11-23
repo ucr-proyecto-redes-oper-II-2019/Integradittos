@@ -3,10 +3,12 @@ import random
 
 class AssemblePackageFactory:
     DATA_MAX_SIZE = 1009
+    #Posiciones
     numberRequestPos = 0
     inicioConfirmacionRespuestaPos = 4
     tareaARealizarPos = 6
     prioridad = 7
+    #Tamaños
     tamNumeroRequest = 4
     tamInicioConfirmacioRespuesta = 2
     tamTareaARealizar = 1
@@ -29,9 +31,9 @@ class AssemblePackageFactory:
             self.tamInicioConfirmacioRespuesta, byteorder='big')
         paqueteRequestPos[self.tareaARealizarPos : self.tareaARealizarPos + self.tamTareaARealizar] = tareaARealizar.to_bytes(
             self.tamTareaARealizar, byteorder='big')
-        paqueteRequestPos[self.tamCuerpoPrioridad : self.tamCuerpoPrioridad + self.tamPrioridad] = tamanoCuerpoPrioridad.to_bytes(
+        paqueteRequestPos[self.prioridad : self.prioridad + self.tamPrioridad] = tamanoPrioridad.to_bytes(
             self.tamPrioridad, byteorder='big')
-        paqueteRequestPos[self.tamCuerpoPrioridad + self.tamPrioridad : ] = datos
+        paqueteRequestPos[self.prioridad + self.tamPrioridad : ] = datos
         return paqueteRequestPos
 
     def unpackPackage(self, paquete):
@@ -42,11 +44,12 @@ class AssemblePackageFactory:
         """
         numeroDeRequest = int.from_bytes(paquete[self.numberRequestPos:self.inicioConfirmacionRespuestaPos], byteorder='big')
         inicioConfirmacionRespuesta = int.from_bytes(paquete[self.inicioConfirmacionRespuestaPos:self.tareaARealizarPos], byteorder='big')
-        numeroDeServicio = int.from_bytes(paquete[self.tareaARealizarPos:self.tamCuerpoPrioridad], byteorder='big')
-        tamanoCuerpoPrioridad = int.from_bytes(paquete[self.tamCuerpoPrioridad:self.tamCuerpoPrioridad + self.tamPrioridad], byteorder='big')
-        datos = paquete[self.tamCuerpoPrioridad + self.tamPrioridad:]
+        numeroDeServicio = int.from_bytes(paquete[self.tareaARealizarPos:self.prioridad], byteorder='big')
+        tamanoCuerpoPrioridad = int.from_bytes(paquete[self.prioridad:self.prioridad + self.tamPrioridad], byteorder='big')
+        datos = paquete[self.prioridad + self.tamPrioridad:]
         return numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamanoCuerpoPrioridad, datos
-
+    def assemblePackageRequest(self):
+        pass
     def assemblePackageRequestACK(self, packageRequest, estaInstanciado):
         """
             Subrutina que emsambla un ACK para un paquete request ACK.
@@ -62,8 +65,8 @@ class AssemblePackageFactory:
         if estaInstanciado is True:
             packageRequestACK = self.assemblePackage(numeroRequest, estaOcupado, numeroDeServicio, 0, 0)
         else:
-            packageRequestACK = self.assemblePackage(numenumeroDeServicio
-        return self.assemblePackage(random.randrange(self.randomMaximo), numeroDeNodoAInstanciar,numeroDeServicio , nodoNaranjaID, 0)
+            packageRequestACK = self.assemblePackage(numeroRequest, estaLibre, numeroDeServicio, 0, 0)
+        return packageRequestACK
 
     def assemblePackageConnectACK(self, paqueteConnect, idNodoAInstanciar, listaVecinos):
         """
