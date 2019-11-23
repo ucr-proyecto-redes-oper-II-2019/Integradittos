@@ -316,11 +316,11 @@ class OrangeNode:
 
 
     def confirmPosACK(self, position, ipPort):
-    """
+        """
     Envia un ACK confirmando la instanciación de una posición
     @:param position posición a confirmar
     @:param ipPort ip del nodo que hizo el request
-    """
+        """
         # Ensamblamos y enviamos el ACK (ya se debio agregar la posicion de instanciado)
         ackPacket = assemblePackageConfirmPos(position, ipPort)
         tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
