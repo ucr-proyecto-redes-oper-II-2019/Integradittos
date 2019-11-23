@@ -59,6 +59,7 @@ class OrangeNode:
         ''' esto es en otra subrutina
         while 1:
             package = self.popPackage() '''
+
         pass
 
     ''' Construye el grafo de nodos verdes para un nodo naranja a partir del
@@ -119,7 +120,10 @@ class OrangeNode:
         self.lis
         pass
 
-    def instantiateNode(self, numeroDeNodo):
+    def instantiateNode(self, numeroDeNodo, ip, port):
+        self.adyacentNodes.get(numeroDeNodo)[0].ip = ip
+        self.adyacentNodes.get(numeroDeNodo)[0].port = port
+        self.adyacentNodes.get(numeroDeNodo)[0].state = True
         pass
     # Subrutina que atiende requests y actúa según la que recibe
 
@@ -135,37 +139,58 @@ class OrangeNode:
         ''' Para REQUESTPOS es mas facil si la subrutina genera el número de nodo las veces
         que sean necesarias y retorna la instanciada. Por esto no estara "position" como parámetro de la 
         funcion. '''
-
+        ipFuente, puertoFuente = ipPort
         if numeroDeServicio == self.REQUESTPOS:
             #Si es un request service se debe sacar un nodo verde no instanciado
             #preguntar a los demas si no lo tienen instancido
             self.requestPosACK(inicioConfirmacionRespuesta, self.orangeNodesList[tamCuerpoPrioridad], package)
+
         elif numeroDeServicio == self.REQUESTPOSACK:
             #Confirma que un id de nodo verde no esta usado.
             #Algun tipo de contador para cuando reciba los
-            self.confirmationCounters[numeroDeRequest] = self.confirmationCounters[numeroDeRequest] + 1
+            self.confirmationCounters[numeroDeRequest] = self.confirmationCounters[numeroDeRequest] + 1 #Aumentamos el contador de request ack recibidos.
+
         elif numeroDeServicio == self.CONFIRMPOS:
             #Debe armar un corfirm pos ack
             self.freeNodeList.remove(inicioConfirmacionRespuesta) #removemos el nodo que ya fue instanciado
-            ip = ""
-            ip += str(int(datos[0]).to_bytes(1, byteorder='big')) + "."
-            ip += str(int(datos[1]).to_bytes(1, byteorder='big')) + "."
-            ip += str(int(datos[2]).to_bytes(1, byteorder='big')) + "."
-            ip += str(int(datos[3]).to_bytes(1, byteorder='big'))
-            port = str(int(datos[4:]).to_bytes(2, byteorder='big'))
-            self.adyacentNodes.get(inicioConfirmacionRespuesta)[0].ip = ip
-            self.adyacentNodes.get(inicioConfirmacionRespuesta)[0].port = port
-            self.adyacentNodes.get(inicioConfirmacionRespuesta)[0].state = True
-            AssemblePackageFactory.assemblePackageConfirmPosACK(1)
-            pass
+            port, ip = self.extractPortAndIp(inicioConfirmacionRespuesta) # Extraemos la direccion del nodo que instanciaron.
+            self.instantiateNode(inicioConfirmacionRespuesta, ip, port) #Instanciamos ese nodo con un puerto e ip.
+             #Armamos el paquete.
+            self.tcplService.sendPackage(AssemblePackageFactory.assemblePackageConfirmPosACK(1), ipFuente, puertoFuente)
+
+
         elif numeroDeServicio == self.CONFIRMPOSACK:
             pass
+
             #dependiendo si ya me confirmaron todos los nodos
         elif numeroDeServicio == self.CONNECT:
-            pass
+            #Cuando recibe una solicitud de conexion:
+            #1- Se busca un nodo que no este instanciado
+            #se pregunta a los demas nodos si lo tienen libre.
+            listaPaquetes = []
+            numeroDeNodo = self.requestPos() #No hay direccion broadcast
+            if numeroDeNodo is not 0: #Si no es 0 es que habia un nodo disponible.
+                listaPaquetes = AssemblePackageFactory.assemblePackageConnectACK(package, numeroDeNodo, self.adyacentNodes.get(numeroDeNodo))
+                for indice in range(len(listaPaquetes)):
+                    self.tcplService.sendPackage(listaPaquetes[indice], ipFuente, puertoFuente)
             #Tenemos que buscar ID
             #Hacemos request pos para los demas
 
+    def extractPortAndIp(self, datos):
+        '''
+        Subrutina que extrae el puerto e ip de un bytearray
+        :param datos: datos de los que se va a extraer la informacion
+        :return: retorna el numero de puerto y la ip.
+        '''
+        ip = ""
+        ip += str(int(datos[0]).to_bytes(1, byteorder='big')) + "."
+        ip += str(int(datos[1]).to_bytes(1, byteorder='big')) + "."
+        ip += str(int(datos[2]).to_bytes(1, byteorder='big')) + "."
+        ip += str(int(datos[3]).to_bytes(1, byteorder='big'))
+        port = str(int(datos[4:]).to_bytes(2, byteorder='big'))
+        self.adyacentNodes.get(inicioConfirmacionRespuesta)[0].ip = ip
+        self.adyacentNodes.get(inicioConfirmacionRespuesta)[0].port = port
+        return port, ip
 
 
 
@@ -215,6 +240,7 @@ class OrangeNode:
 
             # Enviamos la solicitud a todos los naranjas
             for node in self.orangeNodesList:
+                pass
                 # hacer broadcast
 
             timeout = time.time() + WAITFORACKTIMEOUT   # en segundo

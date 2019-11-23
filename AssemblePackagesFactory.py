@@ -48,8 +48,15 @@ class AssemblePackageFactory:
         tamanoCuerpoPrioridad = int.from_bytes(paquete[self.prioridad:self.prioridad + self.tamPrioridad], byteorder='big')
         datos = paquete[self.prioridad + self.tamPrioridad:]
         return numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamanoCuerpoPrioridad, datos
-    def assemblePackageRequest(self):
-        pass
+
+    def assemblePackageRequestPos(self, numeroDeNodoAInstanciar, nodoNaranjaID):
+        """
+            Subrutina que ensambla un paquete de request_pos
+            :return: paquete requestPos ya ensamblado.
+        """
+        numeroDeServicio = 205
+        return self.assemblePackage(random.randrange(self.randomMaximo), numeroDeNodoAInstanciar, numeroDeServicio, nodoNaranjaID, 0)
+
     def assemblePackageRequestACK(self, packageRequest, estaInstanciado):
         """
             Subrutina que emsambla un ACK para un paquete request ACK.
