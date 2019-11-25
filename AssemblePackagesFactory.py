@@ -2,19 +2,22 @@ import random
 
 
 class AssemblePackageFactory:
-    DATA_MAX_SIZE = 1009
-    #Posiciones
-    numberRequestPos = 0
-    inicioConfirmacionRespuestaPos = 4
-    tareaARealizarPos = 6
-    prioridad = 7
-    #Tamaños
-    tamNumeroRequest = 4
-    tamInicioConfirmacioRespuesta = 2
-    tamTareaARealizar = 1
-    tamPrioridad = 2
-    tamIPyPuerto = 8
-    randomMaximo = 65000
+
+    def __init__(self): 
+        self.DATA_MAX_SIZE = 1009
+        #Posiciones
+        self.numberRequestPos = 0
+        self.inicioConfirmacionRespuestaPos = 4
+        self.tareaARealizarPos = 6
+        self.prioridad = 7
+        #Tamaños
+        self.tamNumeroRequest = 4
+        self.tamInicioConfirmacioRespuesta = 2
+        self.tamTareaARealizar = 1
+        self.tamPrioridad = 2
+        self.tamIPyPuerto = 8
+        self.randomMaximo = 65000
+        
     def assemblePackage(self, numeroDeRequest, inicioConfirmacionRespuesta, tareaARealizar, tamanoPrioridad, datos = 0):
         """
             Subrutina que arma un paquete
@@ -84,7 +87,7 @@ class AssemblePackageFactory:
             :return: lista de paquetes que se le debe enviar al que solicito el request.
         """
         numeroDeServicio = 201
-        listaDePaquetesConnectACK = []
+        listaDePaquetesConnectACK = [] 
         numeroRequest, inicioConfirmacionRespuesta, tareaARealizar, prioridad, datos = self.unpackPackage(paqueteConnect)
         # Despues de realizar to do el proceso de de reserve de nodos, para este punto debo contar con el ip y el ppuerto del verde, ademas del ID que se negocio con los demas naranjas.
         for i in listaVecinos:

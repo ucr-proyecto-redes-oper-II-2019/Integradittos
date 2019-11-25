@@ -1,8 +1,8 @@
 import random
 import threading
-
+from TxtReader import TxtReader
 from AssemblePackagesFactory import AssemblePackageFactory
-import tcpl.tcpl # en carpeta inferior
+from tcpl.tcpl import TCPL # en carpeta inferior
 
 # Objeto usado para representar los nodos verdes en la lista de adyancencia
 class GreenNodeToken:
@@ -32,16 +32,16 @@ class OrangeNode:
     WAITFORACKTIMEOUT = 5
 
     def __init__(self, id, port):
-        self.adyacentNodes = None
+        self.adyacentNodes = dict()
         self.id = id
-        self.tcplService = tcpl.TCPL()
+        self.tcplService = TCPL()
         # Estas listas deberían ser atrributos de instancia
         self.freeNodeList = []
         self.orangeNodesList = []
         # Lista de nombres de nodos esperando por ser instanciados
         self.instantiatingList = []
         self.localPort = port
-
+        self.assemblePackage = AssemblePackageFactory()
 
         ''' Lista (dict) utilizada para llevar registro de cuáles solicitudes
          naranja - naranja han sido confirmadas, por ejemplo, aumentar
@@ -54,9 +54,20 @@ class OrangeNode:
 
     # ToDo: TCPL requiere su propio hilo
     def start(self):
-        self.loadOrangeNeighboring("PONERAQUIRUTABONITAENUNACONSTANTE!!!")
-        self.tcplService.start(self.localPort)
+        #1 debe cargar lista de nodos naranjas.
+        #2 cargamos el grafo verde. 
+        #3 Empezamos tcpl para que escuche solicitudes
+        #4 Empezamos un hilo que retire mensajes de la bolsa de tcpl y atienda solicutes. 
+        #
+        ruta = "/home/redes/Integradittos/listaDeNodosNaranja.txt"
+        textReader = TxtReader()
+        self.loadOrangeNeighboring(textReader.readTxt(ruta))
+        self.adyacentNodes = {0:72, 72:0}
+        self.tcplService.startService(self.localPort)
         threadReceiving = threading.Thread(target = self.popPackage())
+        threadReceiving.start() #
+
+
         ''' esto es en otra subrutina
         while 1:
             package = self.popPackage() '''
@@ -123,7 +134,7 @@ class OrangeNode:
         pass
 
     def attendRequests(self, package, ipPort):
-        numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamCuerpoPrioridad, datos = AssemblePackageFactory.unpackPackage(package)
+        numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamCuerpoPrioridad, datos = self.assemblePackage.unpackPackage(package)
 
         ''' Para REQUESTPOS es mas facil si la subrutina genera el número de nodo las veces
         que sean necesarias y retorna la instanciada. Por esto no estara "position" como parámetro de la 
@@ -145,7 +156,7 @@ class OrangeNode:
             port, ip = self.extractPortAndIp(inicioConfirmacionRespuesta) # Extraemos la direccion del nodo que instanciaron.
             self.instantiateNode(inicioConfirmacionRespuesta, ip, port) #Instanciamos ese nodo con un puerto e ip.
              #Armamos el paquete.
-            self.tcplService.sendPackage(AssemblePackageFactory.assemblePackageConfirmPosACK(1), ipFuente, puertoFuente)
+            self.tcplService.sendPackage(self.assemblePackage.assemblePackageConfirmPosACK(1), ipFuente, puertoFuente)
 
 
         elif numeroDeServicio == self.CONFIRMPOSACK:
@@ -159,7 +170,7 @@ class OrangeNode:
             listaPaquetes = []
             numeroDeNodo = self.requestPos() #No hay direccion broadcast
             if numeroDeNodo is not 0: #Si no es 0 es que habia un nodo disponible.
-                listaPaquetes = AssemblePackageFactory.assemblePackageConnectACK(package, numeroDeNodo, self.adyacentNodes.get(numeroDeNodo))
+                listaPaquetes = self.assemblePackage.assemblePackageConnectACK(package, numeroDeNodo, self.adyacentNodes.get(numeroDeNodo))
                 for indice in range(len(listaPaquetes)): #Enviamos la lista de paquetes al nodo verde que se aba de conectar.
                     self.tcplService.sendPackage(listaPaquetes[indice], ipFuente, puertoFuente)
             #Tenemos que buscar ID
@@ -184,7 +195,10 @@ class OrangeNode:
 
     def loadOrangeNeighboring(self, orangeNodes):
         listaDeIpsYpuertos = orangeNodes.split()
+        print("El tamaño de la lista es", len(listaDeIpsYpuertos))
         for i in range(0, len(listaDeIpsYpuertos), 2):
+            print(i, "\n")
+            print("Hola ",listaDeIpsYpuertos[i], "\n")
             self.orangeNodesList.append([listaDeIpsYpuertos[i], listaDeIpsYpuertos[i+1]])
 
     '''
@@ -222,7 +236,7 @@ class OrangeNode:
             self.instantiatingList.append(position)
 
             # Se ensambla el paquete
-            requestPosPacket = AssemblePackageFactory.assemblePackageRequest(position, self.id)
+            requestPosPacket = self.assemblePackage.assemblePackageRequest(position, self.id)
             requestNum = int.from_bytes(receivedPacket[0:4], byteorder='big')
             self.confirmationCounters[requestNum] = 0
 
@@ -286,6 +300,9 @@ class OrangeNode:
         tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
 
     def popPackage(self): 
+        while 1:
+            package, address = self.tcplService.receivePackage()
+        hiloDeAtencionRequest = threading.Thread(target=self.attendRequests(package, ))
         pass
 
     # Anuncia a lo demás nodos naranajs la instanciación de un nodo verde

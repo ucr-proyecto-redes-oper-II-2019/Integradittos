@@ -1,6 +1,6 @@
 class TxtReader:
 
-    def readTxt(self, ruta=".txt"):
+    def readTxt(self, ruta):
         contenido = " "
         archivo = open(ruta, "r")
         for linea in archivo.readlines():
