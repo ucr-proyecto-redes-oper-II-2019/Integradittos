@@ -1,4 +1,5 @@
 import random
+import threading
 
 from AssemblePackagesFactory import AssemblePackageFactory
 import tcpl.tcpl # en carpeta inferior
@@ -55,7 +56,7 @@ class OrangeNode:
     def start(self):
         self.loadOrangeNeighboring("PONERAQUIRUTABONITAENUNACONSTANTE!!!")
         self.tcplService.start(self.localPort)
-        threadReceiving = threading.thread(target = self.popPackage)
+        threadReceiving = threading.Thread(target = self.popPackage())
         ''' esto es en otra subrutina
         while 1:
             package = self.popPackage() '''
@@ -70,7 +71,7 @@ class OrangeNode:
     ToDo: crear una subrutina o implementar en el cosntructor que se llame esta
     subrutina para cargar el grafo, asì como llenar la lista dde nodos verdes libres
     freeNodeList() '''
-    def loadGreenGraph(filePath):
+    def loadGreenGraph(self, filePath):
         graphFile = open (filePath, 'r')
         readLine = graphFile.readline()
 
@@ -100,24 +101,12 @@ class OrangeNode:
 
         return graphDictionary
 
-    # Carga las IP's de los nodos naranja a partir del archivo csv con ruta filePath.
-    # Retorna la lista de las IP's en formato de hilera de todos los nodos naranja.
-
-    # Nota: ¿¿¿Acá no faltaria algo como tuplas id/ip:puerto para los naranjas???
-    def loadOranges(filePath):
-        ipFile = open(filePath, 'r')
-        ipList = ipFile.read().split(",")
-
-        ipFile.close()
-
-        return ipList
-
 
     ''' INTERFACE '''
 
     def checkNodeNumber(self, nodeNumber):
         """Si devuelve un True es que el nodo ya ha sido instanciado. """
-        self.lis
+        #self.lis
         pass
 
     def instantiateNode(self, numeroDeNodo, ip, port):
@@ -171,7 +160,7 @@ class OrangeNode:
             numeroDeNodo = self.requestPos() #No hay direccion broadcast
             if numeroDeNodo is not 0: #Si no es 0 es que habia un nodo disponible.
                 listaPaquetes = AssemblePackageFactory.assemblePackageConnectACK(package, numeroDeNodo, self.adyacentNodes.get(numeroDeNodo))
-                for indice in range(len(listaPaquetes)):
+                for indice in range(len(listaPaquetes)): #Enviamos la lista de paquetes al nodo verde que se aba de conectar.
                     self.tcplService.sendPackage(listaPaquetes[indice], ipFuente, puertoFuente)
             #Tenemos que buscar ID
             #Hacemos request pos para los demas
@@ -188,16 +177,15 @@ class OrangeNode:
         ip += str(int(datos[2]).to_bytes(1, byteorder='big')) + "."
         ip += str(int(datos[3]).to_bytes(1, byteorder='big'))
         port = str(int(datos[4:]).to_bytes(2, byteorder='big'))
-        self.adyacentNodes.get(inicioConfirmacionRespuesta)[0].ip = ip
-        self.adyacentNodes.get(inicioConfirmacionRespuesta)[0].port = port
         return port, ip
 
-
+    def assignAddressToNode(self, id, ip, puerto): 
+        pass
 
     def loadOrangeNeighboring(self, orangeNodes):
         listaDeIpsYpuertos = orangeNodes.split()
         for i in range(0, len(listaDeIpsYpuertos), 2):
-            self.listOrangeNodes.append([listaDeIpsYpuertos[i], listaDeIpsYpuertos[i+1]])
+            self.orangeNodesList.append([listaDeIpsYpuertos[i], listaDeIpsYpuertos[i+1]])
 
     '''
     Genera un numero de nodo verde entre los disponibles
@@ -297,7 +285,8 @@ class OrangeNode:
         ackPacket = assemblePackageRequestPosACK(packageRequest, instantiated)
         tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
 
-
+    def popPackage(self): 
+        pass
 
     # Anuncia a lo demás nodos naranajs la instanciación de un nodo verde
     # Retornta True si todos confirmaron
