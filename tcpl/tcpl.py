@@ -137,6 +137,7 @@ class TCPL:
 			time.sleep(TCPL_TIMEOUT)
 		# Sacamos un paquete para retornarlo.
 		receivedPacket, address = self.receivingBag.get(list(self.receivingBag.keys())[0])
+		print("PERRO ME LLEGO EL PAQUETE.")
 		self.receivingBag.pop(list(self.receivingBag.keys())[0])
 		# Los primeros 5 bytes son de header TCPL
 		return receivedPacket[5:], address

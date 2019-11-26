@@ -17,8 +17,8 @@ class AssemblePackageFactory:
         self.tamPrioridad = 2
         self.tamIPyPuerto = 8
         self.randomMaximo = 65000
-        
-    def assemblePackage(self, numeroDeRequest, inicioConfirmacionRespuesta, tareaARealizar, tamanoPrioridad, datos = 0):
+
+    def assemblePackage(self, numeroDeRequest, inicioConfirmacionRespuesta, tareaARealizar, tamanoPrioridad, datos):
         """
             Subrutina que arma un paquete
             @:param numeroDeRequest numero random que identifica una request.
@@ -58,7 +58,7 @@ class AssemblePackageFactory:
             :return: paquete requestPos ya ensamblado.
         """
         numeroDeServicio = 205
-        return self.assemblePackage(random.randrange(self.randomMaximo), numeroDeNodoAInstanciar, numeroDeServicio, nodoNaranjaID, 0)
+        return self.assemblePackage(random.randrange(self.randomMaximo), numeroDeNodoAInstanciar, numeroDeServicio, nodoNaranjaID, int(0).to_bytes(1, byteorder='big'))
 
     def assemblePackageRequestACK(self, packageRequest, estaInstanciado):
         """
@@ -91,7 +91,7 @@ class AssemblePackageFactory:
         numeroRequest, inicioConfirmacionRespuesta, tareaARealizar, prioridad, datos = self.unpackPackage(paqueteConnect)
         # Despues de realizar to do el proceso de de reserve de nodos, para este punto debo contar con el ip y el ppuerto del verde, ademas del ID que se negocio con los demas naranjas.
         for i in listaVecinos:
-            listaDePaquetesConnectACK.append(self.assemblePackage(numeroRequest, idNodoAInstanciar, numeroDeServicio, self.tamIPyPuerto, i)) #Aqui falta que lisrt
+            listaDePaquetesConnectACK.append(self.assemblePackage(numeroRequest, idNodoAInstanciar, numeroDeServicio, self.tamIPyPuerto, int(i).to_bytes(2, byteorder="big"))) #Aqui falta que lisrt
         return listaDePaquetesConnectACK
 
     def assemblePackageConfirmPos(self, nodoReservado, ipAndPort):
