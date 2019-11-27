@@ -285,9 +285,9 @@ class OrangeNode:
 
 
     def listAdyacentGenerator(self,numeroNodo, listaAdyacencia):
-        listAdyacent = []
-        for indice in listaAdyacencia[numeroNodo]
-            listaDeAdyacencia.append(listaAdyacent[listaAdyacencia[indice.id]])
+        listDeNodosVecinos = []
+        for indice in listaAdyacencia[numeroNodo]:
+            listDeNodosVecinos.append(listaAdyacencia[indice.id])
         return listAdyacent
     def requestPosACK(self, position, ipPort, packageRequest):
         """
