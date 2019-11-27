@@ -95,8 +95,8 @@ class AssemblePackageFactory:
 
         for i in listaVecinos:
             paquete[0:2] = int(i.id).to_bytes(2, byteorder="big") #Id del nodo
-            paquete[2:4] = i.ip # Ip
-            paquete[4:] = ip.port #Puerto
+            paquete[2:4] = int(i.ip).to_bytes(2, byteorder="big") # Ip
+            paquete[4:] = (ip.port).to_bytes(2, byteorder="big") #Puerto
             listaDePaquetesConnectACK.append(self.assemblePackage(numeroRequest, idNodoAInstanciar, numeroDeServicio, self.tamIPyPuerto, paquete)) #Aqui falta que lisrt
         return listaDePaquetesConnectACK
 
