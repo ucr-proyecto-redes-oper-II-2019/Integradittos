@@ -53,18 +53,18 @@ class OrangeNode:
     # Inicia el nodo, creando hilos e iniciando objetos/estructuras necesarias
 
     # ToDo: TCPL requiere su propio hilo
-    def start(self):
+    def start(self, csvPath, orangesPath):
         #1 debe cargar lista de nodos naranjas.
         #2 cargamos el grafo verde. 
         #3 Empezamos tcpl para que escuche solicitudes
         #4 Empezamos un hilo que retire mensajes de la bolsa de tcpl y atienda solicutes. 
         #
-        ruta = "/home/redes/Integradittos/listaDeNodosNaranja.txt"
+        ruta = orangesPath
         textReader = TxtReader()
         self.loadOrangeNeighboring(textReader.readTxt(ruta))
-        self.adyacentNodes = {1:[72], 72:[1]}
-        self.freeNodeList.append(1)
-        self.freeNodeList.append(72)
+        self.adyacentNodes = self.loadGreenGraph(csvPath)
+        #self.freeNodeList.append(1)
+        #self.freeNodeList.append(72)
         self.tcplService.startService(self.localPort)
         threadReceiving = threading.Thread(target = self.popPackage())
         threadReceiving.start() #
@@ -105,7 +105,7 @@ class OrangeNode:
             for nodeId in splitLine[1:]:
                 adyacentNodes.append( GreenNodeToken(nodeId) )
             # Agregar lista de vecinos a la cabeza de la lista
-            graphDictionary[currentNodeId].extent(adyacentNodes)
+            graphDictionary[currentNodeId].extend(adyacentNodes)
 
             # Lee la siguiente línea
             readLine = graphFile.readline()
@@ -250,6 +250,7 @@ class OrangeNode:
             # Enviamos la solicitud a todos los naranjas
             for node in self.orangeNodesList:
                 ip, puerto = node
+            if ip != self.tcplService.getIp():
                 self.tcplService.sendPackage(requestPosPacket, ip, puerto)
                 # hacer broadcast
 

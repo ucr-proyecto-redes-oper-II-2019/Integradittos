@@ -73,9 +73,9 @@ class AssemblePackageFactory:
         estaLibre = 1
         numeroRequest, idNodoAInstanciar, tareaARealizar, prioridad, datos= self.unpackPackage(packageRequest)
         if estaInstanciado is True:
-            packageRequestACK = self.assemblePackage(numeroRequest, estaOcupado, numeroDeServicio, 0, 0)
+            packageRequestACK = self.assemblePackage(numeroRequest, estaOcupado, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
         else:
-            packageRequestACK = self.assemblePackage(numeroRequest, estaLibre, numeroDeServicio, 0, 0)
+            packageRequestACK = self.assemblePackage(numeroRequest, estaLibre, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
         return packageRequestACK
 
     def assemblePackageConnectACK(self, paqueteConnect, idNodoAInstanciar, listaVecinos):
