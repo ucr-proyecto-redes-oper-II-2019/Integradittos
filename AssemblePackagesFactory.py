@@ -90,8 +90,13 @@ class AssemblePackageFactory:
         listaDePaquetesConnectACK = [] 
         numeroRequest, inicioConfirmacionRespuesta, tareaARealizar, prioridad, datos = self.unpackPackage(paqueteConnect)
         # Despues de realizar to do el proceso de de reserve de nodos, para este punto debo contar con el ip y el ppuerto del verde, ademas del ID que se negocio con los demas naranjas.
+        paquete = bytearray(8)
+
+
         for i in listaVecinos:
-            listaDePaquetesConnectACK.append(self.assemblePackage(numeroRequest, idNodoAInstanciar, numeroDeServicio, self.tamIPyPuerto, int(i).to_bytes(2, byteorder="big"))) #Aqui falta que lisrt
+            paquete[0:2] = int(i).to_bytes(2, byteorder="big")
+            paquete
+            listaDePaquetesConnectACK.append(self.assemblePackage(numeroRequest, idNodoAInstanciar, numeroDeServicio, self.tamIPyPuerto, )) #Aqui falta que lisrt
         return listaDePaquetesConnectACK
 
     def assemblePackageConfirmPos(self, nodoReservado, ipAndPort):
@@ -106,3 +111,13 @@ class AssemblePackageFactory:
     def assemblePackageConfirmPosACK(self, id): 
         numeroDeServicio = 211
         return self.assemblePackage(random, id, numeroDeServicio, 0)
+    def packIP(self, ip):
+        arrayIP = bytearray(4)
+        ipSplit = str(ip).split(".")
+        arrayIP[0] = int(ip[0]).to_bytes(4, byteorder='big')
+        arrayIP[1] = int(ip[1]).to_bytes(4, byteorder='big')
+        arrayIP[3] = int(ip[2]).to_bytes(4, byteorder='big')
+        arrayIP[4] = int(ip[3]).to_bytes(4, byteorder='big')
+        return arrayIP
+    def packPort(self, port):
+        return int(port).to_bytes(2, byteorder='big')
