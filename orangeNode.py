@@ -283,7 +283,11 @@ class OrangeNode:
 
 
 
-
+    def listAdyacentGenerator(self,numeroNodo, listaAdyacencia):
+        listAdyacent = []
+        for indice in listaAdyacencia[numeroNodo]
+            listaDeAdyacencia.append(listaAdyacent[listaAdyacencia[indice.id]])
+        return listAdyacent
     def requestPosACK(self, position, ipPort, packageRequest):
         """
         Envia un ACK indicando si una posición ya está instanciada o no
