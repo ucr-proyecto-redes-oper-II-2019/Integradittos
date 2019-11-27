@@ -175,7 +175,8 @@ class OrangeNode:
      
             if numeroDeNodo is not 0: #Si no es 0 es que habia un nodo disponible.
                 print("Esta es la lista de adyacentes",numeroDeNodo , self.adyacentNodes.get(numeroDeNodo))
-                listaPaquetes = self.assemblePackage.assemblePackageConnectACK(package, numeroDeNodo, self.adyacentNodes.get(numeroDeNodo))
+                listaDeAdyacencia = self.listAdyacentGenerator(numeroNodo, self.adyacentNodes.get(numeroDeNodo))
+                listaPaquetes = self.assemblePackage.assemblePackageConnectACK(package, numeroDeNodo, listaDeAdyacencia)
                 for indice in range(len(listaPaquetes)): #Enviamos la lista de paquetes al nodo verde que se aba de conectar.
                     self.tcplService.sendPackage(listaPaquetes[indice], ipFuente, puertoFuente)
             #Tenemos que buscar ID
