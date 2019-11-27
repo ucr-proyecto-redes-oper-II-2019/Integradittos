@@ -287,7 +287,6 @@ class OrangeNode:
             return position
 
 
-
     def listAdyacentGenerator(self,numeroNodo):
         listAdyacent = []
         for indice in self.adyacentNodes[numeroNodo]:
