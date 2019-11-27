@@ -164,7 +164,7 @@ class TCPL:
 					if not (packetNum in self.receivingBag):
 						self.receivingBag[packetNum] = receivedPacket, senderAddress
 					# Armamos el ACK y se envía
-					tcplACK = bytearray(TCPL_MAX_MESSAGE_SIZE)
+					tcplACK = bytearray(5)
 					tcplACK[0:4] = packetNum.to_bytes(4, byteorder = 'big')
 					tcplACK[4] = TCPL_ACK
 					self.tcplSocket.sendto(tcplACK, senderAddress)
@@ -180,8 +180,8 @@ class TCPL:
 	##
 	def getIp(self):
 		try:
-		    IP = self.tcplSocket.getsockname()[0]
+			IP = self.tcplSocket.getsockname()[0]
 		except:
-		    IP = '127.0.0.1'
+			IP = '127.0.0.1'
 		return IP
 

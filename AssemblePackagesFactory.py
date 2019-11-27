@@ -91,8 +91,6 @@ class AssemblePackageFactory:
         numeroRequest, inicioConfirmacionRespuesta, tareaARealizar, prioridad, datos = self.unpackPackage(paqueteConnect)
         # Despues de realizar to do el proceso de de reserve de nodos, para este punto debo contar con el ip y el ppuerto del verde, ademas del ID que se negocio con los demas naranjas.
         paquete = bytearray(8)
-
-
         for i in listaVecinos:
             paquete[0:2] = int(i).to_bytes(2, byteorder="big")
             paquete

@@ -31,7 +31,7 @@ class OrangeNode:
     WAITFORACKDELAY = 0.5
     WAITFORACKTIMEOUT = 5
 
-    def __init__(self, id, port):
+    def __init__(self, id, ip, port):
         self.adyacentNodes = dict()
         self.id = id
         self.tcplService = TCPL()
@@ -40,6 +40,7 @@ class OrangeNode:
         self.orangeNodesList = []
         # Lista de nombres de nodos esperando por ser instanciados
         self.instantiatingList = []
+        self.localIp = ip
         self.localPort = port
         self.assemblePackage = AssemblePackageFactory()
 
@@ -66,8 +67,10 @@ class OrangeNode:
         #self.freeNodeList.append(1)
         #self.freeNodeList.append(72)
         self.tcplService.startService(self.localPort)
+        print("La IP de mi socket es: ", self.tcplService.getIp())
         threadReceiving = threading.Thread(target = self.popPackage())
         threadReceiving.start() #
+
 
 
         ''' esto es en otra subrutina
@@ -103,7 +106,7 @@ class OrangeNode:
             # Los nodos adyacentes son los demás
             adyacentNodes = list()
             for nodeId in splitLine[1:]:
-                adyacentNodes.append( GreenNodeToken(nodeId) )
+                adyacentNodes.append( GreenNodeToken(int(nodeId)) )
             # Agregar lista de vecinos a la cabeza de la lista
             graphDictionary[currentNodeId].extend(adyacentNodes)
 
@@ -175,7 +178,7 @@ class OrangeNode:
      
             if numeroDeNodo is not 0: #Si no es 0 es que habia un nodo disponible.
                 print("Esta es la lista de adyacentes",numeroDeNodo , self.adyacentNodes.get(numeroDeNodo))
-                listaDeAdyacencia = self.listAdyacentGenerator(numeroNodo, self.adyacentNodes.get(numeroDeNodo))
+                listaDeAdyacencia = self.listAdyacentGenerator(numeroDeNodo)
                 listaPaquetes = self.assemblePackage.assemblePackageConnectACK(package, numeroDeNodo, listaDeAdyacencia)
                 for indice in range(len(listaPaquetes)): #Enviamos la lista de paquetes al nodo verde que se aba de conectar.
                     self.tcplService.sendPackage(listaPaquetes[indice], ipFuente, puertoFuente)
@@ -205,7 +208,8 @@ class OrangeNode:
         for i in range(0, len(listaDeIpsYpuertos), 2):
             print(i, "\n")
             print("Hola ",listaDeIpsYpuertos[i], "\n")
-            self.orangeNodesList.append([listaDeIpsYpuertos[i], listaDeIpsYpuertos[i+1]])
+            if self.localIp != listaDeIpsYpuertos[i]:
+                 self.orangeNodesList.append([listaDeIpsYpuertos[i], listaDeIpsYpuertos[i+1]])
 
     '''
     Genera un numero de nodo verde entre los disponibles
@@ -251,7 +255,6 @@ class OrangeNode:
             # Enviamos la solicitud a todos los naranjas
             for node in self.orangeNodesList:
                 ip, puerto = node
-            if ip != self.tcplService.getIp():
                 self.tcplService.sendPackage(requestPosPacket, ip, puerto)
                 # hacer broadcast
 
@@ -285,11 +288,14 @@ class OrangeNode:
 
 
 
-    def listAdyacentGenerator(self,numeroNodo, listaAdyacencia):
+    def listAdyacentGenerator(self,numeroNodo):
         listAdyacent = []
-        for indice in listaAdyacencia[numeroNodo]
-            listaDeAdyacencia.append(listaAdyacent[listaAdyacencia[indice.id]])
+        for indice in self.adyacentNodes[numeroNodo]:
+            print(type(indice.id))
+            print("Añadiendo: ", self.adyacentNodes.get(indice.id)[0].id, "del nodo: ", numeroNodo)
+            listAdyacent.append(self.adyacentNodes.get(indice.id)[0])
         return listAdyacent
+
     def requestPosACK(self, position, ipPort, packageRequest):
         """
         Envia un ACK indicando si una posición ya está instanciada o no
