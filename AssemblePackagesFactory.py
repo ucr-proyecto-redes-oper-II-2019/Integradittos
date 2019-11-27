@@ -91,10 +91,10 @@ class AssemblePackageFactory:
         numeroRequest, inicioConfirmacionRespuesta, tareaARealizar, prioridad, datos = self.unpackPackage(paqueteConnect)
         # Despues de realizar to do el proceso de de reserve de nodos, para este punto debo contar con el ip y el ppuerto del verde, ademas del ID que se negocio con los demas naranjas.
         paquete = bytearray(8)
-        for i in listaVecinos:
-            paquete[0:2] = int(i.id).to_bytes(2, byteorder="big") #Id del nodo
-            paquete[2:4] = int(i.ip).to_bytes(2, byteorder="big") # Ip
-            paquete[4:] = (ip.port).to_bytes(2, byteorder="big") #Puerto
+        for iter in listaVecinos:
+            paquete[0:2] = int(iter.id).to_bytes(2, byteorder="big") #Id del nodo
+            paquete[2:4] = int(iter.ip).to_bytes(2, byteorder="big") # Ip
+            paquete[4:] = int(iter.port).to_bytes(2, byteorder="big") #Puerto
             listaDePaquetesConnectACK.append(self.assemblePackage(numeroRequest, idNodoAInstanciar, numeroDeServicio, self.tamIPyPuerto, paquete)) #Aqui falta que lisrt
         return listaDePaquetesConnectACK
 

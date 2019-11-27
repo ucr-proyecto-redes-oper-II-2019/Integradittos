@@ -146,9 +146,10 @@ class OrangeNode:
         funcion. '''
         ipFuente, puertoFuente = ipPort
         if numeroDeServicio == self.REQUESTPOS:
+            print("Este es el numero de de tamaño cuerpo prioridad", tamCuerpoPrioridad)
             #Si es un request service se debe sacar un nodo verde no instanciado
             #preguntar a los demas si no lo tienen instancido
-            self.requestPosACK(inicioConfirmacionRespuesta, self.orangeNodesList[tamCuerpoPrioridad], package)
+            self.requestPosACK(inicioConfirmacionRespuesta, ipPort, package)
 
         elif numeroDeServicio == self.REQUESTPOSACK:
             #Confirma que un id de nodo verde no esta usado.
