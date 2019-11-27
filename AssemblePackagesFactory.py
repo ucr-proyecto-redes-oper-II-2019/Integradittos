@@ -73,9 +73,9 @@ class AssemblePackageFactory:
         estaLibre = 1
         numeroRequest, idNodoAInstanciar, tareaARealizar, prioridad, datos= self.unpackPackage(packageRequest)
         if estaInstanciado is True:
-            packageRequestACK = self.assemblePackage(numeroRequest, estaOcupado, numeroDeServicio, 0, 0)
+            packageRequestACK = self.assemblePackage(numeroRequest, estaOcupado, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
         else:
-            packageRequestACK = self.assemblePackage(numeroRequest, estaLibre, numeroDeServicio, 0, 0)
+            packageRequestACK = self.assemblePackage(numeroRequest, estaLibre, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
         return packageRequestACK
 
     def assemblePackageConnectACK(self, paqueteConnect, idNodoAInstanciar, listaVecinos):
@@ -94,9 +94,10 @@ class AssemblePackageFactory:
 
 
         for i in listaVecinos:
-            paquete[0:2] = int(i).to_bytes(2, byteorder="big")
-            paquete
-            listaDePaquetesConnectACK.append(self.assemblePackage(numeroRequest, idNodoAInstanciar, numeroDeServicio, self.tamIPyPuerto, )) #Aqui falta que lisrt
+            paquete[0:2] = int(i.id).to_bytes(2, byteorder="big") #Id del nodo
+            paquete[2:4] = i.ip # Ip
+            paquete[4:] = ip.port #Puerto
+            listaDePaquetesConnectACK.append(self.assemblePackage(numeroRequest, idNodoAInstanciar, numeroDeServicio, self.tamIPyPuerto, paquete)) #Aqui falta que lisrt
         return listaDePaquetesConnectACK
 
     def assemblePackageConfirmPos(self, nodoReservado, ipAndPort):
