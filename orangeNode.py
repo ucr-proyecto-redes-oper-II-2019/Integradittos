@@ -225,7 +225,7 @@ class OrangeNode:
             nodeNumIndex = random.randint(0, len(self.freeNodeList) - 1)
             #print("Numero de index ", nodeNumIndex)
             if not self.freeNodeList[nodeNumIndex] in self.instantiatingList:
-                printf("Generé el nombre de nodo: ", self.freeNodeList[nodeNumIndex], " aleatoriamiente")
+                print("Generé el nombre de nodo: ", self.freeNodeList[nodeNumIndex], " aleatoriamiente")
                 return self.freeNodeList[nodeNumIndex]
         return 0
 
