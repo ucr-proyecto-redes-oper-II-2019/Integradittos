@@ -311,16 +311,17 @@ class OrangeNode:
         priority = int.from_bytes(packageRequest[7:9], byteorder='big')
         ''' Revisamos si no está instanciado, no se está intentando instanciar y 
         el request tiene mayor prioridad. '''
-        if (position in self.freeNodeList) and not (position in self.instantiatingList) and (priority > self.id):
-            instantiated = False
+        if (position in self.freeNodeList) and not (position in self.instantiatingList):
+            instantiated = 1
         else:
-            instantiated = True
-       
+            instantiated = 0
         print("Recibí un request pos para: ", position)
         ''' Si este nodo tiene menor prioridad y se está instanciando esa misma posición, 
         debe sacar el nodo de la lista de instanciamiento. '''
         if priority > self.id and position in self.instantiatingList:
             self.instantiatingList.remove(position)
+            instantiated = 1
+
         # Ensamblamos y enviamos el paquete según el estado de esa posición
         ackPacket = self.assemblePackage.assemblePackageRequestACK(packageRequest, instantiated)
         self.tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
