@@ -1,3 +1,4 @@
+# coding=utf-8
 import random
 import threading
 from TxtReader import TxtReader
@@ -134,7 +135,7 @@ class OrangeNode:
     # lista de vecinos
     def sendGreenInfo(self):
         pass
-
+    #Bug nunca envia el confirmPosAck
     def attendRequests(self, package, ipPort):
         numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamCuerpoPrioridad, datos = self.assemblePackage.unpackPackage(package)
         print(numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamCuerpoPrioridad, ipPort, "\n")
@@ -150,7 +151,8 @@ class OrangeNode:
         elif numeroDeServicio == self.REQUESTPOSACK:
             #Confirma que un id de nodo verde no esta usado.
             #Algun tipo de contador para cuando reciba los
-            self.confirmationCounters[numeroDeRequest] = self.confirmationCounters[numeroDeRequest] + 1 #Aumentamos el contador de request ack recibidos.
+            if inicioConfirmacionRespuesta == 1:
+                self.confirmationCounters[numeroDeRequest] = self.confirmationCounters[numeroDeRequest] + 1 #Aumentamos el contador de request ack recibidos.
 
         elif numeroDeServicio == self.CONFIRMPOS:
             #Debe armar un corfirm pos ack
@@ -172,7 +174,6 @@ class OrangeNode:
             #se pregunta a los demas nodos si lo tienen libre.
             listaPaquetes = []
             numeroDeNodo = self.requestPos(ipPort) #No hay direccion broadcast
-     
             if numeroDeNodo is not 0: #Si no es 0 es que habia un nodo disponible.
                 print("Esta es la lista de adyacentes",numeroDeNodo , self.adyacentNodes.get(numeroDeNodo))
                 listaDeAdyacencia = self.listAdyacentGenerator(numeroNodo, self.adyacentNodes.get(numeroDeNodo))
@@ -243,6 +244,7 @@ class OrangeNode:
             # Agregar paquete a lista de nodos instanciandose
             self.instantiatingList.append(position)
             print(self.instantiatingList)
+
             # Se ensambla el paquete
             requestPosPacket = self.assemblePackage.assemblePackageRequestPos(position, self.id)
             requestNum = int.from_bytes(requestPosPacket[0:4], byteorder='big')
