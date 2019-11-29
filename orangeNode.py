@@ -156,6 +156,8 @@ class OrangeNode:
             #Algun tipo de contador para cuando reciba los
             if inicioConfirmacionRespuesta == 1:
                 self.confirmationCounters[numeroDeRequest] = self.confirmationCounters[numeroDeRequest] + 1 #Aumentamos el contador de request ack recibidos.
+            else
+                self.confirmationCounters.remove(numeroDeRequest)
 
         elif numeroDeServicio == self.CONFIRMPOS:
             #Debe armar un corfirm pos ack
@@ -277,6 +279,7 @@ class OrangeNode:
                 # Utilizamos un pequeño delay para el ciclo
                 time.sleep(self.WAITFORACKDELAY)
 
+
             ''' Si se aceptó el request pos, se puede proseguir
             notar que si no se obtuvo respuesta de todos pero tampoco una denegación,
             se instancia. '''
@@ -318,7 +321,7 @@ class OrangeNode:
         print("Recibí un request pos para: ", position)
         ''' Si este nodo tiene menor prioridad y se está instanciando esa misma posición, 
         debe sacar el nodo de la lista de instanciamiento. '''
-        if priority > self.id and position in self.instantiatingList:
+        if priority < self.id and position in self.instantiatingList:
             self.instantiatingList.remove(position)
             instantiated = 1
 
