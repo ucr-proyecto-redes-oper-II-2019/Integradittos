@@ -255,7 +255,7 @@ class OrangeNode:
             #print(self.instantiatingList)
 
             # Se ensambla el paquete
-            confirmPosPacket = self.assemblePackage.assemblePackageRequestPos(position, ipPort)
+            confirmPosPacket = self.assemblePackage.assemblePackageConfirmPos(position, ipPort)
             requestNum = int.from_bytes(confirmPosPacket[0:4], byteorder='big')
             self.confirmationCounters[requestNum] = 0
 
