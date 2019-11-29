@@ -72,8 +72,8 @@ class TCPL:
 		# Valor de retorno
 		delivered = False
 
-		# Se arma el paquete TCPL
-		tcplPack = bytearray(TCPL_MAX_MESSAGE_SIZE)
+		# Se arma el paquete TCPL ( 5 bytes encabezado + payload )
+		tcplPack = bytearray( 5 + len(package) )#TCPL_MAX_MESSAGE_SIZE)
 		myPackNumber = self.packetNumber
 		# Aumentamos el número para el siguiente número de paquete
 		self.packetNumber = (self.packetNumber + 1) % TCPL_MAX_PACKET_NUM
