@@ -320,7 +320,7 @@ class OrangeNode:
         ''' Si este nodo tiene menor prioridad y se está instanciando esa misma posición, 
         debe sacar el nodo de la lista de instanciamiento. '''
         if priority > self.id and position in self.instantiatingList:
-            self.instantiatingList.pop(position)
+            self.instantiatingList.remove(position)
         # Ensamblamos y enviamos el paquete según el estado de esa posición
         ackPacket = self.assemblePackage.assemblePackageRequestACK(packageRequest, instantiated)
         self.tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
