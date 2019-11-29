@@ -9,10 +9,10 @@ tcplService = tcpl.TCPL()
 tcplService.startService(localPort)
 
 for i in range(0,20):
-	packet = bytearray(1009)
+	packet = bytearray(25)
 	packet[0:4] = i.to_bytes(4, byteorder = 'big')
 	if tcplService.sendPackage(packet, ip, port):
-		print("Se logró enviar el paquete: % d" %(i))
+		print("Se logró enviar el paquete:", i)
 	else:
-		print("No se logró enviar el paquete: % d" %(i))
+		print("No se logró enviar el paquete:", i)
 tcplService.stopService()
