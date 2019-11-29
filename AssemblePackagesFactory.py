@@ -102,7 +102,7 @@ class AssemblePackageFactory:
         numeroDeServicio = 210
         tamanoIP = 4
         tamanoPort = 2
-        return self.assemblePackage(random.randrange(self.randomMaximo), nodoReservado, numeroDeServicio, tamanoIP+tamanoPort, ipAndPort)
+        return self.assemblePackage(random.randrange(self.randomMaximo), nodoReservado, numeroDeServicio, tamanoIP+tamanoPort, self.packIpPort(ipAndPort[0],ipAndPort[1]))
 
     def assemblePackageInstanciado(self):
         pass
@@ -116,8 +116,19 @@ class AssemblePackageFactory:
         ipSplit = str(ip).split(".")
         arrayIP[0] = int(ip[0]).to_bytes(4, byteorder='big')
         arrayIP[1] = int(ip[1]).to_bytes(4, byteorder='big')
-        arrayIP[3] = int(ip[2]).to_bytes(4, byteorder='big')
-        arrayIP[4] = int(ip[3]).to_bytes(4, byteorder='big')
+        arrayIP[2] = int(ip[2]).to_bytes(4, byteorder='big')
+        arrayIP[3] = int(ip[3]).to_bytes(4, byteorder='big')
         return arrayIP
     def packPort(self, port):
         return int(port).to_bytes(2, byteorder='big')
+
+    def packIpPort(self, ip, port):
+        arrayIP = bytearray(6)
+        ipSplit = str(ip).split(".")
+        arrayIP[0] = int(ip[0]).to_bytes(4, byteorder='big')
+        arrayIP[1] = int(ip[1]).to_bytes(4, byteorder='big')
+        arrayIP[2] = int(ip[2]).to_bytes(4, byteorder='big')
+        arrayIP[3] = int(ip[3]).to_bytes(4, byteorder='big')
+        arrayIP[4] = int(port[0]).to_bytes(4, byteorder='big')
+        arrayIP[5] = int(port[1]).to_bytes(4, byteorder='big')
+        return arrayIP

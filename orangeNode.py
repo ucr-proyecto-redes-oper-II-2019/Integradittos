@@ -225,8 +225,8 @@ class OrangeNode:
             nodeNumIndex = random.randint(0, len(self.freeNodeList) - 1)
             #print("Numero de index ", nodeNumIndex)
             if not self.freeNodeList[nodeNumIndex] in self.instantiatingList:
-                return self.freeNodeList[nodeNumIndex]
                 printf("Generé el nombre de nodo: ", self.freeNodeList[nodeNumIndex], " aleatoriamiente")
+                return self.freeNodeList[nodeNumIndex]
         return 0
 
 
@@ -255,14 +255,14 @@ class OrangeNode:
             #print(self.instantiatingList)
 
             # Se ensambla el paquete
-            requestPosPacket = self.assemblePackage.assemblePackageRequestPos(position, self.id)
-            requestNum = int.from_bytes(requestPosPacket[0:4], byteorder='big')
+            confirmPosPacket = self.assemblePackage.assemblePackageRequestPos(position, ipPort)
+            requestNum = int.from_bytes(confirmPosPacket[0:4], byteorder='big')
             self.confirmationCounters[requestNum] = 0
 
             # Enviamos la solicitud a todos los naranjas
             for node in self.orangeNodesList:
                 ip, puerto = node
-                self.tcplService.sendPackage(requestPosPacket, ip, puerto)
+                self.tcplService.sendPackage(confirmPosPacket, ip, puerto)
                 # hacer broadcast
 
             print("Envié un request pos para: ", position)
@@ -351,7 +351,7 @@ class OrangeNode:
             # Crear paquete para CONFIRM_POS
 
             # Se ensambla el paquete
-            requestPosPacket = self.assemblePackage.assemblePackageRequestPos(position, self.id)
+            requestPosPacket = self.assemblePackage.assemblePackageConfirmPos(position, ipPort)
             requestNum = int.from_bytes(requestPosPacket[0:4], byteorder='big')
 
             self.confirmationCounters[requestNum] = 0
