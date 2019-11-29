@@ -156,7 +156,7 @@ class OrangeNode:
             #Algun tipo de contador para cuando reciba los
             if inicioConfirmacionRespuesta == 1:
                 self.confirmationCounters[numeroDeRequest] = self.confirmationCounters[numeroDeRequest] + 1 #Aumentamos el contador de request ack recibidos.
-            else
+            else:
                 self.confirmationCounters.remove(numeroDeRequest)
 
         elif numeroDeServicio == self.CONFIRMPOS:
