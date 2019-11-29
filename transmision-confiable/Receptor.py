@@ -31,10 +31,10 @@ puerto_cliente = ""  # Puerto del cliente :).
 mensaje_nuevo = False
 # ---------------------------------------------------------------------------fin de la definicion --------------------------------------------------------------------------------------
 if len(sys.argv) != 3:
-    print("Uso: python3 Receptor.py puerto nombre_archivo")
+    print("Uso: python3 Receptor.py puerto")
     sys.exit()
 
-nombre_del_archivo = sys.argv[2]
+#nombre_del_archivo = sys.argv[2]
 UDP_PORT = sys.argv[1]
 mi_socket = socket.socket(socket.AF_INET,  socket.SOCK_DGRAM)  # (Por defecto utiliza tcp y ipv4)Nos genera un nuevo socket con los valores por default
 mi_socket.bind(('', int(UDP_PORT)))  # Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
