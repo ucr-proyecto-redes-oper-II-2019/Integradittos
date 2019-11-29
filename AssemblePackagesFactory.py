@@ -125,10 +125,10 @@ class AssemblePackageFactory:
     def packIpPort(self, ip, port):
         arrayIP = bytearray(6)
         ipSplit = str(ip).split(".")
-        arrayIP[0] = int(ip[0]).to_bytes(4, byteorder='big')
-        arrayIP[1] = int(ip[1]).to_bytes(4, byteorder='big')
-        arrayIP[2] = int(ip[2]).to_bytes(4, byteorder='big')
-        arrayIP[3] = int(ip[3]).to_bytes(4, byteorder='big')
-        arrayIP[4] = int(port[0]).to_bytes(4, byteorder='big')
-        arrayIP[5] = int(port[1]).to_bytes(4, byteorder='big')
+        arrayIP[0] = int(ip[0]).to_bytes(1, byteorder='big')
+        arrayIP[1] = int(ip[1]).to_bytes(1, byteorder='big')
+        arrayIP[2] = int(ip[2]).to_bytes(1, byteorder='big')
+        arrayIP[3] = int(ip[3]).to_bytes(1, byteorder='big')
+        arrayIP[4] = int(port[0]).to_bytes(1, byteorder='big')
+        arrayIP[5] = int(port[1]).to_bytes(1, byteorder='big')
         return arrayIP
