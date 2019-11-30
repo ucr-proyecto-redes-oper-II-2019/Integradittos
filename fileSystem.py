@@ -11,29 +11,31 @@ Clase que administra los archivos para un nodo verde. En el sistema operativo re
 almacena en el directorio "./<greenNodeFiles>/<nodeIdentifier>/"
 '''
 class FileSystem:
-	BASE_FILE_DIRECTORY = "greenNodeFiles"
-	FILE_EXTENSION = ".dat"
+	_BASE_FILE_DIRECTORY = "greenNodeFiles"
+	_FILE_EXTENSION = ".dat"
 
 	'''
 	Constructor de objetos de clase FileSystem.
 	'''
 	def __init__(self, nodeIdentifier):
 		# Identificador. (Para almacenar los archivos en el sistema real.)
-		self.id = nodeIdentifier
-		# Diccionario con los nombres de archivos en el sistema de archivos, junto con un identificador.
-		self.fileTable = {}
-		# Diccionario con los nombres de los fragmentos en el sistema de archivos, junto con un identificador.
-		self.fragmentsTable = []
+		self._id = nodeIdentifier
+		# Diccionario con los nombres internos de archivos, indexados por sus nombres reales.
+		self._fileTable = {}
+		# Diccionario donde las llaves corresponden a los nombres reales de los archivos
+		# a los que pertenecen los fragmentos, y los valores son diccionarios de los datos
+		# de los fragmentos indexados por sus números de fragmento.
+		self._fragmentsTable = {}
 
 		# Directory in the real OS where file data is put
-		self.fullDirName = "./" + FileSystem.BASE_FILE_DIRECTORY + "/" + nodeIdentifier
+		self._fullDirName = "./" + FileSystem._BASE_FILE_DIRECTORY + "/" + str(nodeIdentifier)
 
 		# Number for the next file/ file fragment
-		self.fileCounter = 1000
+		self._fileCounter = 1000
 
 		# Crea el directorio para almacenar archivos
-		if not os.path.exists(self.fullDirName):
-			os.makedirs(self.fullDirName)
+		if not os.path.exists(self._fullDirName):
+			os.makedirs(self._fullDirName)
 
 
 	'''
@@ -41,7 +43,7 @@ class FileSystem:
 	(Utilizar para limpiar todo rastro de archivos en la computadora usada)
 	'''
 	def __del__(self):
-		shutil.rmtree(self.fullDirName)
+		shutil.rmtree(self._fullDirName)
 
 
 	'''
@@ -49,10 +51,10 @@ class FileSystem:
 	'''
 	def storeFile (self, fileName, fileData):
 		# hex returns a string that starts with "0x", so remove those characters.
-		hexadecimalName = hex(self.fileCounter)[2:]
+		hexadecimalName = hex(self._fileCounter)[2:]
 
 		# Get the path to which the new file will be stored.
-		internalFileName = self.fullDirName + "/" + hexadecimalName + self.FILE_EXTENSION
+		internalFileName = self._fullDirName + "/" + hexadecimalName + self._FILE_EXTENSION
 
 		# Create, open, write to, and close the file 
 		newFile = open(internalFileName, "wb")
@@ -60,20 +62,20 @@ class FileSystem:
 		newFile.close()
 
 		# Increases the file counter so the next one may not use the same internal fileName
-		self.fileCounter += 1
+		self._fileCounter += 1
 		
 		# Add the file to the table.
-		self.fileTable[fileName] = internalFileName
+		self._fileTable[fileName] = internalFileName
 	
 
 	'''
 	Recupera un archivo.
 	'''
 	def loadFile (self, fileName):
-		if fileName in self.fileTable:
+		if fileName in self._fileTable:
 			# Obtiene el nombre interno del archivo solicitado, revisando la tabla
 			# de archivos, y abre dicho archivo.
-			newFile = open(self.fileTable[fileName], "rb")
+			newFile = open(self._fileTable[fileName], "rb")
 			# Lee los datos del archivo
 			fileData = bytearray(newFile.read())
 			
@@ -85,30 +87,30 @@ class FileSystem:
 	Elimina un archivo.
 	'''
 	def deleteFile (self, fileName):
-		if fileName in self.fileTable:
+		if fileName in self._fileTable:
 			# Obtiene el nombre interno del archivo solicitado, revisando la tabla
 			# de archivos.
-			internalName = self.fileTable[fileName]
+			internalName = self._fileTable[fileName]
 			# Elimina el archivo con el nombre encontrado
 			os.remove(internalName)
 			# Elimina el archivo de la tabla de archivos
-			self.fileTable.pop(fileName)
+			self._fileTable.pop(fileName)
 		
 	'''
 	Determina si un archivo se encuentra en el sistema.
 	'''
 	def findFile(self, fileName):
-		return fileName in self.fileTable
+		return fileName in self._fileTable
 	
 	'''
 	Almacena un fragmento de archivo.
 	'''
 	def storeFragment (self, fileName, fragmentNo, fragmentData):
 		# hex returns a string that starts with "0x", so remove those characters.
-		hexadecimalName = hex(self.fileCounter)[2:]
+		hexadecimalName = hex(self._fileCounter)[2:]
 
 		# Get the path to which the new fragment will be stored.
-		internalFileName = self.fullDirName + "/" + hexadecimalName + self.FILE_EXTENSION
+		internalFileName = self._fullDirName + "/" + hexadecimalName + self._FILE_EXTENSION
 
 		# Create, open, write to, and close the file to store the fragment
 		newFile = open(internalFileName, "wb")
@@ -116,13 +118,13 @@ class FileSystem:
 		newFile.close()
 
 		# Increases the file counter so the next one may not use the same internal fileName
-		self.fileCounter += 1
+		self._fileCounter += 1
 		
 		# Add the fragment to the table.
-		if fileName in self.fragmentsTable:
-			self.fragmentsTable[fileName][fragmentNo] = internalFileName
+		if fileName in self._fragmentsTable:
+			self._fragmentsTable[fileName][fragmentNo] = internalFileName
 		else:
-			self.fragmentsTable[fileName] = { fragmentNo : internalFileName }
+			self._fragmentsTable[fileName] = { fragmentNo : internalFileName }
 		
 	
 	'''
@@ -131,12 +133,12 @@ class FileSystem:
 	'''
 	def loadFragments (self, fileName):
 		# Si hay algún fragmento del archivo solicitado,
-		if fileName in self.fragmentsTable:
+		if fileName in self._fragmentsTable:
 			# Crea un diccionario vacío
 			fragments = {}
 
 			# Para cada fragmento almacenado de ese archivo,
-			for fragmentNumber, internalName in self.fragmentsTable[fileName].values():
+			for fragmentNumber, internalName in self._fragmentsTable[fileName].items():
 				# Se abre y se leen los datos del fragmento
 				internalFile = open(internalName, "rb")
 				data = internalFile.read()
@@ -157,23 +159,19 @@ class FileSystem:
 	Determina si algún fragmento de un archivo se encuentra en el sistema.
 	'''
 	def findFragment(self, fileName):
-		return fileName in self.fragmentsTable
+		return fileName in self._fragmentsTable
 
 	'''
 	Elimina los fragmentos de un archivo.
 	'''
 	def deleteFragment (self, fileName):
 		# Si hay algún fragmento del archivo solicitado,
-		if fileName in self.fragmentsTable:
+		if fileName in self._fragmentsTable:
 
 			# Para cada fragmento almacenado de ese archivo,
-			for fragmentNumber, internalName in self.fragmentsTable[fileName].values():
+			for fragmentNumber, internalName in self._fragmentsTable[fileName].items():
 				# Se eliminan los datos del fragmento
 				os.remove(internalName)
-
-				# Se elimina el fragmento de la tabla
-				self.fragmentsTable.pop(fragmentNumber)
 			
-			# También se elimina la entrada de la tabla que indicaba la existencia
-			# de fragmentos de un archivo
-			self.fragmentsTable.pop(fileName)
+			# Se eliminan los fragmentos del archivo en la tabla
+			self._fragmentsTable.pop(fileName)
