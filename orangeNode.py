@@ -1,3 +1,4 @@
+# coding=utf-8
 import random
 import threading
 from TxtReader import TxtReader
@@ -31,7 +32,7 @@ class OrangeNode:
     WAITFORACKDELAY = 0.5
     WAITFORACKTIMEOUT = 5
 
-    def __init__(self, id, port):
+    def __init__(self, id, ip, port):
         self.adyacentNodes = dict()
         self.id = id
         self.tcplService = TCPL()
@@ -40,6 +41,7 @@ class OrangeNode:
         self.orangeNodesList = []
         # Lista de nombres de nodos esperando por ser instanciados
         self.instantiatingList = []
+        self.localIp = ip
         self.localPort = port
         self.assemblePackage = AssemblePackageFactory()
 
@@ -53,21 +55,22 @@ class OrangeNode:
     # Inicia el nodo, creando hilos e iniciando objetos/estructuras necesarias
 
     # ToDo: TCPL requiere su propio hilo
-    def start(self):
+    def start(self, csvPath, orangesPath):
         #1 debe cargar lista de nodos naranjas.
         #2 cargamos el grafo verde. 
         #3 Empezamos tcpl para que escuche solicitudes
         #4 Empezamos un hilo que retire mensajes de la bolsa de tcpl y atienda solicutes. 
         #
-        ruta = "/home/redes/Integradittos/listaDeNodosNaranja.txt"
+        ruta = orangesPath
         textReader = TxtReader()
         self.loadOrangeNeighboring(textReader.readTxt(ruta))
-        self.adyacentNodes = {1:[72], 72:[1]}
-        self.freeNodeList.append(1)
-        self.freeNodeList.append(72)
+        self.adyacentNodes = self.loadGreenGraph(csvPath)
+        #self.freeNodeList.append(1)
+        #self.freeNodeList.append(72)
         self.tcplService.startService(self.localPort)
         threadReceiving = threading.Thread(target = self.popPackage())
         threadReceiving.start() #
+
 
 
         ''' esto es en otra subrutina
@@ -83,8 +86,10 @@ class OrangeNode:
     ToDo: crear una subrutina o implementar en el cosntructor que se llame esta
     subrutina para cargar el grafo, asì como llenar la lista dde nodos verdes libres
     freeNodeList() '''
-    def OrangeLoadGraph(filePath):
-		graphFile = open (filePath, 'r') 
+    def loadGreenGraph(self, filePath):
+        
+        ''' NEWER VERSION:
+        graphFile = open (filePath, 'r') 
 		reader = csv.reader(graphFile)
 		
 		# Diccionario vacío
@@ -98,6 +103,37 @@ class OrangeNode:
 
 		graphFile.close()
 		return graphDictionary
+        '''
+
+        graphFile = open (filePath, 'r')
+        readLine = graphFile.readline()
+
+        # Diccionario vacío
+        graphDictionary = dict()
+
+        while readLine:
+            # Separa la línea leída usando comas
+            splitLine = readLine.split(",")
+            # El nodo actual es el primero en la línea
+            currentNodeId = int(splitLine[0])
+            # Creamos una lista de nodo/vecinos para cada nodo
+            graphDictionary[currentNodeId] = list()
+            # El primero de la lista que precede a sus vecinos
+            graphDictionary[currentNodeId].append( GreenNodeToken(currentNodeId) )
+            # Los nodos adyacentes son los demás
+            adyacentNodes = list()
+            for nodeId in splitLine[1:]:
+                adyacentNodes.append( GreenNodeToken(int(nodeId)) )
+            # Agregar lista de vecinos a la cabeza de la lista
+            graphDictionary[currentNodeId].extend(adyacentNodes)
+
+            # Lee la siguiente línea
+            readLine = graphFile.readline()
+            self.freeNodeList.append(currentNodeId)
+        graphFile.close()
+
+        return graphDictionary
+
 
 
     ''' INTERFACE '''
@@ -111,7 +147,7 @@ class OrangeNode:
         self.adyacentNodes.get(numeroDeNodo)[0].ip = ip
         self.adyacentNodes.get(numeroDeNodo)[0].port = port
         self.adyacentNodes.get(numeroDeNodo)[0].state = True
-        pass
+        printf("Instancié el nodo: ", numeroDeNodo)
     # Subrutina que atiende requests y actúa según la que recibe
 
 
@@ -119,23 +155,27 @@ class OrangeNode:
     # lista de vecinos
     def sendGreenInfo(self):
         pass
-
+    #Bug nunca envia el confirmPosAck
     def attendRequests(self, package, ipPort):
         numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamCuerpoPrioridad, datos = self.assemblePackage.unpackPackage(package)
-        print(numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamCuerpoPrioridad, ipPort, "\n")
+        #print(numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamCuerpoPrioridad, ipPort, "\n")
         ''' Para REQUESTPOS es mas facil si la subrutina genera el número de nodo las veces
         que sean necesarias y retorna la instanciada. Por esto no estara "position" como parámetro de la 
         funcion. '''
         ipFuente, puertoFuente = ipPort
         if numeroDeServicio == self.REQUESTPOS:
+            #print("Este es el numero de de tamaño cuerpo prioridad", tamCuerpoPrioridad)
             #Si es un request service se debe sacar un nodo verde no instanciado
             #preguntar a los demas si no lo tienen instancido
-            self.requestPosACK(inicioConfirmacionRespuesta, self.orangeNodesList[tamCuerpoPrioridad], package)
+            self.requestPosACK(inicioConfirmacionRespuesta, ipPort, package)
 
         elif numeroDeServicio == self.REQUESTPOSACK:
             #Confirma que un id de nodo verde no esta usado.
             #Algun tipo de contador para cuando reciba los
-            self.confirmationCounters[numeroDeRequest] = self.confirmationCounters[numeroDeRequest] + 1 #Aumentamos el contador de request ack recibidos.
+            if inicioConfirmacionRespuesta == 1:
+                self.confirmationCounters[numeroDeRequest] = self.confirmationCounters[numeroDeRequest] + 1 #Aumentamos el contador de request ack recibidos.
+            else:
+                self.confirmationCounters.remove(numeroDeRequest)
 
         elif numeroDeServicio == self.CONFIRMPOS:
             #Debe armar un corfirm pos ack
@@ -151,16 +191,16 @@ class OrangeNode:
 
             #dependiendo si ya me confirmaron todos los nodos
         elif numeroDeServicio == self.CONNECT:
-            print("Si me llego un connect")
+            #print("Si me llego un connect")
             #Cuando recibe una solicitud de conexion:
             #1- Se busca un nodo que no este instanciado
             #se pregunta a los demas nodos si lo tienen libre.
             listaPaquetes = []
             numeroDeNodo = self.requestPos(ipPort) #No hay direccion broadcast
-     
             if numeroDeNodo is not 0: #Si no es 0 es que habia un nodo disponible.
-                print("Esta es la lista de adyacentes",numeroDeNodo , self.adyacentNodes.get(numeroDeNodo))
-                listaPaquetes = self.assemblePackage.assemblePackageConnectACK(package, numeroDeNodo, self.adyacentNodes.get(numeroDeNodo))
+                #print("Esta es la lista de adyacentes",numeroDeNodo , self.adyacentNodes.get(numeroDeNodo))
+                listaDeAdyacencia = self.listAdyacentGenerator(numeroDeNodo)
+                listaPaquetes = self.assemblePackage.assemblePackageConnectACK(package, numeroDeNodo, listaDeAdyacencia)
                 for indice in range(len(listaPaquetes)): #Enviamos la lista de paquetes al nodo verde que se aba de conectar.
                     self.tcplService.sendPackage(listaPaquetes[indice], ipFuente, puertoFuente)
             #Tenemos que buscar ID
@@ -185,11 +225,12 @@ class OrangeNode:
 
     def loadOrangeNeighboring(self, orangeNodes):
         listaDeIpsYpuertos = orangeNodes.split()
-        print("El tamaño de la lista es", len(listaDeIpsYpuertos))
+        #print("El tamaño de la lista es", len(listaDeIpsYpuertos))
         for i in range(0, len(listaDeIpsYpuertos), 2):
-            print(i, "\n")
-            print("Hola ",listaDeIpsYpuertos[i], "\n")
-            self.orangeNodesList.append([listaDeIpsYpuertos[i], listaDeIpsYpuertos[i+1]])
+            #print(i, "\n")
+            #print("Hola ",listaDeIpsYpuertos[i], "\n")
+            if self.localIp != listaDeIpsYpuertos[i]:
+                 self.orangeNodesList.append([listaDeIpsYpuertos[i], listaDeIpsYpuertos[i+1]])
 
     '''
     Genera un numero de nodo verde entre los disponibles
@@ -197,11 +238,12 @@ class OrangeNode:
     De lo contrario retorna 0
     '''
     def getAvailableGreenNum(self):
-        print(len(self.freeNodeList))
+        #print(len(self.freeNodeList))
         while len(self.freeNodeList):
             nodeNumIndex = random.randint(0, len(self.freeNodeList) - 1)
-            print("Numero de index ", nodeNumIndex)
+            #print("Numero de index ", nodeNumIndex)
             if not self.freeNodeList[nodeNumIndex] in self.instantiatingList:
+                print("Generé el nombre de nodo: ", self.freeNodeList[nodeNumIndex], " aleatoriamiente")
                 return self.freeNodeList[nodeNumIndex]
         return 0
 
@@ -227,17 +269,21 @@ class OrangeNode:
             # Agregar paquete a lista de nodos instanciandose
             self.instantiatingList.append(position)
             print(self.instantiatingList)
+
+            #print(self.instantiatingList)
+
             # Se ensambla el paquete
-            requestPosPacket = self.assemblePackage.assemblePackageRequestPos(position, self.id)
-            requestNum = int.from_bytes(requestPosPacket[0:4], byteorder='big')
+            confirmPosPacket = self.assemblePackage.assemblePackageConfirmPos(position, ipPort)
+            requestNum = int.from_bytes(confirmPosPacket[0:4], byteorder='big')
             self.confirmationCounters[requestNum] = 0
 
             # Enviamos la solicitud a todos los naranjas
             for node in self.orangeNodesList:
                 ip, puerto = node
-                self.tcplService.sendPackage(requestPosPacket, ip, puerto)
+                self.tcplService.sendPackage(confirmPosPacket, ip, puerto)
                 # hacer broadcast
 
+            print("Envié un request pos para: ", position)
             timeout = time.time() + self.WAITFORACKTIMEOUT   # en segundo
             # esperar confirmación de todos (si tardan mas de determinado tiempo)
             while requestNum in self.confirmationCounters\
@@ -250,6 +296,7 @@ class OrangeNode:
 
                 # Utilizamos un pequeño delay para el ciclo
                 time.sleep(self.WAITFORACKDELAY)
+
 
             ''' Si se aceptó el request pos, se puede proseguir
             notar que si no se obtuvo respuesta de todos pero tampoco una denegación,
@@ -267,7 +314,13 @@ class OrangeNode:
             return position
 
 
-
+    def listAdyacentGenerator(self,numeroNodo):
+        listAdyacent = []
+        for indice in self.adyacentNodes[numeroNodo]:
+            #print(type(indice.id))
+            #print("Añadiendo: ", self.adyacentNodes.get(indice.id)[0].id, "del nodo: ", numeroNodo)
+            listAdyacent.append(self.adyacentNodes.get(indice.id)[0])
+        return listAdyacent
 
     def requestPosACK(self, position, ipPort, packageRequest):
         """
@@ -279,22 +332,24 @@ class OrangeNode:
         priority = int.from_bytes(packageRequest[7:9], byteorder='big')
         ''' Revisamos si no está instanciado, no se está intentando instanciar y 
         el request tiene mayor prioridad. '''
-        if (position in self.freeNodeList) and not (position in self.instantiatingList) and (priority > self.id):
-            instantiated = False
+        if (position in self.freeNodeList) and not (position in self.instantiatingList):
+            instantiated = 1
         else:
-            instantiated = True
-
+            instantiated = 0
+        print("Recibí un request pos para: ", position)
         ''' Si este nodo tiene menor prioridad y se está instanciando esa misma posición, 
         debe sacar el nodo de la lista de instanciamiento. '''
-        if priority > self.id and position in self.instantiatingList:
-            self.instantiatingList.pop(position)
+        if priority < self.id and position in self.instantiatingList:
+            self.instantiatingList.remove(position)
+            instantiated = 1
+
         # Ensamblamos y enviamos el paquete según el estado de esa posición
         ackPacket = self.assemblePackage.assemblePackageRequestACK(packageRequest, instantiated)
         self.tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
 
     def popPackage(self): 
         while 1:
-            print("Estoy en pop package.")
+            #print("Estoy en pop package.")
             package, address = self.tcplService.receivePackage()
             hiloDeAtencionRequest = threading.Thread(target=self.attendRequests, args=(package, address))
             hiloDeAtencionRequest.start()
@@ -314,7 +369,7 @@ class OrangeNode:
             # Crear paquete para CONFIRM_POS
 
             # Se ensambla el paquete
-            requestPosPacket = self.assemblePackage.assemblePackageRequestPos(position, self.id)
+            requestPosPacket = self.assemblePackage.assemblePackageConfirmPos(position, ipPort)
             requestNum = int.from_bytes(requestPosPacket[0:4], byteorder='big')
 
             self.confirmationCounters[requestNum] = 0
@@ -325,6 +380,7 @@ class OrangeNode:
                 self.tcplService.sendPackage(requestPosPacket, ip, puerto)
                 # hacer broadcast
 
+            print("Envié un confirm pos para: ", position)
             timeout = time.time() + self.WAITFORACKTIMEOUT   # en segundo
             # esperar confirmación de todos (si tardan mas de determinado tiempo)
             while requestNum in self.confirmationCounters\
@@ -353,3 +409,5 @@ class OrangeNode:
         # Ensamblamos y enviamos el ACK (ya se debio agregar la posicion de instanciado)
         ackPacket = self.assemblePackage.assemblePackageConfirmPos(position, ipPort)
         self.tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
+        print("Recibí un confirm pos para: ", position)
+

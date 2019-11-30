@@ -72,8 +72,8 @@ class TCPL:
 		# Valor de retorno
 		delivered = False
 
-		# Se arma el paquete TCPL
-		tcplPack = bytearray(TCPL_MAX_MESSAGE_SIZE)
+		# Se arma el paquete TCPL ( 5 bytes encabezado + payload )
+		tcplPack = bytearray( 5 + len(package) )#TCPL_MAX_MESSAGE_SIZE)
 		myPackNumber = self.packetNumber
 		# Aumentamos el número para el siguiente número de paquete
 		self.packetNumber = (self.packetNumber + 1) % TCPL_MAX_PACKET_NUM
@@ -137,7 +137,6 @@ class TCPL:
 			time.sleep(TCPL_TIMEOUT)
 		# Sacamos un paquete para retornarlo.
 		receivedPacket, address = self.receivingBag.get(list(self.receivingBag.keys())[0])
-		print("PERRO ME LLEGO EL PAQUETE.")
 		self.receivingBag.pop(list(self.receivingBag.keys())[0])
 		# Los primeros 5 bytes son de header TCPL
 		return receivedPacket[5:], address
@@ -165,7 +164,7 @@ class TCPL:
 					if not (packetNum in self.receivingBag):
 						self.receivingBag[packetNum] = receivedPacket, senderAddress
 					# Armamos el ACK y se envía
-					tcplACK = bytearray(TCPL_MAX_MESSAGE_SIZE)
+					tcplACK = bytearray(5)
 					tcplACK[0:4] = packetNum.to_bytes(4, byteorder = 'big')
 					tcplACK[4] = TCPL_ACK
 					self.tcplSocket.sendto(tcplACK, senderAddress)
@@ -177,4 +176,12 @@ class TCPL:
 						self.sendingBag.pop(packetNum)
 						self.resolvedPackets[packetNum] = True
 					self.sendingBagLock.release()
+	
+	##
+	def getIp(self):
+		try:
+			IP = self.tcplSocket.getsockname()[0]
+		except:
+			IP = '127.0.0.1'
+		return IP
 
