@@ -7,14 +7,17 @@ from greenMessageCodes import GreenMessageCodes
 from fileSystem import FileSystem
 
 class GreenNode:
+
+	FILE_FRAGMENT_MAX_SIZE = 1000
 	
 	'''
 	Constructor de objetos de clase GreenNode.
 	Recibe como parametros el numero de puerto del nodo por construir,
 	y la IP y puerto del nodo naranja que usa para conectarse.
+	Incluye la etapa de inicialización del nodo verde.
 	'''
 	def __init__(self, myPortNumber, orangeIP, orangePortNumber):
-		
+		# Inicializar servicios basicos
 		self.myPort = myPortNumber
 		self.graphID = -1
 		
@@ -26,16 +29,10 @@ class GreenNode:
 		self.neighboursTable = []
 		self.routingTable = []
 		
-		self.fileSystem = FileSystem();
-	'''
-	Etapa de inicializacion del nodo verde.
-	'''
-	def _initialization(self):
-		# Inicializar servicios basicos
+		self.fileSystem = FileSystem(str(myPortNumber))
+		
 		# Solicitar unirse al grafo
 		# Esperar identificacion
-		# Construir tabla de enrutamiento
-		pass
 		
 	'''
 	Etapa de ejecucion del nodo verde.
@@ -60,11 +57,10 @@ class GreenNode:
 	de inicializacion, ejecucion y terminacion.
 	'''
 	def run(self):
-		self._initialization()
 		self._execution()
 		self._termination()
 	
-	''' ### ### ### Solicitudes de azules ### ### ### '''
+	'''  # # #  # # #  # # #  Solicitudes de azules  # # #  # # #  # # #  '''
 	
 	'''
 	Almacenar un archivo.
@@ -121,32 +117,52 @@ class GreenNode:
 		pass
 	
 	
-	''' ### ### ### Transacciones con otros verdes ### ### ### '''
+	'''  # # #  # # #  # # #  Transacciones con otros verdes  # # #  # # #  # # #  '''
 	
 	#todo:
 	'''
 	Enviar una nueva ruta más corta hacia uno de los nodos (actualizar tabla de enrutamiento)
-	Confirmar que la tabla de enrutamiento está actualizada (tras recibir una nueva ruta más corta)
+	def _sendRoutingTableUpdate(self):
+	def _updateRoutingTable(self, package):
+
 	Recibir la “presentación” de un nodo verde nuevo.
-	Enviar un proceso reanudable.
-	Enviar de un segmento de archivo.
+	def _sendNeighbourIndtroduction(self, neighbour):
+	def _receiveNeighbourIntroduction(self, package):
+
+	Relocalizar un proceso reanudable.
+	def _relocateProcess(self, process):
+	def _receiveRelocatedProcess(self, package):
+
+	Enviar un segmento de archivo.
+	def _sendFileFragment(self, fragment):
+	def _receiveFileFragment(self, package):
+
 	Preguntar por segmentos de un archivo.
+	def _askForFragments(self, fileName):
+	def _findFragments(self, package):
+
 	Solicitar el envío de segmentos de un archivo.
+	def _retrieveFragments(self, fileName):
+	def _findAndSendFragments(self, package):
+
 	Pedir la eliminación de un archivo o sus fragmentos.
+	def _reqestFileDeletion(self, fileName):
+	def _deleteFileRequested(self, package):
+
 	Avisar sobre terminación de un nodo verde.
-	Relocalización de un proceso reanudable
+	def _tellAboutTermination(self):
+	def _updateRoutingTableAfterTermination(self, package):
 	'''
-	
 	
 	'''
 	Actualiza entradas de la tabla de enrutamiento segun nuevos datos
 	enviados por un vecino.
 	'''
-	def updateRoutingTable(self, requestPack):
+	def _updateRoutingTable(self, requestPack):
+		pass
 	
 	
-	
-	''' ### ### ### Solicitudes de naranjas ### ### ### '''
+	'''  # # #  # # #  # # #  Solicitudes de/ a naranjas  # # #  # # #  # # #  '''
 	
 	'''
 	Agregar un vecino nuevo y presentarse si esta instanciado.
@@ -156,11 +172,7 @@ class GreenNode:
 	
 	
 	''' ### ### ### Procedimientos dentro del mismo nodo ### ### ### '''
-	
-	# todo Acordar estos metodos
-	
+
 	#def splitFile(self, fileToSplit):
 	#def buildFile(self, fileName):
-	#def findFile(self, fileName):
-	#def findFragments(self, fileName):
 	
