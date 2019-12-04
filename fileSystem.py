@@ -6,9 +6,13 @@ import os
 # For removing non-empty directories 
 import shutil
 
+# For locks
+from threading import Lock
+
 '''
 Clase que administra los archivos para un nodo verde. En el sistema operativo real, los
 almacena en el directorio "./<greenNodeFiles>/<nodeIdentifier>/"
+Segura para uso de múltiples hilos.
 '''
 class FileSystem:
 	_BASE_FILE_DIRECTORY = "greenNodeFiles"
@@ -36,6 +40,8 @@ class FileSystem:
 		# Crea el directorio para almacenar archivos
 		if not os.path.exists(self._fullDirName):
 			os.makedirs(self._fullDirName)
+		# Candado para multihilos
+		self.lock = Lock()
 
 
 	'''
@@ -56,6 +62,9 @@ class FileSystem:
 		# Get the path to which the new file will be stored.
 		internalFileName = self._fullDirName + "/" + hexadecimalName + self._FILE_EXTENSION
 
+		# Lock critical section
+		self.lock.acquire()
+
 		# Create, open, write to, and close the file 
 		newFile = open(internalFileName, "wb")
 		newFile.write(fileData)
@@ -66,12 +75,19 @@ class FileSystem:
 		
 		# Add the file to the table.
 		self._fileTable[fileName] = internalFileName
+
+		# Unlock critical section
+		self.lock.release()
 	
 
 	'''
 	Recupera un archivo.
 	'''
 	def loadFile (self, fileName):
+		returnData = 0
+		
+		# Lock critical section
+		self.lock.acquire()
 		if fileName in self._fileTable:
 			# Obtiene el nombre interno del archivo solicitado, revisando la tabla
 			# de archivos, y abre dicho archivo.
@@ -79,14 +95,21 @@ class FileSystem:
 			# Lee los datos del archivo
 			fileData = bytearray(newFile.read())
 			
-			return fileData
+			returnData = fileData
 		else:
-			return bytearray()
+			returnData = bytearray()
+		# Unock critical section
+		self.lock.release()
+
+		return returnData
 
 	'''
 	Elimina un archivo.
 	'''
 	def deleteFile (self, fileName):
+		# Lock critical section
+		self.lock.acquire()
+
 		if fileName in self._fileTable:
 			# Obtiene el nombre interno del archivo solicitado, revisando la tabla
 			# de archivos.
@@ -96,11 +119,22 @@ class FileSystem:
 			# Elimina el archivo de la tabla de archivos
 			self._fileTable.pop(fileName)
 		
+		# Unlock critical section
+		self.lock.release()
+		
 	'''
 	Determina si un archivo se encuentra en el sistema.
 	'''
 	def findFile(self, fileName):
-		return fileName in self._fileTable
+		# Lock critical section
+		self.lock.acquire()
+
+		answer = fileName in self._fileTable
+
+		# Unlock critical section
+		self.lock.release()
+
+		return answer
 	
 	'''
 	Almacena un fragmento de archivo.
@@ -111,6 +145,9 @@ class FileSystem:
 
 		# Get the path to which the new fragment will be stored.
 		internalFileName = self._fullDirName + "/" + hexadecimalName + self._FILE_EXTENSION
+
+		# Lock critical section
+		self.lock.acquire()
 
 		# Create, open, write to, and close the file to store the fragment
 		newFile = open(internalFileName, "wb")
@@ -126,12 +163,20 @@ class FileSystem:
 		else:
 			self._fragmentsTable[fileName] = { fragmentNo : internalFileName }
 		
+		# Unlock critical section
+		self.lock.release()
+		
 	
 	'''
 	Recupera un diccionario con los fragmentos de un archivo, indexados según su número
 	de fragmento.
 	'''
 	def loadFragments (self, fileName):
+		returnData = {}
+
+		# Lock critical section
+		self.lock.acquire()
+
 		# Si hay algún fragmento del archivo solicitado,
 		if fileName in self._fragmentsTable:
 			# Crea un diccionario vacío
@@ -148,30 +193,44 @@ class FileSystem:
 				fragments[fragmentNumber] = bytearray(data)
 			
 			# Retorna el diccionario con el número y los datos de cada fragmento.
-			return fragments
+			returnData = fragments
 
-		# Si no hay fragmentos de ese archivo,
-		else:
-			# Retorna un diccionario vacío
-			return {}
+		# Unlock critical section
+		self.lock.release()
+
+		return returnData
 		
 	'''
 	Determina si algún fragmento de un archivo se encuentra en el sistema.
 	'''
 	def findFragment(self, fileName):
-		return fileName in self._fragmentsTable
+		# Lock critical section
+		self.lock.acquire()
+
+		answer = fileName in self._fragmentsTable
+
+		# Unlock critical section
+		self.lock.release()
+
+		return answer
 
 	'''
 	Elimina los fragmentos de un archivo.
 	'''
 	def deleteFragment (self, fileName):
+		# Lock critical section
+		self.lock.acquire()
+
 		# Si hay algún fragmento del archivo solicitado,
 		if fileName in self._fragmentsTable:
 
 			# Para cada fragmento almacenado de ese archivo,
-			for fragmentNumber, internalName in self._fragmentsTable[fileName].items():
+			for internalName in self._fragmentsTable[fileName].values():
 				# Se eliminan los datos del fragmento
 				os.remove(internalName)
 			
 			# Se eliminan los fragmentos del archivo en la tabla
 			self._fragmentsTable.pop(fileName)
+		
+		# Unlock critical section
+		self.lock.release()
