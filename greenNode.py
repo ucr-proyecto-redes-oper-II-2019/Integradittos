@@ -8,6 +8,8 @@ from fileSystem import FileSystem
 
 class GreenNode:
 	
+	DATA_MAX_SIZE = 1009
+
 	'''
 	Constructor de objetos de clase GreenNode.
 	Recibe como parametros el numero de puerto del nodo por construir,
@@ -23,10 +25,13 @@ class GreenNode:
 		
 		self.tcpl = TCPL()
 		
-		self.neighboursTable = []
-		self.routingTable = []
+		# Registros en tabla: nodoDestino [0] | distancia [1] | vecino [2]
+		self.neighboursTable = dict()
+		# Registros en tabla: ip [0] | puerto [1]
+		self.routingTable = dict()
 		
 		self.fileSystem = FileSystem();
+
 	'''
 	Etapa de inicializacion del nodo verde.
 	'''
@@ -124,9 +129,57 @@ class GreenNode:
 	''' ### ### ### Transacciones con otros verdes ### ### ### '''
 	
 	#todo:
+	
 	'''
-	Enviar una nueva ruta más corta hacia uno de los nodos (actualizar tabla de enrutamiento)
-	Confirmar que la tabla de enrutamiento está actualizada (tras recibir una nueva ruta más corta)
+	Enviar tabla de enrutamiento a vecinos (actualizar tabla de enrutamiento)
+	'''
+	def _sendRouteTable(self, routingTable, neighboursTable):
+
+		# Se crea el payload con la tabla, cada registro son 2 bytes
+		table = bytearray(1000)
+		offset = 0
+		for node in routingTable:
+			table[offset] = routingTable[node][0] # nodo
+			table[offset+1] = routingTable[node][1] # distancia
+			offset += 2
+
+		# Se envían los mensajes a los vecinos
+		tableMessage = bytearray(DATA_MAX_SIZE)
+
+		# ToDo: Crear encabezado y agregar payload con la tabla
+		
+		for neighbour in neighboursTable:
+			ip = neighboursTable[neighbour][0]
+			port = neighboursTable[neighbour][1] 
+			tcpl.sendPackage(tableMessage,  port, port)
+
+
+
+	'''
+	Confirmar que la tabla de enrutamiento está actualizada (tras recibir tabla de enrutamiento)
+	'''
+	def _checkRouteTable(self, ownTable, receivedTable, sender '''nodo'''):
+		items = 0
+		offset = 0
+		while receivedTable[offset] != 0 and receivedTable[offset+1] != 0:
+			items  += 1
+			offset += 2
+			# Se compraran los datos con nuestra tabla
+			# Si ya tenemos la ruta en la tabla checkeamos su distancia
+			if receivedTable[offset] in ownTable:
+				if receivedTable[offset+1] < ownTable[ receivedTable[offset+1] ][1]:
+					# Nueva distancia
+					ownTable[ receivedTable[offset+1] ][1] = receivedTable[offset+1] + 1
+					# Nuevo nodo vecino (quizá)
+					ownTable[ receivedTable[offset+1] ][2] = sender
+			else:
+				# Si no tenemos esa ruta, la agregamos
+				ownTable[ receivedTable[offset] ] = (receivedTable[offset], receivedTable[offset+1], sender)
+		print("Recibi una tabla de tamaño: ", items, " del vecino ", sender)
+
+
+
+	'''
 	Recibir la “presentación” de un nodo verde nuevo.
 	Enviar un proceso reanudable.
 	Enviar de un segmento de archivo.
