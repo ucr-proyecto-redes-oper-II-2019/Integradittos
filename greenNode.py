@@ -9,7 +9,8 @@ from fileSystem import FileSystem
 class GreenNode:
 	
 	DATA_MAX_SIZE = 1009
-
+	MAX_RANDOM = 65000
+	
 	'''
 	Constructor de objetos de clase GreenNode.
 	Recibe como parametros el numero de puerto del nodo por construir,
@@ -146,7 +147,12 @@ class GreenNode:
 		# Se envían los mensajes a los vecinos
 		tableMessage = bytearray(DATA_MAX_SIZE)
 
-		# ToDo: Crear encabezado y agregar payload con la tabla
+		# ToDo: Agregar código de enviar la tabla
+		tableMessage[0:4] = random.randrange(MAX_RANDOM)
+		tableMessage[4:6] = 0
+		# tableMessage[6] = código
+		tableMessage[7:9] = 0 # sin prioridad
+		# ...
 		
 		for neighbour in neighboursTable:
 			ip = neighboursTable[neighbour][0]
