@@ -412,3 +412,10 @@ class OrangeNode:
         self.tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
         print("Recibí un confirm pos para: ", position)
 
+	def printAdyacencyLisy(self, lista):
+		# La lista contiene: #nodo, ip, puerto, ¿instanciado?
+		for  node in lista:
+			for data in lista[node]:
+				print data
+			print "-----------"
+			 
