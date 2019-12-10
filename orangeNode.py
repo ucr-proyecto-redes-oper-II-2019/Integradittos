@@ -174,8 +174,9 @@ class OrangeNode:
             #Algun tipo de contador para cuando reciba los
             if inicioConfirmacionRespuesta == 1:
                 self.confirmationCounters[numeroDeRequest] = self.confirmationCounters[numeroDeRequest] + 1 #Aumentamos el contador de request ack recibidos.
-            else:
-                self.confirmationCounters.remove(numeroDeRequest)
+            else: #Nota para los programadores: Esto nunca esta pasando, ya que antes habian un remove y como era un diccionario debia caerse.
+                if numeroDeRequest in self.confirmationCounters:
+                    self.confirmationCounters.pop(requestNum)
 
         elif numeroDeServicio == self.CONFIRMPOS:
             #Debe armar un corfirm pos ack
@@ -303,7 +304,7 @@ class OrangeNode:
             se instancia. '''
             if requestNum in self.confirmationCounters and position in self.instantiatingList:
                 requested = True
-                self.confirmationCounters.pop(requestNum)
+                self.confirmationCounters.pop(requestNum) #Se saca de el diccionario y se instancia.
             else:
                 return 0
 
@@ -329,7 +330,7 @@ class OrangeNode:
         @:param ipPort Ip y peurto al que se devuelve el ACK instantiated = True
         @:param packageRequest paquete request sobre el cuál se devuelve el ACK
         """
-        priority = int.from_bytes(packageRequest[7:9], byteorder='big')
+        priority = int.from_bytes(packageRequest[6:8], byteorder='big') #Estaba de 7 a 9 que si corresponden a las posiciones si se empiza a contar desde 1.
         ''' Revisamos si no está instanciado, no se está intentando instanciar y 
         el request tiene mayor prioridad. '''
         if (position in self.freeNodeList) and not (position in self.instantiatingList):
