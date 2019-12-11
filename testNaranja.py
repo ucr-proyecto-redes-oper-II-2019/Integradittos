@@ -1,4 +1,9 @@
 from orangeNode import OrangeNode
-
-orange = OrangeNode(0,"10.1.138.75",6789)
+print("Escriba su numero de IP")
+ip = input()
+print("Escriba su numero de puerto.")
+puerto = int(input())
+print("Escriba la prioridad")
+id = int(input())
+orange = OrangeNode(id, ip, puerto)
 orange.start("grafoPrueba.csv", "grafoNaranjas.txt")
