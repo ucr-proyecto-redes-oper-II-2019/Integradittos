@@ -4,7 +4,7 @@ import threading
 from TxtReader import TxtReader
 from AssemblePackagesFactory import AssemblePackageFactory
 from tcpl.tcpl import TCPL # en carpeta inferior
-import time 
+import time
 # Objeto usado para representar los nodos verdes en la lista de adyancencia
 class GreenNodeToken:
 
@@ -57,9 +57,9 @@ class OrangeNode:
     # ToDo: TCPL requiere su propio hilo
     def start(self, csvPath, orangesPath):
         #1 debe cargar lista de nodos naranjas.
-        #2 cargamos el grafo verde. 
+        #2 cargamos el grafo verde.
         #3 Empezamos tcpl para que escuche solicitudes
-        #4 Empezamos un hilo que retire mensajes de la bolsa de tcpl y atienda solicutes. 
+        #4 Empezamos un hilo que retire mensajes de la bolsa de tcpl y atienda solicutes.
         #
         ruta = orangesPath
         textReader = TxtReader()
@@ -87,22 +87,22 @@ class OrangeNode:
     subrutina para cargar el grafo, asì como llenar la lista dde nodos verdes libres
     freeNodeList() '''
     def loadGreenGraph(self, filePath):
-        
+
         ''' NEWER VERSION:
         graphFile = open (filePath, 'r') 
-		reader = csv.reader(graphFile)
-		
-		# Diccionario vacío
-		graphDictionary = dict()
-		
-		# Build dictionary
-		for row in reader:
-			graphDictionary[row[0]] = row[1:]
-		
-		readLine = graphFile.readline()
+        reader = csv.reader(graphFile)
 
-		graphFile.close()
-		return graphDictionary
+        # Diccionario vacío
+        graphDictionary = dict()
+
+        # Build dictionary
+        for row in reader:
+            graphDictionary[row[0]] = row[1:]
+
+        readLine = graphFile.readline()
+
+        graphFile.close()
+        return graphDictionary
         '''
 
         graphFile = open (filePath, 'r')
@@ -176,7 +176,7 @@ class OrangeNode:
                 self.confirmationCounters[numeroDeRequest] = self.confirmationCounters[numeroDeRequest] + 1 #Aumentamos el contador de request ack recibidos.
             else: #Nota para los programadores: Esto nunca esta pasando, ya que antes habian un remove y como era un diccionario debia caerse.
                 if numeroDeRequest in self.confirmationCounters:
-                    self.confirmationCounters.pop(requestNum)
+                    self.confirmationCounters.pop(numeroDeRequest)
 
         elif numeroDeServicio == self.CONFIRMPOS:
             #Debe armar un corfirm pos ack
@@ -185,11 +185,8 @@ class OrangeNode:
             self.instantiateNode(inicioConfirmacionRespuesta, ip, port) #Instanciamos ese nodo con un puerto e ip.
              #Armamos el paquete.
             self.tcplService.sendPackage(self.assemblePackage.assemblePackageConfirmPosACK(1), ipFuente, puertoFuente)
-
-
         elif numeroDeServicio == self.CONFIRMPOSACK:
             pass
-
             #dependiendo si ya me confirmaron todos los nodos
         elif numeroDeServicio == self.CONNECT:
             #print("Si me llego un connect")
@@ -219,9 +216,9 @@ class OrangeNode:
         ip += str(datos[2]) + "."
         ip += str(datos[3])
         port = str(int.from_bytes(datos[4:5], byteorder='big'))
-        return port, ip 
+        return port, ip
 
-    def assignAddressToNode(self, id, ip, puerto): 
+    def assignAddressToNode(self, id, ip, puerto):
         pass
 
     def loadOrangeNeighboring(self, orangeNodes):
@@ -262,7 +259,7 @@ class OrangeNode:
             # Crear paquete para REQUEST_POS
             # Generar un numero aleatorio entre los disponibles
             position = self.getAvailableGreenNum()
-            
+
             # Si se generó un 0, no hay nodos disponibles, retornamos fallo
             if position == 0:
                 return 0
@@ -347,7 +344,7 @@ class OrangeNode:
         ackPacket = self.assemblePackage.assemblePackageRequestACK(packageRequest, instantiated)
         self.tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
 
-    def popPackage(self): 
+    def popPackage(self):
         while 1:
             #print("Estoy en pop package.")
             package, address = self.tcplService.receivePackage()
@@ -411,10 +408,10 @@ class OrangeNode:
         self.tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
         print("Recibí un confirm pos para: ", position)
 
-	def printAdyacencyLisy(self, lista):
-		# La lista contiene: #nodo, ip, puerto, ¿instanciado?
-		for  node in lista:
-			for data in lista[node]:
-				print data
-			print "-----------"
-			 
+    def printAdyacencyLisy(self, lista):
+        # La lista contiene: #nodo, ip, puerto, ¿instanciado?
+        for  node in lista:
+            for data in lista[node]:
+                print (data)
+            print ("-----------")
+https://github.com/ucr-proyecto-redes-oper-II-2019/Integradittos.git
