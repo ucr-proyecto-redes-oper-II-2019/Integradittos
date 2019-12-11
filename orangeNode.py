@@ -147,7 +147,7 @@ class OrangeNode:
         self.adyacentNodes.get(numeroDeNodo)[0].ip = ip
         self.adyacentNodes.get(numeroDeNodo)[0].port = port
         self.adyacentNodes.get(numeroDeNodo)[0].state = True
-        printf("Instancié el nodo: ", numeroDeNodo)
+        print("Instancié el nodo: ", numeroDeNodo)
     # Subrutina que atiende requests y actúa según la que recibe
 
 
@@ -180,8 +180,8 @@ class OrangeNode:
 
         elif numeroDeServicio == self.CONFIRMPOS:
             #Debe armar un corfirm pos ack
-            self.freeNodeList.remove(inicioConfirmacionRespuesta) #removemos el nodo que ya fue instanciado
-            port, ip = self.extractPortAndIp(inicioConfirmacionRespuesta) # Extraemos la direccion del nodo que instanciaron.
+            #self.freeNodeList.remove(inicioConfirmacionRespuesta) #removemos el nodo que ya fue instanciado
+            port, ip = self.extractPortAndIp(datos) # Extraemos la direccion del nodo que instanciaron.
             self.instantiateNode(inicioConfirmacionRespuesta, ip, port) #Instanciamos ese nodo con un puerto e ip.
              #Armamos el paquete.
             self.tcplService.sendPackage(self.assemblePackage.assemblePackageConfirmPosACK(1), ipFuente, puertoFuente)
@@ -214,12 +214,12 @@ class OrangeNode:
         :return: retorna el numero de puerto y la ip.
         '''
         ip = ""
-        ip += str(int(datos[0]).to_bytes(1, byteorder='big')) + "."
-        ip += str(int(datos[1]).to_bytes(1, byteorder='big')) + "."
-        ip += str(int(datos[2]).to_bytes(1, byteorder='big')) + "."
-        ip += str(int(datos[3]).to_bytes(1, byteorder='big'))
-        port = str(int(datos[4:]).to_bytes(2, byteorder='big'))
-        return port, ip
+        ip += str(datos[0]) + "."
+        ip += str(datos[1]) + "."
+        ip += str(datos[2]) + "."
+        ip += str(datos[3])
+        port = str(int.from_bytes(datos[4:5], byteorder='big'))
+        return port, ip 
 
     def assignAddressToNode(self, id, ip, puerto): 
         pass
@@ -272,7 +272,7 @@ class OrangeNode:
             print(self.instantiatingList)
 
             #print(self.instantiatingList)
-
+            print(ipPort)
             # Se ensambla el paquete
             confirmPosPacket = self.assemblePackage.assemblePackageConfirmPos(position, ipPort)
             requestNum = int.from_bytes(confirmPosPacket[0:4], byteorder='big')
@@ -411,3 +411,10 @@ class OrangeNode:
         self.tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
         print("Recibí un confirm pos para: ", position)
 
+	def printAdyacencyLisy(self, lista):
+		# La lista contiene: #nodo, ip, puerto, ¿instanciado?
+		for  node in lista:
+			for data in lista[node]:
+				print data
+			print "-----------"
+			 
