@@ -41,6 +41,7 @@ class GreenNode:
 		# Solicitar unirse al grafo
 		# Esperar identificacion
 		# Construir tabla de enrutamiento
+		self.tcplService.startService(self.myPort)
 		pass
 		
 	'''
