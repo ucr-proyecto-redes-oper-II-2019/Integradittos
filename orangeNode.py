@@ -269,7 +269,7 @@ class OrangeNode:
 
             # Agregar paquete a lista de nodos instanciandose
             self.instantiatingList.append(position)
-            print(self.instantiatingList)
+            print("Instanciando nodos:", self.instantiatingList)
 
             #print(self.instantiatingList)
 
@@ -306,12 +306,16 @@ class OrangeNode:
                 requested = True
                 self.confirmationCounters.pop(requestNum) #Se saca de el diccionario y se instancia.
             else:
+                print("Se me denegó request pos para: ", position)
                 return 0
 
         # Si se instanció la posición, lo sacamos de la lista de disponible y retornamos
         if self.confirmPos(position, ipPort):
             self.freeNodeList.remove(position)
             self.instantiatingList.remove(position)
+            print("Logré instanciar a nodo:", position)
+            print("Lista de adyacencias:")
+            print()
             return position
 
 
@@ -394,10 +398,12 @@ class OrangeNode:
                 # Utilizamos un pequeño delay para el ciclo
                 time.sleep(self.WAITFORACKDELAY)
 
-            # Si se aceptó el request pos, se puede proseguir
+            # Si los demás recibieron el confirm pos, se puede proseguir
             if requestNum in self.confirmationCounters:
                 confirmed = True
                 self.confirmationCounters.pop(requestNum)
+                print("confirm pos para: ", position, "entregado")
+
         return True
 
 
