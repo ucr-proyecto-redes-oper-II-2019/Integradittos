@@ -346,16 +346,16 @@ class OrangeNode:
         ''' Revisamos si no está instanciado, no se está intentando instanciar y 
         el request tiene mayor prioridad. '''
         if (position in self.freeNodeList) and not (position in self.instantiatingList):
-            instantiated = 0 #El id no esta instaciado
+            instantiated = 1 #El id no esta instaciado
         else:
-            instantiated = 1 #El id esta instaciado
+            instantiated = 0 #El id esta instaciado
         print("Recibí un request pos para: ", position, "con prioridad", priority)
 
         ''' Si este nodo tiene menor prioridad y se está instanciando esa misma posición, 
         debe sacar el nodo de la lista de instanciamiento. '''
         if priority < self.id and position in self.instantiatingList:
             self.instantiatingList.remove(position)
-            instantiated = 0
+            instantiated = 1
 
         print("Responderé al request pos con un:", instantiated)
 
