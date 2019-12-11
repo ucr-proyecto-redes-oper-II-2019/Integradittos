@@ -414,4 +414,3 @@ class OrangeNode:
             for data in lista[node]:
                 print (data)
             print ("-----------")
-https://github.com/ucr-proyecto-redes-oper-II-2019/Integradittos.git
