@@ -3,14 +3,13 @@ import random
 import threading
 from tcpl.tcpl import TCPL # en carpeta inferior
 from orangeNode import GreenNodeToken
-from greenMessageCodes import GreenMessageCodes
 from fileSystem import FileSystem
 from AssemblePackagesFactory import AssemblePackageFactory
 import time
 
 class GreenNode:
 
-	#FILE_FRAGMENT_MAX_SIZE = 1000
+    #FILE_FRAGMENT_MAX_SIZE = 1000
     GREET_NEIGHBOR = 100
     GREET_NEIGHBOR_ACK = 101
     FILE_EXISTS = 102
@@ -36,150 +35,153 @@ class GreenNode:
     DATA_MAX_SIZE = 1009
     MAX_RANDOM = 65000
     FILE_NAME_SIZE = 32
-	
-	'''
-	Constructor de objetos de clase GreenNode.
-	Recibe como parametros el numero de puerto del nodo por construir,
-	y la IP y puerto del nodo naranja que usa para conectarse.
-	Incluye la etapa de inicialización del nodo verde.
-	'''
-	def __init__(self, myPortNumber, orangeIP, orangePortNumber):
-		# Inicializar servicios basicos
-		self.myPort = myPortNumber
-		self.myID = -1
-		
-		self.orangeIP = orangeIP
-		self.orangePort = orangePortNumber
-		
-		self.tcpl = TCPL()
+
+    '''
+    Constructor de objetos de clase GreenNode.
+    Recibe como parametros el numero de puerto del nodo por construir,
+    y la IP y puerto del nodo naranja que usa para conectarse.
+    Incluye la etapa de inicialización del nodo verde.
+    '''
+    def __init__(self, myPortNumber, orangeIP, orangePortNumber):
+        # Inicializar servicios basicos
+        self.myPort = myPortNumber
+        self.myID = -1
+
+        self.orangeIP = orangeIP
+        self.orangePort = orangePortNumber
+
+        self.tcpl = TCPL()
 
         self.tcpl.startService(self.myPort)
-		
-		# Diccionario con GreenNodeToken
+
+        # Diccionario con GreenNodeToken
         self.neighboursTable = dict()
         # Registros en tabla: nodoDestino [0] | distancia [1] | vecino [2]
         self.routingTable = dict()
 
-        self.fileSystem = FileSystem()
+        self.fileSystem = FileSystem(self.myPort)
 
         self.assemblePackage = AssemblePackageFactory()
-		
-		# Solicitar unirse al grafo
-		# Esperar identificacion
-		
-	'''
-	Etapa de ejecucion del nodo verde.
-	'''
-	def _execution(self):
+
+        # Solicitar unirse al grafo
+        # Esperar identificacion
+
+    '''
+    Etapa de ejecucion del nodo verde.
+    '''
+    def _execution(self):
         self.isRunning = True
-		# Esperar nuevos vecinos (de parte de naranja)
+        # Esperar nuevos vecinos (de parte de naranja)
         paquete = self.assemblePackage.assemblePackageConnect()
-        if(self.tcpl.sendPackage(paquete, self.orangeIP, self.orangePortNumber)):
+        if(self.tcpl.sendPackage(paquete, self.orangeIP, self.orangePort)):
+            package, address = self.tcpl.receivePackage()
+            requestNumber, beginConfirmationAnswer, serviceNumber, sizeBodyPriority, data = self.assemblePackage.unpackPackage(package)
+            self.myID = int.from_bytes(data[0:2], byteorder='big')
             threadReceiving = threading.Thread(target = self.popPackage())
             threadReceiving.start()
-		else:
+        else:
             print("No fue posible enviar el paquete para solicitar ID al nodo Naranja")
             return -1
         # Esperar solicitudes de otros verdes
-		# Esperar solicitudes de azules
+        # Esperar solicitudes de azules
         self._receiveMessages()
-	
-	'''
-	Etapa de finalizacion del nodo verde.
-	'''
-	def _termination(self):
-		# Rechazar solicitudes de otros nodos
-		# Avisar a un naranja sobre la terminacion
-		# Avisar a sus vecinos verdes sobre la finalizacion
-		pass
-	
-	'''
-	Ejecuta toda la funcionalidad del nodo verde, incluyendo las etapas
-	de ejecucion y terminacion.
-	'''
-	def run(self):
-		self._execution()
-		self._termination()
-	
+
+    '''
+    Etapa de finalizacion del nodo verde.
+    '''
+    def _termination(self):
+        # Rechazar solicitudes de otros nodos
+        # Avisar a un naranja sobre la terminacion
+        # Avisar a sus vecinos verdes sobre la finalizacion
+        pass
+
+    '''
+    Ejecuta toda la funcionalidad del nodo verde, incluyendo las etapas
+    de ejecucion y terminacion.
+    '''
+    def run(self):
+        self._execution()
+        self._termination()
+
     def popPackage(self):
         while 1:
             print("Pop package...")
-            package, address = self.tcplService.receivePackage()
-            hiloDeAtencionRequest = threading.Thread(target=self.attendRequests, args=(package, address))
+            package, address = self.tcpl.receivePackage()
+            hiloDeAtencionRequest = threading.Thread(target=self._attendRequests, args=(package, address))
             hiloDeAtencionRequest.start()
         pass
-	'''  # # #  # # #  # # #  Solicitudes de azules  # # #  # # #  # # #  '''
-	
-	'''
-	Almacenar un archivo.
-	'''
-	def _putFile(self, data):
+    '''  # # #  # # #  # # #  Solicitudes de azules  # # #  # # #  # # #  '''
+
+    '''
+    Almacenar un archivo.
+    '''
+    def _putFile(self, data):
         fileName = data[0, self.FILE_NAME_SIZE].decode('ascii')
         fileData = data[self.FILE_NAME_SIZE:]
 
-		self.fileSystem.storeFile(fileName, fileData)
-		
-	'''
-	Recuperar un archivo.
-	'''
-	def _getFile(self, data):
+        self.fileSystem.storeFile(fileName, fileData)
+
+    '''
+    Recuperar un archivo.
+    '''
+    def _getFile(self, data):
         #fileName = data.decode('ascii')
-		pass
-	
-	'''
-	Pregunta si existen fragmentos de un archivo.
-	'''
-	def _askForFileFragments(self, requestPack):
-		pass
-	
-	'''
-	Pregunta si existe un archivo entero.
-	'''
-	def _askForWholeFile(self, requestPack):
-		pass
+        pass
 
-	'''
-	Almacenar fragmento de un archivo.
-	'''
-	def _putFragment(self, data):
+    '''
+    Pregunta si existen fragmentos de un archivo.
+    '''
+    def _askForFileFragments(self, requestPack):
+        pass
+
+    '''
+    Pregunta si existe un archivo entero.
+    '''
+    def _askForWholeFile(self, requestPack):
+        pass
+
+    '''
+    Almacenar fragmento de un archivo.
+    '''
+    def _putFragment(self, data):
         fileName = data[0, self.FILE_NAME_SIZE].decode('ascii')
         fileData = data[self.FILE_NAME_SIZE:]
 
-		self.fileSystem.storeFragment(fileName, fileData)
-	'''
-	Recuperar fragmentos de un archivo.
-	'''
-	def _getFragments(self, requestPack):
-		pass
-	
-	'''
-	Localizar un archivo.
-	'''
-	def _locateFile(self, requestPack):
-		pass
-	
-	'''
-	Eliminar un archivo.
-	'''
-	def _deleteFile(self, requestPack):
-		pass
-	
-	'''
-	Migrar un proceso reanudable a otro nodo.
-	'''
-	def _migrateProcess(self, requestPack):
-		pass
-	
-	'''
-	Ejecuta un proceso.
-	'''
-	def _runProcess(self, requestPack):
-		pass
-	
-	
-	'''  # # #  # # #  # # #  Transacciones con otros verdes  # # #  # # #  # # #  '''
-	
-	'''
+        self.fileSystem.storeFragment(fileName, fileData)
+    '''
+    Recuperar fragmentos de un archivo.
+    '''
+    def _getFragments(self, requestPack):
+        pass
+
+    '''
+    Localizar un archivo.
+    '''
+    def _locateFile(self, requestPack):
+        pass
+
+    '''
+    Eliminar un archivo.
+    '''
+    def _deleteFile(self, requestPack):
+        pass
+
+    '''
+    Migrar un proceso reanudable a otro nodo.
+    '''
+    def _migrateProcess(self, requestPack):
+        pass
+
+    '''
+    Ejecuta un proceso.
+    '''
+    def _runProcess(self, requestPack):
+        pass
+
+
+    '''  # # #  # # #  # # #  Transacciones con otros verdes  # # #  # # #  # # #  '''
+
+    '''
     Enviar tabla de enrutamiento a vecinos (actualizar tabla de enrutamiento)
     '''
     def _sendRouteTable(self):
@@ -261,12 +263,19 @@ class GreenNode:
                 hiloDeAtencionRequest = threading.Thread(target=self._attendRequests, args=(package, address))
                 hiloDeAtencionRequest.start()
      
-    
+    def sendGreetNeighbor(self, indice):
+        if self.neighboursTable.get(indice).ip != "0.0.0.0":
+            package = self.assemblePackage.assemblePackageGreetNeighbor(self.myID)
+            self.tcpl.sendPackage(package, self.neighboursTable.get(indice).ip, self.neighboursTable.get(indice).port)
+
+        pass
     def _attendRequests(self, package, ipPort):
 
         requestNumber, beginConfirmationAnswer, serviceNumber, sizeBodyPriority, data = self.assemblePackage.unpackPackage(package)
         if serviceNumber == self.GREET_NEIGHBOR: #Se me informa que tengo un vecino
-           self.greetNeighbor(requestNumber, beginConfirmationAnswer, data)
+            print("Mi vecino me saludo y tiene la direccion: ", ipPort)
+            self._greetNeighbor(requestNumber, beginConfirmationAnswer, ipPort)
+            self.imprimirListVecinos()
 
         elif serviceNumber == self.GREET_NEIGHBOR_ACK: # recibo un ack de que mi vecino ya sabe que existo
             pass
@@ -285,7 +294,7 @@ class GreenNode:
         elif serviceNumber == self.LOCATE_FILE_ACK:  # Respuesta con una lista de ids que contienen el archivo.
             pass
         elif serviceNumber == self.REMOVE_FILE:  # Se me indica que debo borrar X archivo de mi almacenamiento
-            self.removeFile(requestNumber)
+            #self.removeFile(requestNumber)
             pass
         elif serviceNumber == self.REMOVE_FILE_ACK:  # Respuesta de que un archivo pudo ser borrado.
             pass
@@ -303,79 +312,89 @@ class GreenNode:
             pass
         elif serviceNumber == self.SEND_ROUTE_ACK: #Se me indica que la tabla que mande se recibio correctamente.
             pass
-        elif serviceNumber = self.CONNECT_ACK:
+        elif serviceNumber == self.CONNECT_ACK:
             self.myID = beginConfirmationAnswer
             neighbourID = int.from_bytes(data[0:2], byteorder='big')
             neighbourNode = GreenNodeToken(neighbourID)
             port, ip = self._extractPortAndIp(data[2:8])
-            if(ip != "0.0.0.0"):
+            if ip != "0.0.0.0":
                 neighbourNode.ip = ip
                 neighbourNode.port = port
                 neighbourNode.state = True
                 self.neighboursTable[neighbourID] = neighbourNode
+                self.sendGreetNeighbor(neighbourID)
             else:
                 self.neighboursTable[neighbourID] = neighbourNode
             arrayTable = {neighbourID, 1, neighbourID}
             self.routingTable[neighbourID] = arrayTable
+            self.imprimirListVecinos()
 
     '''
-	Recibir la “presentación” de un nodo verde nuevo.
-	def _sendNeighbourIndtroduction(self, neighbour):
-	def _receiveNeighbourIntroduction(self, package):
+    Recibir la “presentación” de un nodo verde nuevo.
+    def _sendNeighbourIndtroduction(self, neighbour):
+    def _receiveNeighbourIntroduction(self, package):
 
-	Relocalizar un proceso reanudable.
-	def _relocateProcess(self, process):
-	def _receiveRelocatedProcess(self, package):int.from_bytes(data[2:6])
-	def _sendFileFragment(self, fragment):
-	def _receiveFileFragment(self, package):
+    Relocalizar un proceso reanudable.
+    def _relocateProcess(self, process):
+    def _receiveRelocatedProcess(self, package):int.from_bytes(data[2:6])
+    def _sendFileFragment(self, fragment):
+    def _receiveFileFragment(self, package):
 
-	Preguntar por segmentos de un archivo.
-	def _askForFragments(self, fileName):
-	def _findFragments(self, package):
+    Preguntar por segmentos de un archivo.
+    def _askForFragments(self, fileName):
+    def _findFragments(self, package):
 
-	Solicitar el envío de segmentos de un archivo.
-	def _retrieveFragments(self, fileName):
-	def _findAndSendFragments(self, package):
+    Solicitar el envío de segmentos de un archivo.
+    def _retrieveFragments(self, fileName):
+    def _findAndSendFragments(self, package):
 
-	Pedir la eliminación de un archivo o sus fragmentos.
-	def _reqestFileDeletion(self, fileName):
-	def _deleteFileRequested(self, package):
+    Pedir la eliminación de un archivo o sus fragmentos.
+    def _reqestFileDeletion(self, fileName):
+    def _deleteFileRequested(self, package):
 
-	Avisar sobre terminación de un nodo verde.
-	def _tellAboutTermination(self):
-	def _updateRoutingTableAfterTermination(self, package):
-	'''
-	
-	'''
-	Actualiza entradas de la tabla de enrutamiento segun nuevos datos
-	enviados por un vecino.
-	'''
-	def _updateRoutingTable(self, requestPack):
-		pass
-	
-	
-	'''  # # #  # # #  # # #  Solicitudes de/ a naranjas  # # #  # # #  # # #  '''
-	
-	'''
-	Agregar un vecino nuevo y presentarse si esta instanciado.
-	'''
-	def _addNeighbour(self, requestPack):
+    Avisar sobre terminación de un nodo verde.
+    def _tellAboutTermination(self):
+    def _updateRoutingTableAfterTermination(self, package):
+    '''
+
+    '''
+    Actualiza entradas de la tabla de enrutamiento segun nuevos datos
+    enviados por un vecino.
+    '''
+    def _updateRoutingTable(self, requestPack):
+        pass
+
+    def imprimirListVecinos(self):
+        diccionario = self.neighboursTable.copy()
+        for i in diccionario:
+            print("ID: ", diccionario.get(i).id)
+            print("Ip: ", diccionario.get(i).ip)
+            print("Puerto: ", diccionario.get(i).port)
+            #"print("-----------------------------------------------------------------------------")
+        print("------------------------------------------Aqui termina la tabla de adyacencias------------------------------")
+
+    '''  # # #  # # #  # # #  Solicitudes de/ a naranjas  # # #  # # #  # # #  '''
+
+    '''
+    Agregar un vecino nuevo y presentarse si esta instanciado.
+    '''
+    def _addNeighbour(self, requestPack):
         # Agregar a tabla de vecinos
         # Presentarse al vecino si está instanciado
-		pass
-	
-	
-	''' ### ### ### Procedimientos dentro del mismo nodo ### ### ### '''
+        pass
+
+
+    ''' ### ### ### Procedimientos dentro del mismo nodo ### ### ### '''
 
     ''' ¿Debería estar en esta sección? '''
     '''
     Envía un mensaje saludando a un vecino instanciado
     '''
-    def _greetNeighbor(self, requestNumber, beginConfirmationAnswer, data):
-        port, ip = self.extractPortAndIp(data)
-        self.neighboursTable[beginConfirmationAnswer] = ip, port
+    def _greetNeighbor(self, requestNumber, beginConfirmationAnswer, ipPort):
+        self.neighboursTable[beginConfirmationAnswer].ip = ipPort[0]
+        self.neighboursTable[beginConfirmationAnswer].port = ipPort[1]
         package = self.assemblePackage.assemblePackageGreetNeighborACK(requestNumber)
-        self.tcpl.sendPackage(package, ip, port)
+        self.tcpl.sendPackage(package, ipPort[0], ipPort[1])
 
     '''
     Determina si contiene un archivo o sus fragmentos.
@@ -387,7 +406,7 @@ class GreenNode:
         # Pregunta por un archivo entero:
         answer = self.fileSystem.findFile(name) 
         # Pregunta por fragmentos de un archivo:
-        answer ||= self.fileSystem.findFragments(name)
+        answer = self.fileSystem.findFragments(name)
 
         package = self.assemblePackage.assemblePackageFileExistACK(requestNum, answer)
         self.tcpl.sendPackage(package, ipPort[0], ipPort[1])
@@ -403,7 +422,7 @@ class GreenNode:
         self.fileSystem.deleteFile(name)
 
         # Se eliminan fragmentos del archivo
-        self.fileSystem.deleteFragments(name)
+        self.fileSystem.deleteFragment(name)
 
         # Se crea ACK
         package = self.assemblePackage.assmblePackageRemoveFileACK(requesNum)
@@ -411,11 +430,11 @@ class GreenNode:
 
     # todo Acordar estos metodos
     def _extractPortAndIp(self, data):
-    '''
-    Subrutina que extrae el puerto e ip de un bytearray
-    :param datos: datos de los que se va a extraer la informacion
-    :return: retorna el numero de puerto y la ip.
-    '''
+        '''
+        Subrutina que extrae el puerto e ip de un bytearray
+        :param datos: datos de los que se va a extraer la informacion
+        :return: retorna el numero de puerto y la ip.
+        '''
         ip = ""
         ip += str(data[0]) + "."
         ip += str(data[1]) + "."
@@ -428,4 +447,4 @@ class GreenNode:
     #def buildFile(self, filePiecesList):
     #def findFile(self, fileName):
     #def findFragments(self, fileName):
-	
+

@@ -148,7 +148,7 @@ class OrangeNode:
         self.adyacentNodes.get(numeroDeNodo)[0].port = port
         self.adyacentNodes.get(numeroDeNodo)[0].state = True
         print("Instancié el nodo:", numeroDeNodo, "en la lista de adyacencias")
-        self.printAdyacencyList(self.adyacentNodes)
+        #self.printAdyacencyList(self.adyacentNodes)
     # Subrutina que atiende requests y actúa según la que recibe
 
 
@@ -166,7 +166,7 @@ class OrangeNode:
         ipFuente, puertoFuente = ipPort
         if numeroDeServicio == self.REQUESTPOS:
             #print("Este es el numero de de tamaño cuerpo prioridad", tamCuerpoPrioridad)
-            print("Recibí un request pos de:", tamCuerpoPrioridad)
+            #print("Recibí un request pos de:", tamCuerpoPrioridad)
             #Si es un request service se debe sacar un nodo verde no instanciado
             #preguntar a los demas si no lo tienen instancido
             self.requestPosACK(inicioConfirmacionRespuesta, ipPort, package)
@@ -178,7 +178,7 @@ class OrangeNode:
                 self.confirmationCounters[numeroDeRequest] += 1 #Aumentamos el contador de request ack recibidos.
             else: #Nota para los programadores: Esto nunca esta pasando, ya que antes habian un remove y como era un diccionario debia caerse.
                 if numeroDeRequest in self.confirmationCounters:
-                    print("Estoy popeando el numero de request (esoy en request pos ack) ", numeroDeRequest)
+                    #print("Estoy popeando el numero de request (esoy en request pos ack) ", numeroDeRequest)
                     self.confirmationCounters.pop(numeroDeRequest)
                     #print(self.instantiatingList)
                     #self.instantiatingList.remove(inicioConfirmacionRespuesta)
@@ -253,7 +253,7 @@ class OrangeNode:
             nodeNumIndex = random.randint(0, len(self.freeNodeList) - 1)
             #print("Numero de index ", nodeNumIndex)
             if not self.freeNodeList[nodeNumIndex] in self.instantiatingList:
-                print("Generé el nombre de nodo: ", self.freeNodeList[nodeNumIndex], " aleatoriamiente")
+                #print("Generé el nombre de nodo: ", self.freeNodeList[nodeNumIndex], " aleatoriamiente")
                 return self.freeNodeList[nodeNumIndex]
         return 0
 
@@ -278,7 +278,7 @@ class OrangeNode:
 
             # Agregar paquete a lista de nodos instanciandose
             self.instantiatingList.append(position)
-            print("Instanciando nodos:", self.instantiatingList)
+            #print("Instanciando nodos:", self.instantiatingList)
 
             #print(self.instantiatingList)
             #print(ipPort)
@@ -312,8 +312,8 @@ class OrangeNode:
                 requested = True
                 
                 self.confirmationCounters.pop(requestNum) #Se saca de el diccionario y se instancia.
-            else:
-                print("Se me denegó request pos para: ", position)
+            #else:
+                #print("Se me denegó request pos para: ", position)
                 #return 0
 
         # Si se instanció la posición, lo sacamos de la lista de disponible y retornamos
@@ -321,9 +321,9 @@ class OrangeNode:
             self.freeNodeList.remove(position)
             self.instantiatingList.remove(position)
             self.instantiateNode(position, ipPort[0], ipPort[1])
-            print("Logré instanciar a nodo:", position)
-            print("Lista de adyacencias:")
-            self.printAdyacencyList(self.adyacentNodes)
+            #print("Logré instanciar a nodo:", position)
+            #print("Lista de adyacencias:")
+            #self.printAdyacencyList(self.adyacentNodes)
             return position
 
 
@@ -349,20 +349,20 @@ class OrangeNode:
             instantiated = 1 #El id no esta instaciado
         else:
             instantiated = 0 #El id esta instaciado
-        print("Recibí un request pos para: ", position, "con prioridad", priority)
+        #print("Recibí un request pos para: ", position, "con prioridad", priority)
         ''' Si este nodo tiene menor prioridad y se está instanciando esa misma posición, 
         debe sacar el nodo de la lista de instanciamiento. '''
         if priority < self.id and position in self.instantiatingList:
             self.instantiatingList.remove(position)
             instantiated = 1
-        print("Responderé al request pos con un:", instantiated)
+        #print("Responderé al request pos con un:", instantiated)
         # Ensamblamos y enviamos el paquete según el estado de esa posición
         ackPacket = self.assemblePackage.assemblePackageRequestACK(packageRequest, instantiated)
         self.tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
         
     def popPackage(self):
         while 1:
-            print("Pop package...")
+            #print("Pop package...")
             package, address = self.tcplService.receivePackage()
             hiloDeAtencionRequest = threading.Thread(target=self.attendRequests, args=(package, address))
             hiloDeAtencionRequest.start()
@@ -393,7 +393,7 @@ class OrangeNode:
                 self.tcplService.sendPackage(requestPosPacket, ip, puerto)
                 # hacer broadcast
 
-            print("Envié un confirm pos para: ", position)
+            #print("Envié un confirm pos para: ", position)
             timeout = time.time() + self.WAITFORACKTIMEOUT   # en segundo
             # esperar confirmación de todos (si tardan mas de determinado tiempo)
             while requestNum in self.confirmationCounters\
@@ -408,9 +408,9 @@ class OrangeNode:
             # Si los demás recibieron el confirm pos, se puede proseguir
             if requestNum in self.confirmationCounters:
                 confirmed = True
-                print("Estoy popeando el numero de request (estoy en request pos)", requestNum)
+                #print("Estoy popeando el numero de request (estoy en request pos)", requestNum)
                 self.confirmationCounters.pop(requestNum)
-                print("confirm pos para: ", position, "entregado")
+                #print("confirm pos para: ", position, "entregado")
         return True
 
 
@@ -420,7 +420,7 @@ class OrangeNode:
     @:param position posición a confirmar
     @:param ipPort ip del nodo que hizo el request
         """
-        print("Recibí un confirm pos para: ", position)
+        #print("Recibí un confirm pos para: ", position)
         # Ensamblamos y enviamos el ACK (ya se debio agregar la posicion de instanciado)
         ackPacket = self.assemblePackage.assemblePackageConfirmPos(position, ipPort)
         self.tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])

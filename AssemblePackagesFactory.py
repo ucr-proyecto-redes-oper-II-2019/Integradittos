@@ -110,6 +110,9 @@ class AssemblePackageFactory:
         numeroDeServicio = 211
         return self.assemblePackage(requestNum, id, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
 
+    def assemblePackageGreetNeighbor(self, id):
+        numeroDeServicio = 100
+        return self.assemblePackage(random.randint(0,self.randomMaximo), id, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
 
     def assemblePackageGreetNeighborACK(self, requestNum):
         numeroDeServicio = 101
@@ -125,7 +128,7 @@ class AssemblePackageFactory:
 
     def assemblePackageConnect(self):
         numeroDeServicio = 200
-        return self.assemblePackage(random.randint(0,self.randomMaximo), 1, numeroDeServicio, int(0).to_bytes(1, byteorder='big'))
+        return self.assemblePackage(random.randint(0,self.randomMaximo), 1, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
 
 
     def packIP(self, ip):
