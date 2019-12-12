@@ -31,6 +31,7 @@ class GreenNode:
     SEND_ROUTE_ACK = 119
     DATA_MAX_SIZE = 1009
     MAX_RANDOM = 65000
+    FILE_NAME_SIZE = 32
 	
 	'''
 	Constructor de objetos de clase GreenNode.
@@ -66,10 +67,11 @@ class GreenNode:
 	Etapa de ejecucion del nodo verde.
 	'''
 	def _execution(self):
+        self.isRunning = True
 		# Esperar nuevos vecinos (de parte de naranja)
 		# Esperar solicitudes de otros verdes
 		# Esperar solicitudes de azules
-		pass
+        self._receiveMessages()
 	
 	'''
 	Etapa de finalizacion del nodo verde.
@@ -82,7 +84,7 @@ class GreenNode:
 	
 	'''
 	Ejecuta toda la funcionalidad del nodo verde, incluyendo las etapas
-	de inicializacion, ejecucion y terminacion.
+	de ejecucion y terminacion.
 	'''
 	def run(self):
 		self._execution()
@@ -93,13 +95,17 @@ class GreenNode:
 	'''
 	Almacenar un archivo.
 	'''
-	def _putFile(self, requestPack):
-		pass
+	def _putFile(self, data):
+        fileName = data[0, self.FILE_NAME_SIZE].decode('ascii')
+        fileData = data[self.FILE_NAME_SIZE:]
+
+		self.fileSystem.storeFile(fileName, fileData)
 		
 	'''
 	Recuperar un archivo.
 	'''
-	def _getFile(self, requestPack):
+	def _getFile(self, data):
+        #fileName = data.decode('ascii')
 		pass
 	
 	'''
@@ -113,11 +119,19 @@ class GreenNode:
 	'''
 	def _askForWholeFile(self, requestPack):
 		pass
-	
+
 	'''
-	Recuperar un archivo.
+	Almacenar fragmento de un archivo.
 	'''
-	def _getFile(self, requestPack):
+	def _putFragment(self, data):
+        fileName = data[0, self.FILE_NAME_SIZE].decode('ascii')
+        fileData = data[self.FILE_NAME_SIZE:]
+
+		self.fileSystem.storeFragment(fileName, fileData)
+	'''
+	Recuperar fragmentos de un archivo.
+	'''
+	def _getFragments(self, requestPack):
 		pass
 	
 	'''
@@ -211,8 +225,8 @@ class GreenNode:
     '''
     Recibir mensajes
     '''
-    def receiveMessages(self):
-        while 1:
+    def _receiveMessages(self):
+        while self.isRunning:
             #print("Estoy recibiendo mensajes.")
             package, address = self.tcpl.receivePackage()
             # Si es el nodo destino se ruteo
@@ -226,12 +240,11 @@ class GreenNode:
                 else:
                     print ("Mensaje hacia nodo: ", destination, " desechado, no hay entrada en la tabla de ruteo.")
             else:
-                hiloDeAtencionRequest = threading.Thread(target=self.attendRequests, args=(package, address))
+                hiloDeAtencionRequest = threading.Thread(target=self._attendRequests, args=(package, address))
                 hiloDeAtencionRequest.start()
-        pass
      
     
-    def attendRequests(self, package, ipPort):
+    def _attendRequests(self, package, ipPort):
 
         requestNumber, beginConfirmationAnswer, serviceNumber, sizeBodyPriority, data = self.assemblePackage.unpackPackage(package)
         if serviceNumber == self.GREET_NEIGHBOR: #Se me informa que tengo un vecino
@@ -241,7 +254,7 @@ class GreenNode:
             pass
 
         elif serviceNumber == self.FILE_EXISTS: #Recibo un mensaje de pregunta si un archivo existe
-            self.fileExist(requestNumber, data, ipPort)
+            self._fileExistInSelf(requestNumber, data, ipPort)
             pass
 
         elif serviceNumber == self.FILE_EXISTS_ACK: #Se medio una respuesta acerca de la existencia de un archivo.
@@ -317,36 +330,62 @@ class GreenNode:
 	Agregar un vecino nuevo y presentarse si esta instanciado.
 	'''
 	def _addNeighbour(self, requestPack):
+        # Agregar a tabla de vecinos
+        # Presentarse al vecino si está instanciado
 		pass
 	
 	
 	''' ### ### ### Procedimientos dentro del mismo nodo ### ### ### '''
-    def greetNeighbor(self, requestNumber, beginConfirmationAnswer, data):
+
+    ''' ¿Debería estar en esta sección? '''
+    '''
+    Envía un mensaje saludando a un vecino instanciado
+    '''
+    def _greetNeighbor(self, requestNumber, beginConfirmationAnswer, data):
         port, ip = self.extractPortAndIp(data)
         self.neighboursTable[beginConfirmationAnswer] = ip, port
         package = self.assemblePackage.assemblePackageGreetNeighborACK(requestNumber)
         self.tcpl.sendPackage(package, ip, port)
 
-    def fileExist(self, requestNum, data, ipPort):
-        #Hay que convertir los bytes al identificador.
-        answer = self._askForFileFragments() #Este no es el metodo que hay que usar :)
+    '''
+    Determina si contiene un archivo o sus fragmentos.
+    '''
+    def _fileExistInSelf(self, requestNum, data, ipPort):
+        # Hay que convertir los bytes al identificador.
+        name = ''
+
+        # Pregunta por un archivo entero:
+        answer = self.fileSystem.findFile(name) 
+        # Pregunta por fragmentos de un archivo:
+        answer ||= self.fileSystem.findFragments(name)
+
         package = self.assemblePackage.assemblePackageFileExistACK(requestNum, answer)
         self.tcpl.sendPackage(package, ipPort[0], ipPort[1])
 
-    def removeFile(self, requesNum):
-        #Se remueve el archivo
+    '''
+    Elimina un archivo o sus fragmentos.
+    '''
+    def _removeFileInSelf(self, requesNum, data):
+        #todo Obtener el nombre a partir de data
+        name = ''
 
-        #Se crea ACK
+        # Se elimina el archivo
+        self.fileSystem.deleteFile(name)
+
+        # Se eliminan fragmentos del archivo
+        self.fileSystem.deleteFragments(name)
+
+        # Se crea ACK
         package = self.assemblePackage.assmblePackageRemoveFileACK(requesNum)
         self.tcpl.sendPackage()
 
     # todo Acordar estos metodos
-    def extractPortAndIp(self, data):
-        '''
-        Subrutina que extrae el puerto e ip de un bytearray
-        :param datos: datos de los que se va a extraer la informacion
-        :return: retorna el numero de puerto y la ip.
-        '''
+    def _extractPortAndIp(self, data):
+    '''
+    Subrutina que extrae el puerto e ip de un bytearray
+    :param datos: datos de los que se va a extraer la informacion
+    :return: retorna el numero de puerto y la ip.
+    '''
         ip = ""
         ip += str(data[0]) + "."
         ip += str(data[1]) + "."
@@ -354,8 +393,9 @@ class GreenNode:
         ip += str(data[3])
         port = str(int.from_bytes(data[4:6], byteorder='big'))
         return port, ip
-        #def splitFile(self, fileToSplit):
-        #def buildFile(self, fileName):
-        #def findFile(self, fileName):
-        #def findFragments(self, fileName):
+
+    #def splitFile(self, fileToSplit):
+    #def buildFile(self, filePiecesList):
+    #def findFile(self, fileName):
+    #def findFragments(self, fileName):
 	
