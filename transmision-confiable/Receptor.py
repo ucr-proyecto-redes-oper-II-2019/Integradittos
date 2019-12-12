@@ -34,7 +34,7 @@ if len(sys.argv) != 3:
     print("Uso: python3 Receptor.py puerto")
     sys.exit()
 
-#nombre_del_archivo = sys.argv[2]
+ruta_del_archivo = sys.argv[2]
 UDP_PORT = sys.argv[1]
 mi_socket = socket.socket(socket.AF_INET,  socket.SOCK_DGRAM)  # (Por defecto utiliza tcp y ipv4)Nos genera un nuevo socket con los valores por default
 mi_socket.bind(('', int(UDP_PORT)))  # Recibe dos valores que uno es el host y el otro el puerto en el que va a estar esuchando.
@@ -89,7 +89,8 @@ def almacenar(datos):  # Encargado de guardar el archivo(Capa superior).
     candado_critico.acquire()
     # si no se ha abierto la imagen, la abrimos con el nombre recibido en el primer paquete
     if imagen == 0:
-       imagen = open( datos[0:50].decode('utf-8').strip('\x00'), "bw")
+       nombre = datos[0:50].decode('utf-8').strip('\x00')
+       imagen = open(ruta_del_archivo + nombre, "bw")
        imagen.write(datos[50:])
     else:
         if datos[0] == SENAL_DE_PARADA and datos[1] == 0:  # Podemos hacer que retorne un False en lugar de jugar con esa variable global.

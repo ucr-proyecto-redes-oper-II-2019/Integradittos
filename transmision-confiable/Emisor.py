@@ -40,6 +40,7 @@ receiver_timeout = 10
 def cargar_imagen(archivo):
     global end_of_image
     # abrir imagen
+    print("Emisor: abriendo", archivo)
     in_file = open(archivo, "rb")
     # insertamos el nombre del archivo en el primer slice
     image_slice = bytearray(512)
