@@ -219,7 +219,7 @@ class GreenNode:
     def receiveMessages(self):
         while 1:
             #print("Estoy recibiendo mensajes.")
-            package, address = self.tcplService.receivePackage()
+            package, address = self.tcpl.receivePackage()
             # Si es el nodo destino se ruteo
             destination = int.from_bytes(package[13:15], byteorder='big')
             if destination != self.graphID:
@@ -227,7 +227,7 @@ class GreenNode:
                     ip = self.neighboursTable[ self.routingTable[destination][2] ].ip
                     port = self.neighboursTable[ self.routingTable[destination][2] ].port
                     print ("Ruteando paquete hacia ", destination, " por vecino: ", self.routingTable[destination][2], ip, port )
-                    self.tcplService.sendPackage(package, ip, port)
+                    self.tcpl.sendPackage(package, ip, port)
                 else:
                     print ("Mensaje hacia nodo: ", destination, " desechado, no hay entrada en la tabla de ruteo.")
             else:
@@ -236,21 +236,22 @@ class GreenNode:
         pass
      
     
-    def _attendRequests(self, package, ipPort):
+    def attendRequests(self, package, ipPort):
 
         requestNumber, beginConfirmationAnswer, serviceNumber, sizeBodyPriority, data = self.assemblePackage.unpackPackage(package)
         if serviceNumber == self.GREET_NEIGHBOR: #Se me informa que tengo un vecino
-           self.greetNeighbor( requestNumber, beginConfirmationAnswer, data)
+           self.greetNeighbor(requestNumber, beginConfirmationAnswer, data)
 
         elif serviceNumber == self.GREET_NEIGHBOR_ACK: # recibo un ack de que mi vecino ya sabe que existo
             pass
 
         elif serviceNumber == self.FILE_EXISTS: #Recibo un mensaje de pregunta si un archivo existe
-
-
+            self.fileExist(requestNumber, data, ipPort)
             pass
+
         elif serviceNumber == self.FILE_EXISTS_ACK: #Se medio una respuesta acerca de la existencia de un archivo.
             pass
+
         elif serviceNumber == self.FILE_COMPLETE: #Se me pregunta si un archivo x(viene en los datos) esta completo
             pass
         elif serviceNumber == self.LOCATE_FILE: #Se me pregunta por la lista de nodos que tiene x archivo
@@ -258,6 +259,7 @@ class GreenNode:
         elif serviceNumber == self.LOCATE_FILE_ACK:  # Respuesta con una lista de ids que contienen el archivo.
             pass
         elif serviceNumber == self.REMOVE_FILE:  # Se me indica que debo borrar X archivo de mi almacenamiento
+            self.removeFile(requestNumber)
             pass
         elif serviceNumber == self.REMOVE_FILE_ACK:  # Respuesta de que un archivo pudo ser borrado.
             pass
@@ -315,13 +317,21 @@ def greetNeighbor(self, requestNumber, beginConfirmationAnswer, data):
     port, ip = self.extractPortAndIp(data)
     self.neighboursTable[beginConfirmationAnswer] = ip, port
     package = self.assemblePackage.assemblePackageGreetNeighborACK(requestNumber)
-    self.tcplService.sendPackage(package, ip, port)
+    self.tcpl.sendPackage(package, ip, port)
 
-def fileExist(self, requestNum, data):
+def fileExist(self, requestNum, data, ipPort):
     #Hay que convertir los bytes al identificador.
-    answer = self._askForFileFragments()
-    self.assemblePackage.assemblePackageFileExistACK(requestNum, answer)
+    answer = self._askForFileFragments() #Este no es el metodo que hay que usar :)
+    package = self.assemblePackage.assemblePackageFileExistACK(requestNum, answer)
+    self.tcpl.sendPackage(package, ipPort[0], ipPort[1])
 
+def removeFile(self, requesNum):
+    #Se remueve el archivo
+
+    #Se crea ACK
+    package = self.assemblePackage.assmblePackageRemoveFileACK(requesNum)
+    self.tcpl.sendPackage()
+    pass
 
     # todo Acordar estos metodos
 def extractPortAndIp(self, data):
