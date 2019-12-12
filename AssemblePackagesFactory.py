@@ -30,10 +30,10 @@ class AssemblePackageFactory:
         paquete = bytearray(self.DATA_MAX_SIZE)
         paquete[0:4] = numeroDeRequest.to_bytes(self.tamNumeroRequest, byteorder='big')
         paquete[4:6] = inicioConfirmacionRespuesta.to_bytes(self.tamInicioConfirmacioRespuesta, byteorder='big')
-        paquete[6] = tareaARealizar.to_bytes(self.tamTareaARealizar, byteorder='big')
+        paquete[6] = tareaARealizar
         paquete[7:9] = tamanoPrioridad.to_bytes(self.tamPrioridad, byteorder='big')
         paquete[9:] = datos
-        return paqueteRequestPos
+        return paquete
 
     def unpackPackage(self, paquete):
         """
@@ -43,7 +43,7 @@ class AssemblePackageFactory:
         """
         numeroDeRequest = int.from_bytes(paquete[0:4], byteorder='big')
         inicioConfirmacionRespuesta = int.from_bytes(paquete[4:6], byteorder='big')
-        numeroDeServicio = int.from_bytes(paquete[6], byteorder='big')
+        numeroDeServicio = paquete[6]
         tamanoCuerpoPrioridad = int.from_bytes(paquete[7:9], byteorder='big')
         datos = paquete[9:]
         return numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamanoCuerpoPrioridad, datos
@@ -54,7 +54,9 @@ class AssemblePackageFactory:
             :return: paquete requestPos ya ensamblado.
         """
         numeroDeServicio = 205
-        return self.assemblePackage(random.randrange(self.randomMaximo), numeroDeNodoAInstanciar, numeroDeServicio, nodoNaranjaID, int(0).to_bytes(1, byteorder='big'))
+        numeroRand = random.randrange(self.randomMaximo)
+        print("El numero de reques que se esta generando es: ", numeroRand )
+        return self.assemblePackage(numeroRand, numeroDeNodoAInstanciar, numeroDeServicio, nodoNaranjaID, int(0).to_bytes(1, byteorder='big'))
 
     def assemblePackageRequestACK(self, packageRequest, estaInstanciado):
         """

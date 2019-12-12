@@ -123,7 +123,7 @@ class OrangeNode:
             # Los nodos adyacentes son los demás
             adyacentNodes = list()
             for nodeId in splitLine[1:]:
-                adyacentNodes.append( GreenNodeToken(int(nodeId)) )
+                adyacentNodes.append(GreenNodeToken(int(nodeId)) )
             # Agregar lista de vecinos a la cabeza de la lista
             graphDictionary[currentNodeId].extend(adyacentNodes)
 
@@ -174,10 +174,11 @@ class OrangeNode:
         elif numeroDeServicio == self.REQUESTPOSACK:
             #Confirma que un id de nodo verde no esta usado.
             #Algun tipo de contador para cuando reciba los
-            if inicioConfirmacionRespuesta == 1:
+            if inicioConfirmacionRespuesta == and numeroDeRequest in self.confirmationCounters:
                 self.confirmationCounters[numeroDeRequest] += 1 #Aumentamos el contador de request ack recibidos.
             else: #Nota para los programadores: Esto nunca esta pasando, ya que antes habian un remove y como era un diccionario debia caerse.
                 if numeroDeRequest in self.confirmationCounters:
+                    print("Estoy popeando el numero de request (esoy en request pos ack) ", numeroDeRequest)
                     self.confirmationCounters.pop(numeroDeRequest)
                     #print(self.instantiatingList)
                     #self.instantiatingList.remove(inicioConfirmacionRespuesta)
@@ -238,8 +239,8 @@ class OrangeNode:
         for i in range(0, len(listaDeIpsYpuertos), 2):
             #print(i, "\n")
             #print("Hola ",listaDeIpsYpuertos[i], "\n")
-            #if self.localIp != listaDeIpsYpuertos[i]:
-            self.orangeNodesList.append([listaDeIpsYpuertos[i], listaDeIpsYpuertos[i+1]])
+            if self.localIp != listaDeIpsYpuertos[i]:
+                self.orangeNodesList.append([listaDeIpsYpuertos[i], listaDeIpsYpuertos[i+1]])
 
     '''
     Genera un numero de nodo verde entre los disponibles
@@ -309,6 +310,7 @@ class OrangeNode:
             se instancia. '''
             if requestNum in self.confirmationCounters and position in self.instantiatingList:
                 requested = True
+                
                 self.confirmationCounters.pop(requestNum) #Se saca de el diccionario y se instancia.
             else:
                 print("Se me denegó request pos para: ", position)
@@ -405,6 +407,7 @@ class OrangeNode:
             # Si los demás recibieron el confirm pos, se puede proseguir
             if requestNum in self.confirmationCounters:
                 confirmed = True
+                print("Estoy popeando el numero de request (estoy en request pos)", requestNum)
                 self.confirmationCounters.pop(requestNum)
                 print("confirm pos para: ", position, "entregado")
         return True
