@@ -55,7 +55,7 @@ class AssemblePackageFactory:
         """
         numeroDeServicio = 205
         numeroRand = random.randrange(self.randomMaximo)
-        print("El numero de reques que se esta generando es: ", numeroRand )
+        #print("El numero de reques que se esta generando es: ", numeroRand )
         return self.assemblePackage(numeroRand, numeroDeNodoAInstanciar, numeroDeServicio, nodoNaranjaID, int(0).to_bytes(1, byteorder='big'))
 
     def assemblePackageRequestACK(self, packageRequest, estaInstanciado):
@@ -147,7 +147,7 @@ class AssemblePackageFactory:
         arrayIP = bytearray(6)
         ipSplit = str(ip).split(".")
         if len(ipSplit) == 4:
-            print("arreglo ip split ", ipSplit)
+            #print("arreglo ip split ", ipSplit)
             arrayIP[0] = int(ipSplit[0])
             arrayIP[1] = int(ipSplit[1])
             arrayIP[2] = int(ipSplit[2])

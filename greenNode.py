@@ -105,7 +105,7 @@ class GreenNode:
 
     def popPackage(self):
         while 1:
-            print("Pop package...")
+            #print("Pop package...")
             package, address = self.tcpl.receivePackage()
             hiloDeAtencionRequest = threading.Thread(target=self._attendRequests, args=(package, address))
             hiloDeAtencionRequest.start()
@@ -366,12 +366,13 @@ class GreenNode:
 
     def imprimirListVecinos(self):
         diccionario = self.neighboursTable.copy()
+        print("Mi numero de ID es: ", self.myID, " Y la tabla de adyacencias")
         for i in diccionario:
             print("ID: ", diccionario.get(i).id)
             print("Ip: ", diccionario.get(i).ip)
             print("Puerto: ", diccionario.get(i).port)
-            #"print("-----------------------------------------------------------------------------")
-        print("------------------------------------------Aqui termina la tabla de adyacencias------------------------------")
+            print("°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°")
+        print("--------------------------Aqui termina la tabla de adyacencias-----------------------")
 
     '''  # # #  # # #  # # #  Solicitudes de/ a naranjas  # # #  # # #  # # #  '''
 
