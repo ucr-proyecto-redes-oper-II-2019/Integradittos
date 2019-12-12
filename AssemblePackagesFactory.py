@@ -27,16 +27,12 @@ class AssemblePackageFactory:
             @:param datos son los datos que se quieren enviar en el paquete.
             @:return paquete ya ensamblado con los parametros entrantes.
         """
-        paqueteRequestPos = bytearray(self.DATA_MAX_SIZE)
-        paqueteRequestPos[self.numberRequestPos: self.numberRequestPos + self.tamNumeroRequest] = numeroDeRequest.to_bytes(
-            self.tamNumeroRequest, byteorder='big')
-        paqueteRequestPos[self.inicioConfirmacionRespuestaPos : self.inicioConfirmacionRespuestaPos + self.tamInicioConfirmacioRespuesta] = inicioConfirmacionRespuesta.to_bytes(
-            self.tamInicioConfirmacioRespuesta, byteorder='big')
-        paqueteRequestPos[self.tareaARealizarPos : self.tareaARealizarPos + self.tamTareaARealizar] = tareaARealizar.to_bytes(
-            self.tamTareaARealizar, byteorder='big')
-        paqueteRequestPos[self.prioridad : self.prioridad + self.tamPrioridad] = tamanoPrioridad.to_bytes(
-            self.tamPrioridad, byteorder='big')
-        paqueteRequestPos[self.prioridad + self.tamPrioridad : ] = datos
+        paquete = bytearray(self.DATA_MAX_SIZE)
+        paquete[0:4] = numeroDeRequest.to_bytes(self.tamNumeroRequest, byteorder='big')
+        paquete[4:6] = inicioConfirmacionRespuesta.to_bytes(self.tamInicioConfirmacioRespuesta, byteorder='big')
+        paquete[6] = tareaARealizar.to_bytes(self.tamTareaARealizar, byteorder='big')
+        paquete[7:9] = tamanoPrioridad.to_bytes(self.tamPrioridad, byteorder='big')
+        paquete[9:] = datos
         return paqueteRequestPos
 
     def unpackPackage(self, paquete):
@@ -45,11 +41,11 @@ class AssemblePackageFactory:
             @:param paquete que se desea desempaquetar.
             @:return: los datos que contiene el paquete.
         """
-        numeroDeRequest = int.from_bytes(paquete[self.numberRequestPos:self.inicioConfirmacionRespuestaPos], byteorder='big')
-        inicioConfirmacionRespuesta = int.from_bytes(paquete[self.inicioConfirmacionRespuestaPos:self.tareaARealizarPos], byteorder='big')
-        numeroDeServicio = int.from_bytes(paquete[self.tareaARealizarPos:self.prioridad], byteorder='big')
-        tamanoCuerpoPrioridad = int.from_bytes(paquete[self.prioridad:self.prioridad + self.tamPrioridad], byteorder='big')
-        datos = paquete[self.prioridad + self.tamPrioridad:]
+        numeroDeRequest = int.from_bytes(paquete[0:4], byteorder='big')
+        inicioConfirmacionRespuesta = int.from_bytes(paquete[4:6], byteorder='big')
+        numeroDeServicio = int.from_bytes(paquete[6], byteorder='big')
+        tamanoCuerpoPrioridad = int.from_bytes(paquete[7:9], byteorder='big')
+        datos = paquete[9:]
         return numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamanoCuerpoPrioridad, datos
 
     def assemblePackageRequestPos(self, numeroDeNodoAInstanciar, nodoNaranjaID):
