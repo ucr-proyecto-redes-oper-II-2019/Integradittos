@@ -117,6 +117,10 @@ class AssemblePackageFactory:
         numeroDeServicio = 101
         return self.assemblePackage(requestNum, 0, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
 
+    def assemblePackageFileExistACK(self, requestNum, answer):
+        numeroDeServicio = 103
+        return self.assemblePackage(requestNum, 0, numeroDeServicio, 0, int(answer).to_bytes(1, byteorder='big'))
+
     def packIP(self, ip):
         arrayIP = bytearray(4)
         ipSplit = str(ip).split(".")
@@ -125,6 +129,7 @@ class AssemblePackageFactory:
         arrayIP[2] = int(ipSplit[2])
         arrayIP[3] = int(ipSplit[3])
         return arrayIP
+
     def packPort(self, port):
         return int(port).to_bytes(2, byteorder='big')
 

@@ -61,7 +61,7 @@ class GreenNode:
         # Solicitar unirse al grafo
         # Esperar identificacion
         # Construir tabla de enrutamiento
-        self.tcplService.startService(self.myPort)
+        self.tcpl.startService(self.myPort)
         pass
 
     '''
@@ -168,7 +168,7 @@ class GreenNode:
             offset += 4
 
         # Se envían los mensajes a los vecinos
-        tableMessage = bytearray(DATA_MAX_SIZE)
+        tableMessage = bytearray(self.DATA_MAX_SIZE)
 
         # ToDo: Agregar código de enviar la tabla
         tableMessage[0:4] = random.randrange(self.MAX_RANDOM)
@@ -180,27 +180,27 @@ class GreenNode:
         for neighbour in neighboursTable:
             ip = neighboursTable[neighbour][0]
             port = neighboursTable[neighbour][1]
-            tcpl.sendPackage(tableMessage,  port, port)
+            self.tcpl.sendPackage(tableMessage,  port, port)
 
     '''
     Confirmar que la tabla de enrutamiento está actualizada (tras recibir tabla de enrutamiento)
     '''
-    def _checkRouteTable(self, receivedTable, sender '''nodo'''):
-        ownTable = self.routingTable
 
+    def _checkRouteTable(self, receivedTable, sender):
+        ownTable = self.routingTable
         items = 0
         offset = 0
-        while self.receivedTable[offset] != 0 and receivedTable[offset+2] != 0:
+        while self.receivedTable[offset] != 0 and self.receivedTable[offset+2] != 0:
             items  += 1
 
             # 2 bytes de nodo + 2 bytes de distancia = 4 bytes
-            nodeNum = int.from_bytes(receivedTable[offset:offset+2], byteorder='big')
-            distance = int.from_bytes(receivedTable[offset+2:offset+4], byteorder='big')
+            nodeNum = int.from_bytes(self.receivedTable[offset:offset+2], byteorder='big')
+            distance = int.from_bytes(self.receivedTable[offset+2:offset+4], byteorder='big')
 
             # Se compraran los datos con nuestra tabla
             # Si ya tenemos la ruta en la tabla checkeamos su distancia
             if nodeNum in ownTable:
-                if receivedTable[offset+2] < ownTable[ nodeNum ][1]:
+                if self.receivedTable[offset+2] < ownTable[ nodeNum ][1]:
                     # Nueva distancia
                     ownTable[ nodeNum ][1] = distance + 1
                     # Nuevo nodo enlace (quizá)
@@ -216,12 +216,12 @@ class GreenNode:
     '''
     Recibir mensajes
     '''
-     def receiveMessages(self):
+    def receiveMessages(self):
         while 1:
             #print("Estoy recibiendo mensajes.")
             package, address = self.tcplService.receivePackage()
             # Si es el nodo destino se ruteo
-            destinationNode = int.from_bytes(package[13:15], byteorder='big')
+            destination = int.from_bytes(package[13:15], byteorder='big')
             if destination != self.graphID:
                 if destination in self.routingTable:
                     ip = self.neighboursTable[ self.routingTable[destination][2] ].ip
@@ -241,10 +241,13 @@ class GreenNode:
         requestNumber, beginConfirmationAnswer, serviceNumber, sizeBodyPriority, data = self.assemblePackage.unpackPackage(package)
         if serviceNumber == self.GREET_NEIGHBOR: #Se me informa que tengo un vecino
            self.greetNeighbor( requestNumber, beginConfirmationAnswer, data)
-        elif serviceNumber == self.GREET_NEIGHBOR_ACK: # recibo un ack de que mi vecino ya sabe que existo
 
+        elif serviceNumber == self.GREET_NEIGHBOR_ACK: # recibo un ack de que mi vecino ya sabe que existo
             pass
+
         elif serviceNumber == self.FILE_EXISTS: #Recibo un mensaje de pregunta si un archivo existe
+
+
             pass
         elif serviceNumber == self.FILE_EXISTS_ACK: #Se medio una respuesta acerca de la existencia de un archivo.
             pass
@@ -295,7 +298,7 @@ class GreenNode:
     enviados por un vecino.
     '''
     def updateRoutingTable(self, requestPack):
-
+        pass
 
 
     ''' ### ### ### Solicitudes de naranjas ### ### ### '''
@@ -314,6 +317,11 @@ def greetNeighbor(self, requestNumber, beginConfirmationAnswer, data):
     package = self.assemblePackage.assemblePackageGreetNeighborACK(requestNumber)
     self.tcplService.sendPackage(package, ip, port)
 
+def fileExist(self, requestNum, data):
+    #Hay que convertir los bytes al identificador.
+    answer = self._askForFileFragments()
+    self.assemblePackage.assemblePackageFileExistACK(requestNum, answer)
+    pass
     # todo Acordar estos metodos
 def extractPortAndIp(self, data):
     '''
