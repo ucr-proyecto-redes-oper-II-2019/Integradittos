@@ -238,8 +238,10 @@ class GreenNode:
 
         requestNumber, beginConfirmationAnswer, serviceNumber, sizeBodyPriority, data = self.assemblePackage.unpackPackage(package)
         if serviceNumber == self.GREET_NEIGHBOR: #Se me informa que tengo un vecino
-            pass
+           self.greetNeighbor(beginConfirmationAnswer, data)
+
         elif serviceNumber == self.GREET_NEIGHBOR_ACK: # recibo un ack de que mi vecino ya sabe que existo
+
             pass
         elif serviceNumber == self.FILE_EXISTS: #Recibo un mensaje de pregunta si un archivo existe
             pass
@@ -305,9 +307,24 @@ class GreenNode:
 
 
     ''' ### ### ### Procedimientos dentro del mismo nodo ### ### ### '''
+def greetNeighbor(self, beginConfirmationAnswer, data):
+    port, ip = self.extractPortAndIp(data)
+    self.neighboursTable[beginConfirmationAnswer] = ip, port
 
     # todo Acordar estos metodos
-
+def extractPortAndIp(self, data):
+    '''
+    Subrutina que extrae el puerto e ip de un bytearray
+    :param datos: datos de los que se va a extraer la informacion
+    :return: retorna el numero de puerto y la ip.
+    '''
+    ip = ""
+    ip += str(data[0]) + "."
+    ip += str(data[1]) + "."
+    ip += str(data[2]) + "."
+    ip += str(data[3])
+    port = str(int.from_bytes(data[4:6], byteorder='big'))
+    return port, ip
     #def splitFile(self, fileToSplit):
     #def buildFile(self, fileName):
     #def findFile(self, fileName):
