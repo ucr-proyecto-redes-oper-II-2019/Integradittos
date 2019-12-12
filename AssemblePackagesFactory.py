@@ -122,6 +122,12 @@ class AssemblePackageFactory:
     def assmblePackageRemoveFileACK(self, requesNum):
         numeroDeServicio = 109
         return self.assemblePackage(requesNum, 0, numeroDeServicio, 1, int(0).to_bytes(1, byteorder='big'))
+
+    def assemblePackageConnect(self):
+        numeroDeServicio = 200
+        return self.assemblePackage(random.randint(0,self.randomMaximo), 1, numeroDeServicio, int(0).to_bytes(1, byteorder='big'))
+
+
     def packIP(self, ip):
         arrayIP = bytearray(4)
         ipSplit = str(ip).split(".")

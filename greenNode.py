@@ -6,6 +6,8 @@ from orangeNode import GreenNodeToken
 from greenMessageCodes import GreenMessageCodes
 from fileSystem import FileSystem
 from AssemblePackagesFactory import AssemblePackageFactory
+import time
+
 class GreenNode:
 
 	#FILE_FRAGMENT_MAX_SIZE = 1000
@@ -29,6 +31,8 @@ class GreenNode:
     EXEC_STOP_ACK = 117
     SEND_ROUTE = 118
     SEND_ROUTE_ACK = 119
+    CONNECT_ACK = 201
+    WAITFORACKTIMEOUT = 5
     DATA_MAX_SIZE = 1009
     MAX_RANDOM = 65000
     FILE_NAME_SIZE = 32
@@ -42,7 +46,7 @@ class GreenNode:
 	def __init__(self, myPortNumber, orangeIP, orangePortNumber):
 		# Inicializar servicios basicos
 		self.myPort = myPortNumber
-		self.graphID = -1
+		self.myID = -1
 		
 		self.orangeIP = orangeIP
 		self.orangePort = orangePortNumber
@@ -51,7 +55,7 @@ class GreenNode:
 
         self.tcpl.startService(self.myPort)
 		
-		# Registros en tabla: ip [0] | puerto [1]
+		# Diccionario con GreenNodeToken
         self.neighboursTable = dict()
         # Registros en tabla: nodoDestino [0] | distancia [1] | vecino [2]
         self.routingTable = dict()
@@ -69,7 +73,14 @@ class GreenNode:
 	def _execution(self):
         self.isRunning = True
 		# Esperar nuevos vecinos (de parte de naranja)
-		# Esperar solicitudes de otros verdes
+        paquete = self.assemblePackage.assemblePackageConnect()
+        if(self.tcpl.sendPackage(paquete, self.orangeIP, self.orangePortNumber)):
+            threadReceiving = threading.Thread(target = self.popPackage())
+            threadReceiving.start()
+		else:
+            print("No fue posible enviar el paquete para solicitar ID al nodo Naranja")
+            return -1
+        # Esperar solicitudes de otros verdes
 		# Esperar solicitudes de azules
         self._receiveMessages()
 	
@@ -90,6 +101,13 @@ class GreenNode:
 		self._execution()
 		self._termination()
 	
+    def popPackage(self):
+        while 1:
+            print("Pop package...")
+            package, address = self.tcplService.receivePackage()
+            hiloDeAtencionRequest = threading.Thread(target=self.attendRequests, args=(package, address))
+            hiloDeAtencionRequest.start()
+        pass
 	'''  # # #  # # #  # # #  Solicitudes de azules  # # #  # # #  # # #  '''
 	
 	'''
@@ -285,6 +303,20 @@ class GreenNode:
             pass
         elif serviceNumber == self.SEND_ROUTE_ACK: #Se me indica que la tabla que mande se recibio correctamente.
             pass
+        elif serviceNumber = self.CONNECT_ACK:
+            self.myID = beginConfirmationAnswer
+            neighbourID = int.from_bytes(data[0:2], byteorder='big')
+            neighbourNode = GreenNodeToken(neighbourID)
+            port, ip = self._extractPortAndIp(data[2:8])
+            if(ip != "0.0.0.0"):
+                neighbourNode.ip = ip
+                neighbourNode.port = port
+                neighbourNode.state = True
+                self.neighboursTable[neighbourID] = neighbourNode
+            else:
+                self.neighboursTable[neighbourID] = neighbourNode
+            arrayTable = {neighbourID, 1, neighbourID}
+            self.routingTable[neighbourID] = arrayTable
 
     '''
 	Recibir la “presentación” de un nodo verde nuevo.
@@ -293,9 +325,7 @@ class GreenNode:
 
 	Relocalizar un proceso reanudable.
 	def _relocateProcess(self, process):
-	def _receiveRelocatedProcess(self, package):
-
-	Enviar un segmento de archivo.
+	def _receiveRelocatedProcess(self, package):int.from_bytes(data[2:6])
 	def _sendFileFragment(self, fragment):
 	def _receiveFileFragment(self, package):
 
