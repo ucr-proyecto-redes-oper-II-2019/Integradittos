@@ -4,6 +4,7 @@ import sys
 import select
 import ctypes
 import time
+import os.path
 from listaCircular import listaCircular
 
 # General
@@ -40,16 +41,21 @@ def cargar_imagen(archivo):
     global end_of_image
     # abrir imagen
     in_file = open(archivo, "rb")
+    # insertamos el nombre del archivo en el primer slice
+    image_slice = bytearray(512)
+    image_slice[0:50] = os.path.basename(archivo.encode())
+    image_slice[50:512] = in_file.read(462)
     # Mientras no se haya leido toda la imagen
     while not end_of_image:   
-        image_slice = in_file.read(512)
         # si no hay mas que leer, es el final
         if not image_slice:
-        	# "libera" el bus para que la capa inferior pueda enviar el paquete con el *
+            # "libera" el bus para que la capa inferior pueda enviar el paquete con el *
             end_of_image = True
         else:
         	# si no, se envia la seccion normal
             enviar_seccion(image_slice)
+        # se lee el siguiente slice
+        image_slice = in_file.read(512)
     in_file.close()
 
 def enviar_seccion(image_slice):
@@ -71,7 +77,7 @@ def sending_buffering():
     global SENDING_BUFFER_LOCK
     global bytes_on_bus
     global finishing_ACK
-    SENDING_BUFFER.establecerInicio(BUFFER_START)
+    SENDING_BUFFER.establecer_inicio(BUFFER_START)
     while not end_of_image:
         # si SN_max es mayor o igual al mensaje que falta de ACK (SN_min),
         # y hay espacio en el buffer
@@ -136,7 +142,7 @@ def enviar_imagen(ip, port):
         	SENDING_BUFFER_LOCK.acquire() # region critica
         	if(iterador_ventana < final_ventana):
         		#print("Enviando paquete: % d" %(iterador_ventana))
-        		mi_socket.sendto(SENDING_BUFFER.getElemento(iterador_ventana), (ip, int(port)))
+        		mi_socket.sendto(SENDING_BUFFER.get_elemento(iterador_ventana), (ip, int(port)))
         		iterador_ventana += 1
         	SENDING_BUFFER_LOCK.release() # region critica
 
@@ -145,7 +151,7 @@ def enviar_imagen(ip, port):
             for msg in range (SN_min, SN_max):
                 # podria acabarse el timeout de envio y o recibir un ACK mientras se envian los paquetes
                 #if time.time() < timeout and last_SN_min == SN_min:
-                mi_socket.sendto(SENDING_BUFFER.getElemento(msg), (ip, int(port)))
+                mi_socket.sendto(SENDING_BUFFER.get_elemento(msg), (ip, int(port)))
             SENDING_BUFFER_LOCK.release() # region critica
             '''
 
@@ -178,7 +184,7 @@ def recibir_ACK():
         # si el nuevo SN_min es diferente al ultimo, actualizamos el inicio de la ventana
         if(ultimo_ACK < SN_min):
         	if(ultimo_ACK != -1):
-        		SENDING_BUFFER.establecerInicio(SN_min)
+        		SENDING_BUFFER.establecer_inicio(SN_min)
         		SENDING_BUFFER_COUNT -= (SN_min - ultimo_ACK)
         	ultimo_ACK = SN_min  
 

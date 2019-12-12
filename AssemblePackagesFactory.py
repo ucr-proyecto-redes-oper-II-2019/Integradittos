@@ -72,7 +72,7 @@ class AssemblePackageFactory:
         estaOcupado = 0
         estaLibre = 1
         numeroRequest, idNodoAInstanciar, tareaARealizar, prioridad, datos= self.unpackPackage(packageRequest)
-        if estaInstanciado is True:
+        if estaInstanciado == 0:
             packageRequestACK = self.assemblePackage(numeroRequest, estaOcupado, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
         else:
             packageRequestACK = self.assemblePackage(numeroRequest, estaLibre, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
@@ -108,9 +108,9 @@ class AssemblePackageFactory:
     def assemblePackageInstanciado(self):
         pass
 
-    def assemblePackageConfirmPosACK(self, id): 
+    def assemblePackageConfirmPosACK(self, id, requestNum): 
         numeroDeServicio = 211
-        return self.assemblePackage(random.randint(0,self.randomMaximo), id, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
+        return self.assemblePackage(requestNum, id, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
 
     def packIP(self, ip):
         arrayIP = bytearray(4)
