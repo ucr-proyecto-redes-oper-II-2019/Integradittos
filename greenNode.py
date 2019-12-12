@@ -31,6 +31,7 @@ class GreenNode:
     SEND_ROUTE_ACK = 119
     DATA_MAX_SIZE = 1009
     MAX_RANDOM = 65000
+    FILE_NAME_SIZE = 32
 	
 	'''
 	Constructor de objetos de clase GreenNode.
@@ -66,10 +67,11 @@ class GreenNode:
 	Etapa de ejecucion del nodo verde.
 	'''
 	def _execution(self):
+        self.isRunning = True
 		# Esperar nuevos vecinos (de parte de naranja)
 		# Esperar solicitudes de otros verdes
 		# Esperar solicitudes de azules
-		pass
+        self._receiveMessages()
 	
 	'''
 	Etapa de finalizacion del nodo verde.
@@ -82,7 +84,7 @@ class GreenNode:
 	
 	'''
 	Ejecuta toda la funcionalidad del nodo verde, incluyendo las etapas
-	de inicializacion, ejecucion y terminacion.
+	de ejecucion y terminacion.
 	'''
 	def run(self):
 		self._execution()
@@ -93,13 +95,17 @@ class GreenNode:
 	'''
 	Almacenar un archivo.
 	'''
-	def _putFile(self, requestPack):
-		pass
+	def _putFile(self, data):
+        fileName = data[0, self.FILE_NAME_SIZE].decode('ascii')
+        fileData = data[self.FILE_NAME_SIZE:]
+
+		self.fileSystem.storeFile(fileName, fileData)
 		
 	'''
 	Recuperar un archivo.
 	'''
-	def _getFile(self, requestPack):
+	def _getFile(self, data):
+        #fileName = data.decode('ascii')
 		pass
 	
 	'''
@@ -113,11 +119,19 @@ class GreenNode:
 	'''
 	def _askForWholeFile(self, requestPack):
 		pass
-	
+
 	'''
-	Recuperar un archivo.
+	Almacenar fragmento de un archivo.
 	'''
-	def _getFile(self, requestPack):
+	def _putFragment(self, data):
+        fileName = data[0, self.FILE_NAME_SIZE].decode('ascii')
+        fileData = data[self.FILE_NAME_SIZE:]
+
+		self.fileSystem.storeFragment(fileName, fileData)
+	'''
+	Recuperar fragmentos de un archivo.
+	'''
+	def _getFragments(self, requestPack):
 		pass
 	
 	'''
@@ -212,7 +226,7 @@ class GreenNode:
     Recibir mensajes
     '''
     def _receiveMessages(self):
-        while 1:
+        while self.isRunning:
             #print("Estoy recibiendo mensajes.")
             package, address = self.tcpl.receivePackage()
             # Si es el nodo destino se ruteo
@@ -228,7 +242,6 @@ class GreenNode:
             else:
                 hiloDeAtencionRequest = threading.Thread(target=self._attendRequests, args=(package, address))
                 hiloDeAtencionRequest.start()
-        pass
      
     
     def _attendRequests(self, package, ipPort):
@@ -317,6 +330,8 @@ class GreenNode:
 	Agregar un vecino nuevo y presentarse si esta instanciado.
 	'''
 	def _addNeighbour(self, requestPack):
+        # Agregar a tabla de vecinos
+        # Presentarse al vecino si está instanciado
 		pass
 	
 	
