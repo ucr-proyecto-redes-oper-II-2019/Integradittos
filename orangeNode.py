@@ -174,7 +174,7 @@ class OrangeNode:
         elif numeroDeServicio == self.REQUESTPOSACK:
             #Confirma que un id de nodo verde no esta usado.
             #Algun tipo de contador para cuando reciba los
-            if inicioConfirmacionRespuesta == and numeroDeRequest in self.confirmationCounters:
+            if inicioConfirmacionRespuesta == 1 and numeroDeRequest in self.confirmationCounters:
                 self.confirmationCounters[numeroDeRequest] += 1 #Aumentamos el contador de request ack recibidos.
             else: #Nota para los programadores: Esto nunca esta pasando, ya que antes habian un remove y como era un diccionario debia caerse.
                 if numeroDeRequest in self.confirmationCounters:
