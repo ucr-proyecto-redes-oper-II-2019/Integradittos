@@ -51,6 +51,8 @@ class GreenNode:
 
         self.fileSystem = FileSystem();
 
+        self.assemblePackage = AssemblePackageFactory()
+
     '''
     Etapa de inicializacion del nodo verde.
     '''
@@ -238,8 +240,7 @@ class GreenNode:
 
         requestNumber, beginConfirmationAnswer, serviceNumber, sizeBodyPriority, data = self.assemblePackage.unpackPackage(package)
         if serviceNumber == self.GREET_NEIGHBOR: #Se me informa que tengo un vecino
-           self.greetNeighbor(beginConfirmationAnswer, data)
-
+           self.greetNeighbor( requestNumber, beginConfirmationAnswer, data)
         elif serviceNumber == self.GREET_NEIGHBOR_ACK: # recibo un ack de que mi vecino ya sabe que existo
 
             pass
@@ -307,9 +308,11 @@ class GreenNode:
 
 
     ''' ### ### ### Procedimientos dentro del mismo nodo ### ### ### '''
-def greetNeighbor(self, beginConfirmationAnswer, data):
+def greetNeighbor(self, requestNumber, beginConfirmationAnswer, data):
     port, ip = self.extractPortAndIp(data)
     self.neighboursTable[beginConfirmationAnswer] = ip, port
+    package = self.assemblePackage.assemblePackageGreetNeighborACK(requestNumber)
+    self.tcplService.sendPackage(package, ip, port)
 
     # todo Acordar estos metodos
 def extractPortAndIp(self, data):

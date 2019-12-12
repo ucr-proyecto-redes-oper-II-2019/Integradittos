@@ -112,6 +112,11 @@ class AssemblePackageFactory:
         numeroDeServicio = 211
         return self.assemblePackage(requestNum, id, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
 
+
+    def assemblePackageGreetNeighborACK(self, requestNum):
+        numeroDeServicio = 101
+        return self.assemblePackage(requestNum, 0, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
+
     def packIP(self, ip):
         arrayIP = bytearray(4)
         ipSplit = str(ip).split(".")
