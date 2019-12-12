@@ -212,7 +212,6 @@ class OrangeNode:
             else:
                 print("No hay nodos disponibles")
                 self.tcplService.sendPackage(self.assemblePackage.assemblePackage(numeroDeRequest, 0, 201, 0, bytearray(0)), ipFuente, puertoFuente)
-
             #Tenemos que buscar ID
             #Hacemos request pos para los demas
 
@@ -271,7 +270,7 @@ class OrangeNode:
             # Crear paquete para REQUEST_POS
             # Generar un numero aleatorio entre los disponibles
             position = self.getAvailableGreenNum()
-
+            
             # Si se generó un 0, no hay nodos disponibles, retornamos fallo
             if position == 0:
                 return 0
@@ -292,7 +291,6 @@ class OrangeNode:
                 ip, puerto = node
                 self.tcplService.sendPackage(requestPosPacket, ip, puerto)
                 # hacer broadcast
-
             timeout = time.time() + self.WAITFORACKTIMEOUT   # en segundo
             # esperar confirmación de todos (si tardan mas de determinado tiempo)
             while requestNum in self.confirmationCounters\
@@ -350,19 +348,15 @@ class OrangeNode:
         else:
             instantiated = 0 #El id esta instaciado
         print("Recibí un request pos para: ", position, "con prioridad", priority)
-
         ''' Si este nodo tiene menor prioridad y se está instanciando esa misma posición, 
         debe sacar el nodo de la lista de instanciamiento. '''
         if priority < self.id and position in self.instantiatingList:
             self.instantiatingList.remove(position)
             instantiated = 1
-
         print("Responderé al request pos con un:", instantiated)
-
         # Ensamblamos y enviamos el paquete según el estado de esa posición
         ackPacket = self.assemblePackage.assemblePackageRequestACK(packageRequest, instantiated)
         self.tcplService.sendPackage(ackPacket, ipPort[0], ipPort[1])
-
     def popPackage(self):
         while 1:
             print("Pop package...")
@@ -408,13 +402,11 @@ class OrangeNode:
 
                 # Utilizamos un pequeño delay para el ciclo
                 time.sleep(self.WAITFORACKDELAY)
-
             # Si los demás recibieron el confirm pos, se puede proseguir
             if requestNum in self.confirmationCounters:
                 confirmed = True
                 self.confirmationCounters.pop(requestNum)
                 print("confirm pos para: ", position, "entregado")
-
         return True
 
 
