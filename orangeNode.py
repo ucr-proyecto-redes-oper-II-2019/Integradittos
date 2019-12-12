@@ -187,10 +187,13 @@ class OrangeNode:
             #self.freeNodeList.remove(inicioConfirmacionRespuesta) #removemos el nodo que ya fue instanciado
             port, ip = self.extractPortAndIp(datos) # Extraemos la direccion del nodo que instanciaron.
             self.instantiateNode(inicioConfirmacionRespuesta, ip, port) #Instanciamos ese nodo con un puerto e ip.
-             #Armamos el paquete.
-            self.tcplService.sendPackage(self.assemblePackage.assemblePackageConfirmPosACK(1), ipFuente, puertoFuente)
-        elif numeroDeServicio == self.CONFIRMPOSACK:
-            pass
+            self.freeNodeList.remove(inicioConfirmacionRespuesta)
+            #Armamos el paquete.
+            self.tcplService.sendPackage(self.assemblePackage.assemblePackageConfirmPosACK(1,numeroDeRequest), ipFuente, puertoFuente)
+
+
+        elif numeroDeServicio == self.CONFIRMPOSACK: 
+            self.confirmationCounters[numeroDeRequest] += 1
 
             #dependiendo si ya me confirmaron todos los nodos
         elif numeroDeServicio == self.CONNECT:
@@ -206,6 +209,10 @@ class OrangeNode:
                 listaPaquetes = self.assemblePackage.assemblePackageConnectACK(package, numeroDeNodo, listaDeAdyacencia)
                 for indice in range(len(listaPaquetes)): #Enviamos la lista de paquetes al nodo verde que se aba de conectar.
                     self.tcplService.sendPackage(listaPaquetes[indice], ipFuente, puertoFuente)
+            else:
+                print("No hay nodos disponibles")
+                self.tcplService.sendPackage(self.assemblePackage.assemblePackage(numeroDeRequest, 0, 201, 0, bytearray(0)), ipFuente, puertoFuente)
+
             #Tenemos que buscar ID
             #Hacemos request pos para los demas
 
@@ -220,8 +227,8 @@ class OrangeNode:
         ip += str(datos[1]) + "."
         ip += str(datos[2]) + "."
         ip += str(datos[3])
-        port = str(int.from_bytes(datos[4:5], byteorder='big'))
-        return port, ip
+        port = str(int.from_bytes(datos[4:6], byteorder='big'))
+        return port, ip 
 
     def assignAddressToNode(self, id, ip, puerto):
         pass
@@ -286,7 +293,6 @@ class OrangeNode:
                 self.tcplService.sendPackage(requestPosPacket, ip, puerto)
                 # hacer broadcast
 
-            print("Envié un request pos para: ", position, "codigo:", requestNum)
             timeout = time.time() + self.WAITFORACKTIMEOUT   # en segundo
             # esperar confirmación de todos (si tardan mas de determinado tiempo)
             while requestNum in self.confirmationCounters\
@@ -336,20 +342,20 @@ class OrangeNode:
         @:param ipPort Ip y peurto al que se devuelve el ACK instantiated = True
         @:param packageRequest paquete request sobre el cuál se devuelve el ACK
         """
-        priority = int.from_bytes(packageRequest[6:8], byteorder='big') #Estaba de 7 a 9 que si corresponden a las posiciones si se empiza a contar desde 1.
+        priority = int.from_bytes(packageRequest[7:9], byteorder='big') #Estaba de 7 a 9 que si corresponden a las posiciones si se empiza a contar desde 1.
         ''' Revisamos si no está instanciado, no se está intentando instanciar y 
         el request tiene mayor prioridad. '''
         if (position in self.freeNodeList) and not (position in self.instantiatingList):
-            instantiated = 0 #El id no esta instaciado
+            instantiated = 1 #El id no esta instaciado
         else:
-            instantiated = 1 #El id esta instaciado
+            instantiated = 0 #El id esta instaciado
         print("Recibí un request pos para: ", position, "con prioridad", priority)
 
         ''' Si este nodo tiene menor prioridad y se está instanciando esa misma posición, 
         debe sacar el nodo de la lista de instanciamiento. '''
         if priority < self.id and position in self.instantiatingList:
             self.instantiatingList.remove(position)
-            instantiated = 0
+            instantiated = 1
 
         print("Responderé al request pos con un:", instantiated)
 
