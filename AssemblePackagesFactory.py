@@ -72,7 +72,7 @@ class AssemblePackageFactory:
         estaOcupado = 0
         estaLibre = 1
         numeroRequest, idNodoAInstanciar, tareaARealizar, prioridad, datos= self.unpackPackage(packageRequest)
-        if estaInstanciado is True:
+        if estaInstanciado == 0:
             packageRequestACK = self.assemblePackage(numeroRequest, estaOcupado, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
         else:
             packageRequestACK = self.assemblePackage(numeroRequest, estaLibre, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
@@ -91,10 +91,11 @@ class AssemblePackageFactory:
         numeroRequest, inicioConfirmacionRespuesta, tareaARealizar, prioridad, datos = self.unpackPackage(paqueteConnect)
         # Despues de realizar to do el proceso de de reserve de nodos, para este punto debo contar con el ip y el ppuerto del verde, ademas del ID que se negocio con los demas naranjas.
         paquete = bytearray(8)
-        for iter in listaVecinos:
-            paquete[0:2] = int(iter.id).to_bytes(2, byteorder="big") #Id del nodo
-            paquete[2:4] = int(iter.ip).to_bytes(2, byteorder="big") # Ip
-            paquete[4:] = int(iter.port).to_bytes(2, byteorder="big") #Puerto
+        for vecino in listaVecinos:
+            paquete[0:2] = int(vecino.id).to_bytes(2, byteorder="big") #Id del nodo
+            arrayIPandPort = self.packIpPort(vecino.ip, vecino.port)
+            paquete[2:6] = arrayIPandPort[0:4] 
+            paquete[6:8] = arrayIPandPort[4:]
             listaDePaquetesConnectACK.append(self.assemblePackage(numeroRequest, idNodoAInstanciar, numeroDeServicio, self.tamIPyPuerto, paquete)) #Aqui falta que lisrt
         return listaDePaquetesConnectACK
 
@@ -102,33 +103,47 @@ class AssemblePackageFactory:
         numeroDeServicio = 210
         tamanoIP = 4
         tamanoPort = 2
-        return self.assemblePackage(random.randrange(self.randomMaximo), nodoReservado, numeroDeServicio, tamanoIP+tamanoPort, self.packIpPort(ipAndPort[0],ipAndPort[1]))
+        return self.assemblePackage(random.randint(0,self.randomMaximo), nodoReservado, numeroDeServicio, tamanoIP+tamanoPort, self.packIpPort(ipAndPort[0],ipAndPort[1]))
 
     def assemblePackageInstanciado(self):
         pass
 
-    def assemblePackageConfirmPosACK(self, id): 
+    def assemblePackageConfirmPosACK(self, id, requestNum): 
         numeroDeServicio = 211
-        return self.assemblePackage(random, id, numeroDeServicio, 0)
+        return self.assemblePackage(requestNum, id, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
 
+
+    def assemblePackageGreetNeighborACK(self, requestNum):
+        numeroDeServicio = 101
+        return self.assemblePackage(requestNum, 0, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
+
+    def assemblePackageFileExistACK(self, requestNum, answer):
+        numeroDeServicio = 103
+        return self.assemblePackage(requestNum, 0, numeroDeServicio, 0, int(answer).to_bytes(1, byteorder='big'))
+
+    def assmblePackageRemoveFileACK(self, requesNum):
+        numeroDeServicio = 109
+        return self.assemblePackage(requesNum, 0, numeroDeServicio, 1, int(0).to_bytes(1, byteorder='big'))
     def packIP(self, ip):
         arrayIP = bytearray(4)
         ipSplit = str(ip).split(".")
-        arrayIP[0] = int(ip[0]).to_bytes(4, byteorder='big')
-        arrayIP[1] = int(ip[1]).to_bytes(4, byteorder='big')
-        arrayIP[2] = int(ip[2]).to_bytes(4, byteorder='big')
-        arrayIP[3] = int(ip[3]).to_bytes(4, byteorder='big')
+        arrayIP[0] = int(ipSplit[0])
+        arrayIP[1] = int(ipSplit[1])
+        arrayIP[2] = int(ipSplit[2])
+        arrayIP[3] = int(ipSplit[3])
         return arrayIP
+
     def packPort(self, port):
         return int(port).to_bytes(2, byteorder='big')
 
     def packIpPort(self, ip, port):
         arrayIP = bytearray(6)
         ipSplit = str(ip).split(".")
-        arrayIP[0] = int(ip[0]).to_bytes(1, byteorder='big')
-        arrayIP[1] = int(ip[1]).to_bytes(1, byteorder='big')
-        arrayIP[2] = int(ip[2]).to_bytes(1, byteorder='big')
-        arrayIP[3] = int(ip[3]).to_bytes(1, byteorder='big')
-        arrayIP[4] = int(port[0]).to_bytes(1, byteorder='big')
-        arrayIP[5] = int(port[1]).to_bytes(1, byteorder='big')
+        if len(ipSplit) == 4:
+            print("arreglo ip split ", ipSplit)
+            arrayIP[0] = int(ipSplit[0])
+            arrayIP[1] = int(ipSplit[1])
+            arrayIP[2] = int(ipSplit[2])
+            arrayIP[3] = int(ipSplit[3])
+            arrayIP[4:] = int(port).to_bytes(2, byteorder='big')
         return arrayIP
