@@ -16,6 +16,7 @@ class ProcessSystem:
     _BASE_FILE_DIRECTORY = "greenNodeProcesses"
 
     def __init__(self, id, port):
+        # nombre | ejecutable |
         self._processList = dict()
         self._ownerNode = -1
         self._savingPath = "./" + ProcessSystem._BASE_FILE_DIRECTORY + "/" + str(id)
@@ -23,7 +24,7 @@ class ProcessSystem:
             os.makedirs(self._savingPath)
         self._reliTransPort = port
 
-    def receiveProcess(self, programName):
+    def receiveProcess(self, programName, executableName):
 
 
         processDirectory = self._savingPath + "/" + programName
@@ -36,14 +37,12 @@ class ProcessSystem:
 
         # Recibimos el programa por transmisión confiable
         # Creamos el comando para recibir proceso con syscall
-        programPath = processDirectory + "/" + programName
-        comando = "./kappita" + " " + str(self._reliTransPort + 1000) + " " + programPath
+        programPath = processDirectory + "/" #+ programName
+        comando = "./recibir_proceso" + " " + str(self._reliTransPort + 1000) + " " + programPath + " " + programName
         print(comando)
         os.system(comando)
-        print ("HPSAL ... Kappa")
-        # Se ejecuta el programa
-        os.system(programPath)
-        
-    #def runProcess(self, processName):
 
+        os.system(programPath + executableName)
+        
+    def sendProcess(self, )
         
