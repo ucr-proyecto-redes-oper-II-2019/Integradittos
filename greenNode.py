@@ -8,7 +8,7 @@ from fileSystem import FileSystem
 
 class GreenNode:
 	
-	DATA_MAX_SIZE = 1009
+	DATA_MAX_SIZE = 1015
 	MAX_RANDOM = 65000
 	
 	'''
@@ -152,14 +152,18 @@ class GreenNode:
 
 		# ToDo: Agregar código de enviar la tabla
 		tableMessage[0:4] = random.randrange(MAX_RANDOM)
-		tableMessage[4:6] = 0
+		tableMessage[4:6] = bytearray(2) #0
 		# tableMessage[6] = código
-		tableMessage[7:9] = 0 # sin prioridad
+		tableMessage[7:9] = bytearray(2) # sin prioridad
+		tableMessage[9:11] = int(50).to_bytes(2, byteorder='big')
 		# ...
 		
 		for neighbour in neighboursTable:
+			# fuente - destino
+			tableMessage[11:13] = int(self.graphID).to_bytes(2, byteorder='big')
+			tableMessage[13:15] = int(neighbour).to_bytes(2, byteorder='big')
 			ip = neighboursTable[neighbour][0]
-			port = neighboursTable[neighbour][1] 
+			port = neighboursTable[neighbour][1]
 			tcpl.sendPackage(tableMessage,  port, port)
 
 	'''
