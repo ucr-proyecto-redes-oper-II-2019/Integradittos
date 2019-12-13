@@ -17,7 +17,7 @@
 int exec_privilege(char * file_name)
 {
 	char comando[512];
-	strcpy(comando, "chmod u+x ./");
+	strcpy(comando, "chmod u+x ");
    	strcat(comando, file_name);
    	
    	printf("%s\n", comando);
@@ -92,11 +92,12 @@ int pack_process(long file_count, char * file_names[], FILE * archivo_proceso)
  *Metodo que "Desempaca" informacion de un archivo. 
  *@param archivo_proceso Archivo que contiene informacion concatenada.
  */
-int unpack_process(FILE * archivo_proceso)
+int unpack_process(FILE * archivo_proceso, char * ruta_archivo)
 {
 	long cantidad_de_archivos = 0;
 	long cantidad_de_bytes_archivo = 0; 
 	char nombre_del_archivo[F_NAME_SIZE];
+	char ruta_completa[255];
 	FILE * file; 
 
 	//Leemos la cantidad de archivos el primer long que hay en el archivo, que es el numero de archivos que hay 
@@ -110,7 +111,10 @@ int unpack_process(FILE * archivo_proceso)
 		fread(&cantidad_de_bytes_archivo, FILE_BYTES_SIZE, 1, archivo_proceso);
 		printf("Desempaquetando %s: %ld bytes\n", nombre_del_archivo, cantidad_de_bytes_archivo);
 		//Abrimos el archivo. 
-		file = fopen(nombre_del_archivo, "wb");
+		memset(ruta_completa, 0, 255);
+		strcpy(ruta_completa, ruta_archivo);
+		strcat(ruta_completa, nombre_del_archivo);
+		file = fopen(ruta_completa, "wb");
 		//Pasamos los datos al archivo.
 		//char one_byte;
 		//for(size_t byte; byte < cantidad_de_bytes_archivo; ++byte)
@@ -127,7 +131,7 @@ int unpack_process(FILE * archivo_proceso)
 		// 	Si se desempaquetó l primer archivo, se da permisos de ejecución al ejecutable (primer archivo)
 		// pues es el ejecutable
 		if(indice == 0)
-			exec_privilege(nombre_del_archivo);
+			exec_privilege(ruta_completa);
 	}	
 	return 0;
 }
