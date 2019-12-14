@@ -15,34 +15,64 @@ class ProcessSystem:
 
     _BASE_FILE_DIRECTORY = "greenNodeProcesses"
 
-    def __init__(self, id, port):
-        # nombre | ejecutable |
+    def __init__(self, greenIp, TCPLPort, ownPort):
+        # nombre (key) | ruta concantenado [0] | ruta ejecutable [1]
         self._processList = dict()
         self._ownerNode = -1
-        self._savingPath = "./" + ProcessSystem._BASE_FILE_DIRECTORY + "/" + str(id)
+        self._savingPath = "./" + ProcessSystem._BASE_FILE_DIRECTORY + "/" + str(ownPort) + "/"
         if not os.path.exists(self._savingPath):
             os.makedirs(self._savingPath)
-        self._reliTransPort = port
+        self._ownPort = ownPort
+        self._tcplPort = TCPLPort 
+        self._reliTransPort = TCPLPort + 1000
+        self._greenIp = greenIp
+        
 
+    '''Recibe el proceso con ese nombre (programName) por transmisión confiable'''
     def receiveProcess(self, programName, executableName):
 
-
-        processDirectory = self._savingPath + "/" + programName
+        processDirectory = self._savingPath + programName + "/"
         print("Creando carpeta:", processDirectory)
         # Crear la carpeta para el proceso
         os.makedirs(processDirectory)
         
-        # Cambiamos de directorio
-        #os.chdir(processDirectory)
+        # Agregamos el proceso a la lista
+        self._processList[programName] = [processDirectory + programName, processDirectory + executableName]
 
         # Recibimos el programa por transmisión confiable
         # Creamos el comando para recibir proceso con syscall
-        programPath = processDirectory + "/" #+ programName
-        comando = "./recibir_proceso" + " " + str(self._reliTransPort + 1000) + " " + programPath + " " + programName
+        programPath = processDirectory #+ "/" + programName
+        comando = "./recibir_proceso" + " " + str(self._reliTransPort) + " " + programPath + " " + programName
         print(comando)
         os.system(comando)
 
-        os.system(programPath + executableName)
+
+    '''Envia un proceso'''
+    def sendProcess(self, programName, filesList):
+
+        # Creamos el comando para enviar por transmisión confiable
+        comando = "./enviar_proceso " + self._greenIp + " " + self._reliTransPort + " " + self._ownPort + " "
+        for file in filesList:
+            comando = comando + file + " "
+        print(comando)
+
         
-    def sendProcess(self, )
+    def executeProcess(self, programName)
+
+        # Buscamos el proceso en la lista
+        if  not programName in self._processList:
+            return 0
+        else:
+            # Se crea un subproceso para ejecutar el programa
+            pid = os.fork()
+            if pid is 0:
+                os.system(self._processList[0][1])
+            else:
+                os.wait()
+        return 1
+
+    def sendProcessToRun(self):
+        pass
+        
+    
         
