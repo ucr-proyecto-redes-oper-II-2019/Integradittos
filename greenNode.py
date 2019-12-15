@@ -8,202 +8,6 @@ from AssemblePackagesFactory import AssemblePackageFactory
 import time
 
 class GreenNode:
-<<<<<<< HEAD
-	
-	DATA_MAX_SIZE = 1015
-	MAX_RANDOM = 65000
-	
-	'''
-	Constructor de objetos de clase GreenNode.
-	Recibe como parametros el numero de puerto del nodo por construir,
-	y la IP y puerto del nodo naranja que usa para conectarse.
-	'''
-	def __init__(self, myPortNumber, orangeIP, orangePortNumber):
-		
-		self.myPort = myPortNumber
-		self.graphID = -1
-		
-		self.orangeIP = orangeIP
-		self.orangePort = orangePortNumber
-		
-		self.tcpl = TCPL()
-		
-		# Registros en tabla: ip [0] | puerto [1]
-		self.neighboursTable = dict()
-		# Registros en tabla: nodoDestino [0] | distancia [1] | vecino [2]
-		self.routingTable = dict()
-		
-		self.fileSystem = FileSystem();
-
-	'''
-	Etapa de inicializacion del nodo verde.
-	'''
-	def _initialization(self):
-		# Inicializar servicios basicos
-		# Solicitar unirse al grafo
-		# Esperar identificacion
-		# Construir tabla de enrutamiento
-		self.tcplService.startService(self.myPort)
-		pass
-		
-	'''
-	Etapa de ejecucion del nodo verde.
-	'''
-	def _execution(self):
-		# Esperar nuevos vecinos (de parte de naranja)
-		# Esperar solicitudes de otros verdes
-		# Esperar solicitudes de azules
-		pass
-	
-	'''
-	Etapa de finalizacion del nodo verde.
-	'''
-	def _termination(self):
-		# Rechazar solicitudes de otros nodos
-		# Avisar a un naranja sobre la terminacion
-		# Avisar a sus vecinos verdes sobre la finalizacion
-		pass
-	
-	'''
-	Ejecuta toda la funcionalidad del nodo verde, incluyendo las etapas
-	de inicializacion, ejecucion y terminacion.
-	'''
-	def run(self):
-		self._initialization()
-		self._execution()
-		self._termination()
-	
-	''' ### ### ### Solicitudes de azules ### ### ### '''
-	
-	'''
-	Almacenar un archivo.
-	'''
-	def _putFile(self, requestPack):
-		pass
-		
-	'''
-	Recuperar un archivo.
-	'''
-	def _getFile(self, requestPack):
-		pass
-	
-	'''
-	Pregunta si existen fragmentos de un archivo.
-	'''
-	def _askForFileFragments(self, requestPack):
-		pass
-	
-	'''
-	Pregunta si existe un archivo entero.
-	'''
-	def _askForWholeFile(self, requestPack):
-		pass
-	
-	'''
-	Recuperar un archivo.
-	'''
-	def _getFile(self, requestPack):
-		pass
-	
-	'''
-	Localizar un archivo.
-	'''
-	def _locateFile(self, requestPack):
-		pass
-	
-	'''
-	Eliminar un archivo.
-	'''
-	def _deleteFile(self, requestPack):
-		pass
-	
-	'''
-	Migrar un proceso reanudable a otro nodo.
-	'''
-	def _migrateProcess(self, requestPack):
-		pass
-	
-	'''
-	Ejecuta un proceso.
-	'''
-	def _runProcess(self, requestPack):
-		pass
-	
-	
-	''' ### ### ### Transacciones con otros verdes ### ### ### '''
-	
-	#todo:
-	
-	'''
-	Enviar tabla de enrutamiento a vecinos (actualizar tabla de enrutamiento)
-	'''
-	def _sendRouteTable(self):
-		routingTable = self.routingTable
-		neighboursTable = self.neighboursTable
-		
-		# Se crea el payload con la tabla, cada registro son 2 bytes
-		table = bytearray(1000)
-		offset = 0
-		for node in routingTable:
-			table[offset] = routingTable[node][0].to_bytes(2, byteorder='big') # nodo
-			table[offset+2] = routingTable[node][1].to_bytes(2, byteorder='big') # distancia
-			offset += 4
-
-		# Se envían los mensajes a los vecinos
-		tableMessage = bytearray(DATA_MAX_SIZE)
-
-		# ToDo: Agregar código de enviar la tabla
-		tableMessage[0:4] = random.randrange(MAX_RANDOM)
-		tableMessage[4:6] = bytearray(2) #0
-		# tableMessage[6] = código
-		tableMessage[7:9] = bytearray(2) # sin prioridad
-		tableMessage[9:11] = int(50).to_bytes(2, byteorder='big')
-		# ...
-		
-		for neighbour in neighboursTable:
-			# fuente - destino
-			tableMessage[11:13] = int(self.graphID).to_bytes(2, byteorder='big')
-			tableMessage[13:15] = int(neighbour).to_bytes(2, byteorder='big')
-			ip = neighboursTable[neighbour][0]
-			port = neighboursTable[neighbour][1]
-			tcpl.sendPackage(tableMessage,  port, port)
-
-	'''
-	Confirmar que la tabla de enrutamiento está actualizada (tras recibir tabla de enrutamiento)
-	'''
-	def _checkRouteTable(self, receivedTable, sender '''nodo'''):
-		ownTable = self.routingTable
-
-		items = 0
-		offset = 0
-		while receivedTable[offset] != 0 and receivedTable[offset+2] != 0:
-			items  += 1
-			
-			# 2 bytes de nodo + 2 bytes de distancia = 4 bytes
-			nodeNum = int.from_bytes(receivedTable[offset:offset+2], byteorder='big')
-			distance = int.from_bytes(receivedTable[offset+2:offset+4], byteorder='big')
-			
-			# Se compraran los datos con nuestra tabla
-			# Si ya tenemos la ruta en la tabla checkeamos su distancia
-			if nodeNum in ownTable:
-				if receivedTable[offset+2] < ownTable[ nodeNum ][1]:
-					# Nueva distancia
-					ownTable[ nodeNum ][1] = distance + 1
-					# Nuevo nodo enlace (quizá)
-					ownTable[ nodeNum ][2] = sender
-			else:
-				# Si no tenemos esa ruta, la agregamos
-				ownTable[ nodeNum ] = [nodeNum, distance, sender]
-				
-			offset += 4
-		print("Recibi una tabla de tamaño: ", items, " del vecino ", sender)
-
-	
-	'''
-	Recibir mensajes
-	'''
-	 def receiveMessages(self): 
-=======
 
     #FILE_FRAGMENT_MAX_SIZE = 1000
     GREET_NEIGHBOR = 100
@@ -228,7 +32,7 @@ class GreenNode:
     SEND_ROUTE_ACK = 119
     CONNECT_ACK = 201
     WAITFORACKTIMEOUT = 5
-    DATA_MAX_SIZE = 1009
+    DATA_MAX_SIZE = 1015
     MAX_RANDOM = 65000
     FILE_NAME_SIZE = 32
 
@@ -304,7 +108,6 @@ class GreenNode:
         '''
         ¿?
         '''
->>>>>>> master
         while 1:
             #print("Pop package...")
             package, address = self.tcpl.receivePackage()
