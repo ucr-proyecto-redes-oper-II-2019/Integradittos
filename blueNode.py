@@ -20,4 +20,25 @@ class BlueNode:
 
     def runInterface():
         pass
+
+    def displayMenu(self):
+        print("\n\n # # #   # # #   # # #  Nodo azul  # # #   # # #  # # # \n")
+        num = -1
+        while True:
+            print("1. Enviar un programa.")
+            print("2. Ejecutar un programa.")
+            print("3. Ver estado de los procesos.")
+            print("4. Salir.")
+        
+            try:
+                num = int(input("\nSeleccione una opción: "))
+                if 0 < num and num < 5:
+                    break
+
+            except ValueError:
+                pass
+
+            print("\nPor favor seleccione una opción válida.\n")
+
+        return num
  
