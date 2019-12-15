@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
 {
 	if( argc < 3)
 	{
-		printf("Uso: ./enviar_proceso [nombre_proceso] [ejecutable] archivo1 archivo2 ...\n");
+		printf("Uso: ./enviar_proceso [ip_receptor] [puerto_receptor] [puerto_local] [nombre_proceso] [ejecutable] archivo1 archivo2 ...\n");
 		return -1;
 	}
 
@@ -21,14 +21,14 @@ int main(int argc, char* argv[])
 
 	// Se intenta abrir el archivo que contendrá
 	// lo necesario para restartear el proceso
-	archivo_proceso = fopen(argv[1], "wb");
+	archivo_proceso = fopen(argv[4], "wb");
 	if( archivo_proceso == NULL ) {
 		perror("Error abriendo archivo: ");
 		return(-1);
 	}
 
 	// Se compilan todos los archivos indicados en archivo_proceso
-	int error = pack_process(argc - 2 /*./enviar nombre ...*/, argv + 2 , archivo_proceso);
+	int error = pack_process(argc - 5 /*./enviar nombre ...*/, argv + 5 , archivo_proceso);
 
 	fclose(archivo_proceso);
 
@@ -40,11 +40,11 @@ int main(int argc, char* argv[])
 	else
 	{
 		// Se piden los datos de envío
-		char ip_receptor[16];
-		char puerto_receptor[6];
-		char puerto_local[6];
-		printf("Ingrese: IP-receptor Puerto_receptor Puerto_local\n");
-		scanf("%s %s %s", ip_receptor, puerto_receptor, puerto_local);
+		char * ip_receptor = argv[1];
+		char * puerto_receptor = argv[2];
+		char * puerto_local = argv[3];
+		//printf("Ingrese: IP-receptor Puerto_receptor Puerto_local\n");
+		//scanf("%s %s %s", ip_receptor, puerto_receptor, puerto_local);
 
 		// Ensamblamos el comando para enviar el archivo del proceso
 		char comando[1024];
@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
 	   	strcat(comando, " ");
 	   	strcat(comando, puerto_receptor);
 	   	strcat(comando, " ");
-	   	strcat(comando, argv[1]);
+	   	strcat(comando, argv[4]);
 	   	strcat(comando, " ");
 	   	strcat(comando, puerto_local);
 

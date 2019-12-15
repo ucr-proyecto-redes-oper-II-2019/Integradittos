@@ -27,17 +27,13 @@ class AssemblePackageFactory:
             @:param datos son los datos que se quieren enviar en el paquete.
             @:return paquete ya ensamblado con los parametros entrantes.
         """
-        paqueteRequestPos = bytearray(self.DATA_MAX_SIZE)
-        paqueteRequestPos[self.numberRequestPos: self.numberRequestPos + self.tamNumeroRequest] = numeroDeRequest.to_bytes(
-            self.tamNumeroRequest, byteorder='big')
-        paqueteRequestPos[self.inicioConfirmacionRespuestaPos : self.inicioConfirmacionRespuestaPos + self.tamInicioConfirmacioRespuesta] = inicioConfirmacionRespuesta.to_bytes(
-            self.tamInicioConfirmacioRespuesta, byteorder='big')
-        paqueteRequestPos[self.tareaARealizarPos : self.tareaARealizarPos + self.tamTareaARealizar] = tareaARealizar.to_bytes(
-            self.tamTareaARealizar, byteorder='big')
-        paqueteRequestPos[self.prioridad : self.prioridad + self.tamPrioridad] = tamanoPrioridad.to_bytes(
-            self.tamPrioridad, byteorder='big')
-        paqueteRequestPos[self.prioridad + self.tamPrioridad : ] = datos
-        return paqueteRequestPos
+        paquete = bytearray(self.DATA_MAX_SIZE)
+        paquete[0:4] = numeroDeRequest.to_bytes(self.tamNumeroRequest, byteorder='big')
+        paquete[4:6] = inicioConfirmacionRespuesta.to_bytes(self.tamInicioConfirmacioRespuesta, byteorder='big')
+        paquete[6] = tareaARealizar
+        paquete[7:9] = tamanoPrioridad.to_bytes(self.tamPrioridad, byteorder='big')
+        paquete[9:] = datos
+        return paquete
 
     def unpackPackage(self, paquete):
         """
@@ -45,11 +41,11 @@ class AssemblePackageFactory:
             @:param paquete que se desea desempaquetar.
             @:return: los datos que contiene el paquete.
         """
-        numeroDeRequest = int.from_bytes(paquete[self.numberRequestPos:self.inicioConfirmacionRespuestaPos], byteorder='big')
-        inicioConfirmacionRespuesta = int.from_bytes(paquete[self.inicioConfirmacionRespuestaPos:self.tareaARealizarPos], byteorder='big')
-        numeroDeServicio = int.from_bytes(paquete[self.tareaARealizarPos:self.prioridad], byteorder='big')
-        tamanoCuerpoPrioridad = int.from_bytes(paquete[self.prioridad:self.prioridad + self.tamPrioridad], byteorder='big')
-        datos = paquete[self.prioridad + self.tamPrioridad:]
+        numeroDeRequest = int.from_bytes(paquete[0:4], byteorder='big')
+        inicioConfirmacionRespuesta = int.from_bytes(paquete[4:6], byteorder='big')
+        numeroDeServicio = paquete[6]
+        tamanoCuerpoPrioridad = int.from_bytes(paquete[7:9], byteorder='big')
+        datos = paquete[9:]
         return numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamanoCuerpoPrioridad, datos
 
     def assemblePackageRequestPos(self, numeroDeNodoAInstanciar, nodoNaranjaID):
@@ -58,7 +54,9 @@ class AssemblePackageFactory:
             :return: paquete requestPos ya ensamblado.
         """
         numeroDeServicio = 205
-        return self.assemblePackage(random.randrange(self.randomMaximo), numeroDeNodoAInstanciar, numeroDeServicio, nodoNaranjaID, int(0).to_bytes(1, byteorder='big'))
+        numeroRand = random.randrange(self.randomMaximo)
+        #print("El numero de reques que se esta generando es: ", numeroRand )
+        return self.assemblePackage(numeroRand, numeroDeNodoAInstanciar, numeroDeServicio, nodoNaranjaID, int(0).to_bytes(1, byteorder='big'))
 
     def assemblePackageRequestACK(self, packageRequest, estaInstanciado):
         """
@@ -112,6 +110,27 @@ class AssemblePackageFactory:
         numeroDeServicio = 211
         return self.assemblePackage(requestNum, id, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
 
+    def assemblePackageGreetNeighbor(self, id):
+        numeroDeServicio = 100
+        return self.assemblePackage(random.randint(0,self.randomMaximo), id, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
+
+    def assemblePackageGreetNeighborACK(self, requestNum):
+        numeroDeServicio = 101
+        return self.assemblePackage(requestNum, 0, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
+
+    def assemblePackageFileExistACK(self, requestNum, answer):
+        numeroDeServicio = 103
+        return self.assemblePackage(requestNum, 0, numeroDeServicio, 0, int(answer).to_bytes(1, byteorder='big'))
+
+    def assmblePackageRemoveFileACK(self, requesNum):
+        numeroDeServicio = 109
+        return self.assemblePackage(requesNum, 0, numeroDeServicio, 1, int(0).to_bytes(1, byteorder='big'))
+
+    def assemblePackageConnect(self):
+        numeroDeServicio = 200
+        return self.assemblePackage(random.randint(0,self.randomMaximo), 1, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
+
+
     def packIP(self, ip):
         arrayIP = bytearray(4)
         ipSplit = str(ip).split(".")
@@ -120,6 +139,7 @@ class AssemblePackageFactory:
         arrayIP[2] = int(ipSplit[2])
         arrayIP[3] = int(ipSplit[3])
         return arrayIP
+
     def packPort(self, port):
         return int(port).to_bytes(2, byteorder='big')
 
@@ -127,7 +147,7 @@ class AssemblePackageFactory:
         arrayIP = bytearray(6)
         ipSplit = str(ip).split(".")
         if len(ipSplit) == 4:
-            print("arreglo ip split ", ipSplit)
+            #print("arreglo ip split ", ipSplit)
             arrayIP[0] = int(ipSplit[0])
             arrayIP[1] = int(ipSplit[1])
             arrayIP[2] = int(ipSplit[2])

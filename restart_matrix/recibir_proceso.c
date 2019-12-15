@@ -12,24 +12,25 @@
 
 int main(int argc, char* argv[])
 {
-	if( argc < 1)
+	if( argc < 3)
 	{
-		printf("Uso: ./recibir_proceso\n");
+		printf("Uso: ./recibir_proceso [puerto] [ruta_archivo] [nombre_archivo]\n");
 		return -1;
 	}
 
 	// Se pide el puerto usado para recibir el archivo del proceso
-	char puerto_local[6];
-	char nombre_archivo[256];
-	printf("Ingrese: Puerto_local nombre_archivo\n");
-	scanf("%s %s", puerto_local, nombre_archivo);
+	char * puerto_local = argv[1];
+	char * ruta_archivo = argv[2];
+	char * nombre_archivo = argv[3];
+	//printf("Ingrese: Puerto_local nombre_archivo\n");
+	//scanf("%s %s", puerto_local, nombre_archivo);
 
 	// Ensamblamos el comando para enviar el archivo del proceso
 	char comando[1024];
 	strcpy(comando, "python3 Receptor.py ");
    	strcat(comando, puerto_local);
    	strcat(comando, " ");
-   	strcat(comando, nombre_archivo);
+   	strcat(comando, ruta_archivo);
 
    	printf("%s\n", comando);
 
@@ -46,14 +47,17 @@ int main(int argc, char* argv[])
 
 	// Se intenta abrir el archivo que contiene
 	// los archivos necesarios para restartear el proceso
-	archivo_proceso = fopen(nombre_archivo, "rb");
+	char nombre[100];
+	strcpy(nombre, ruta_archivo);
+	strcat(nombre, nombre_archivo);
+	archivo_proceso = fopen(nombre, "rb");
 	if( archivo_proceso == NULL ) {
 		perror("Error abriendo archivo: ");
 		return(-1);
 	}
 
 	// Se desempaquetan los archivos recividos
-	int error = unpack_process(archivo_proceso);
+	int error = unpack_process(archivo_proceso, ruta_archivo);
 
 	fclose(archivo_proceso);
 
