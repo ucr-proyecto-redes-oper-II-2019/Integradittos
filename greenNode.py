@@ -36,13 +36,15 @@ class GreenNode:
     MAX_RANDOM = 65000
     FILE_NAME_SIZE = 32
 
-    '''
-    Constructor de objetos de clase GreenNode.
-    Recibe como parametros el numero de puerto del nodo por construir,
-    y la IP y puerto del nodo naranja que usa para conectarse.
-    Incluye la etapa de inicialización del nodo verde.
-    '''
+    '''  # # #  # # #  # # #  Procedimientos dentro del mismo nodo  # # #  # # #  # # #  '''
+
     def __init__(self, myPortNumber, orangeIP, orangePortNumber):
+        '''
+        Constructor de objetos de clase GreenNode.
+        Recibe como parametros el numero de puerto del nodo por construir,
+        y la IP y puerto del nodo naranja que usa para conectarse.
+        Incluye la etapa de inicialización del nodo verde.
+        '''
         # Inicializar servicios basicos
         self.myPort = myPortNumber
         self.myID = -1
@@ -66,10 +68,10 @@ class GreenNode:
         # Solicitar unirse al grafo
         # Esperar identificacion
 
-    '''
-    Etapa de ejecucion del nodo verde.
-    '''
     def _execution(self):
+        '''
+        Etapa de ejecucion del nodo verde.
+        '''
         self.isRunning = True
         # Esperar nuevos vecinos (de parte de naranja)
         paquete = self.assemblePackage.assemblePackageConnect()
@@ -82,170 +84,55 @@ class GreenNode:
         else:
             print("No fue posible enviar el paquete para solicitar ID al nodo Naranja")
             return -1
-        # Esperar solicitudes de otros verdes
-        # Esperar solicitudes de azules
+        # Esperar solicitudes de otros verdes y de azules:
         self._receiveMessages()
-
-    '''
-    Etapa de finalizacion del nodo verde.
-    '''
+    
     def _termination(self):
+        '''
+        Etapa de finalizacion del nodo verde.
+        '''
         # Rechazar solicitudes de otros nodos
         # Avisar a un naranja sobre la terminacion
         # Avisar a sus vecinos verdes sobre la finalizacion
         pass
-
-    '''
-    Ejecuta toda la funcionalidad del nodo verde, incluyendo las etapas
-    de ejecucion y terminacion.
-    '''
+  
     def run(self):
+        '''
+        Ejecuta toda la funcionalidad del nodo verde, incluyendo las etapas
+        de ejecucion y terminacion.
+        '''
         self._execution()
         self._termination()
 
     def popPackage(self):
+        '''
+        ¿?
+        '''
         while 1:
             #print("Pop package...")
             package, address = self.tcpl.receivePackage()
             hiloDeAtencionRequest = threading.Thread(target=self._attendRequests, args=(package, address))
             hiloDeAtencionRequest.start()
-        pass
-    '''  # # #  # # #  # # #  Solicitudes de azules  # # #  # # #  # # #  '''
 
-    '''
-    Almacenar un archivo.
-    '''
-    def _putFile(self, data):
-        fileName = data[0, self.FILE_NAME_SIZE].decode('ascii')
-        fileData = data[self.FILE_NAME_SIZE:]
+    def _extractPortAndIp(self, data):
+        '''
+        Subrutina que extrae el puerto e ip de un bytearray
+        :param datos: datos de los que se va a extraer la informacion
+        :return: retorna el numero de puerto y la ip.
+        '''
+        ip = ""
+        ip += str(data[0]) + "."
+        ip += str(data[1]) + "."
+        ip += str(data[2]) + "."
+        ip += str(data[3])
+        port = str(int.from_bytes(data[4:6], byteorder='big'))
+        return port, ip
 
-        self.fileSystem.storeFile(fileName, fileData)
-
-    '''
-    Recuperar un archivo.
-    '''
-    def _getFile(self, data):
-        #fileName = data.decode('ascii')
-        pass
-
-    '''
-    Pregunta si existen fragmentos de un archivo.
-    '''
-    def _askForFileFragments(self, requestPack):
-        pass
-
-    '''
-    Pregunta si existe un archivo entero.
-    '''
-    def _askForWholeFile(self, requestPack):
-        pass
-
-    '''
-    Almacenar fragmento de un archivo.
-    '''
-    def _putFragment(self, data):
-        fileName = data[0, self.FILE_NAME_SIZE].decode('ascii')
-        fileData = data[self.FILE_NAME_SIZE:]
-
-        self.fileSystem.storeFragment(fileName, fileData)
-    '''
-    Recuperar fragmentos de un archivo.
-    '''
-    def _getFragments(self, requestPack):
-        pass
-
-    '''
-    Localizar un archivo.
-    '''
-    def _locateFile(self, requestPack):
-        pass
-
-    '''
-    Eliminar un archivo.
-    '''
-    def _deleteFile(self, requestPack):
-        pass
-
-    '''
-    Migrar un proceso reanudable a otro nodo.
-    '''
-    def _migrateProcess(self, requestPack):
-        pass
-
-    '''
-    Ejecuta un proceso.
-    '''
-    def _runProcess(self, requestPack):
-        pass
-
-
-    '''  # # #  # # #  # # #  Transacciones con otros verdes  # # #  # # #  # # #  '''
-
-    '''
-    Enviar tabla de enrutamiento a vecinos (actualizar tabla de enrutamiento)
-    '''
-    def _sendRouteTable(self):
-        routingTable = self.routingTable
-        neighboursTable = self.neighboursTable
-
-        # Se crea el payload con la tabla, cada registro son 2 bytes
-        table = bytearray(1000)
-        offset = 0
-        for node in routingTable:
-            table[offset] = routingTable[node][0].to_bytes(2, byteorder='big') # nodo
-            table[offset+2] = routingTable[node][1].to_bytes(2, byteorder='big') # distancia
-            offset += 4
-
-        # Se envían los mensajes a los vecinos
-        tableMessage = bytearray(self.DATA_MAX_SIZE)
-
-        # ToDo: Agregar código de enviar la tabla
-        tableMessage[0:4] = random.randrange(self.MAX_RANDOM)
-        tableMessage[4:6] = 0
-        # tableMessage[6] = código
-        tableMessage[7:9] = 0 # sin prioridad
-        # ...
-
-        for neighbour in neighboursTable:
-            ip = neighboursTable[neighbour][0]
-            port = neighboursTable[neighbour][1]
-            self.tcpl.sendPackage(tableMessage,  port, port)
-
-    '''
-    Confirmar que la tabla de enrutamiento está actualizada (tras recibir tabla de enrutamiento)
-    '''
-
-    def _checkRouteTable(self, receivedTable, sender):
-        ownTable = self.routingTable
-        items = 0
-        offset = 0
-        while self.receivedTable[offset] != 0 and self.receivedTable[offset+2] != 0:
-            items  += 1
-
-            # 2 bytes de nodo + 2 bytes de distancia = 4 bytes
-            nodeNum = int.from_bytes(self.receivedTable[offset:offset+2], byteorder='big')
-            distance = int.from_bytes(self.receivedTable[offset+2:offset+4], byteorder='big')
-
-            # Se compraran los datos con nuestra tabla
-            # Si ya tenemos la ruta en la tabla checkeamos su distancia
-            if nodeNum in ownTable:
-                if self.receivedTable[offset+2] < ownTable[ nodeNum ][1]:
-                    # Nueva distancia
-                    ownTable[ nodeNum ][1] = distance + 1
-                    # Nuevo nodo enlace (quizá)
-                    ownTable[ nodeNum ][2] = sender
-            else:
-                # Si no tenemos esa ruta, la agregamos
-                ownTable[ nodeNum ] = [nodeNum, distance, sender]
-
-            offset += 4
-        print("Recibi una tabla de tamaño: ", items, " del vecino ", sender)
-
-
-    '''
-    Recibir mensajes
-    '''
     def _receiveMessages(self):
+        '''
+        Recibe constantemente mensajes de otros nodos, y los atiende
+        si son solicitudes para el nodo actual.
+        '''
         while self.isRunning:
             #print("Estoy recibiendo mensajes.")
             package, address = self.tcpl.receivePackage()
@@ -264,13 +151,18 @@ class GreenNode:
                 hiloDeAtencionRequest.start()
      
     def sendGreetNeighbor(self, indice):
+        '''
+        ¿?
+        '''
         if self.neighboursTable.get(indice).ip != "0.0.0.0":
             package = self.assemblePackage.assemblePackageGreetNeighbor(self.myID)
             self.tcpl.sendPackage(package, self.neighboursTable.get(indice).ip, self.neighboursTable.get(indice).port)
-
         pass
+    
     def _attendRequests(self, package, ipPort):
-
+        '''
+        Atiende una solicitud hecha al nodo actual.
+        '''
         requestNumber, beginConfirmationAnswer, serviceNumber, sizeBodyPriority, data = self.assemblePackage.unpackPackage(package)
         if serviceNumber == self.GREET_NEIGHBOR: #Se me informa que tengo un vecino
             print("Mi vecino me saludo y tiene la direccion: ", ipPort)
@@ -329,39 +221,105 @@ class GreenNode:
             self.routingTable[neighbourID] = arrayTable
             self.imprimirListVecinos()
 
-    '''
-    Recibir la “presentación” de un nodo verde nuevo.
-    def _sendNeighbourIndtroduction(self, neighbour):
-    def _receiveNeighbourIntroduction(self, package):
 
-    Relocalizar un proceso reanudable.
-    def _relocateProcess(self, process):
-    def _receiveRelocatedProcess(self, package):int.from_bytes(data[2:6])
-    def _sendFileFragment(self, fragment):
-    def _receiveFileFragment(self, package):
+    '''  # # #  # # #  # # #  Solicitudes de azules  # # #  # # #  # # #  '''
 
-    Preguntar por segmentos de un archivo.
-    def _askForFragments(self, fileName):
-    def _findFragments(self, package):
+    
+    def _migrateProcess(self, requestPack):
+        '''
+        Migrar un proceso reanudable a otro nodo.
+        '''
+        pass
 
-    Solicitar el envío de segmentos de un archivo.
-    def _retrieveFragments(self, fileName):
-    def _findAndSendFragments(self, package):
+    def _runProcess(self, requestPack):
+        '''
+        Ejecutar un proceso.
+        '''
+        pass
 
-    Pedir la eliminación de un archivo o sus fragmentos.
-    def _reqestFileDeletion(self, fileName):
-    def _deleteFileRequested(self, package):
 
-    Avisar sobre terminación de un nodo verde.
-    def _tellAboutTermination(self):
-    def _updateRoutingTableAfterTermination(self, package):
-    '''
+    '''  # # #  # # #  # # #  Transacciones con otros verdes  # # #  # # #  # # #  '''
+    
+    
+    def _greetNeighbor(self, requestNumber, beginConfirmationAnswer, ipPort):
+        '''
+        Envía un mensaje saludando a un vecino instanciado.
+        '''
+        self.neighboursTable[beginConfirmationAnswer].ip = ipPort[0]
+        self.neighboursTable[beginConfirmationAnswer].port = ipPort[1]
+        package = self.assemblePackage.assemblePackageGreetNeighborACK(requestNumber)
+        self.tcpl.sendPackage(package, ipPort[0], ipPort[1])
+    
+    def _sendRouteTable(self):
+        '''
+        Enviar tabla de enrutamiento a vecinos (actualizar tabla de enrutamiento)
+        '''
+        routingTable = self.routingTable
+        neighboursTable = self.neighboursTable
 
-    '''
-    Actualiza entradas de la tabla de enrutamiento segun nuevos datos
-    enviados por un vecino.
-    '''
+        # Se crea el payload con la tabla, cada registro son 2 bytes
+        table = bytearray(1000)
+        offset = 0
+        for node in routingTable:
+            table[offset] = routingTable[node][0].to_bytes(2, byteorder='big') # nodo
+            table[offset+2] = routingTable[node][1].to_bytes(2, byteorder='big') # distancia
+            offset += 4
+
+        # Se envían los mensajes a los vecinos
+        tableMessage = bytearray(self.DATA_MAX_SIZE)
+
+        # ToDo: Agregar código de enviar la tabla
+        tableMessage[0:4] = random.randrange(self.MAX_RANDOM)
+        tableMessage[4:6] = 0
+        # tableMessage[6] = código
+        tableMessage[7:9] = 0 # sin prioridad
+        # ...
+
+        for neighbour in neighboursTable:
+            ip = neighboursTable[neighbour][0]
+            port = neighboursTable[neighbour][1]
+            self.tcpl.sendPackage(tableMessage,  port, port)
+    
+    def _checkRouteTable(self, receivedTable, sender):
+        '''
+        Confirmar que la tabla de enrutamiento está actualizada (tras recibir tabla de enrutamiento)
+        '''
+        ownTable = self.routingTable
+        items = 0
+        offset = 0
+        while self.receivedTable[offset] != 0 and self.receivedTable[offset+2] != 0:
+            items  += 1
+
+            # 2 bytes de nodo + 2 bytes de distancia = 4 bytes
+            nodeNum = int.from_bytes(self.receivedTable[offset:offset+2], byteorder='big')
+            distance = int.from_bytes(self.receivedTable[offset+2:offset+4], byteorder='big')
+
+            # Se compraran los datos con nuestra tabla
+            # Si ya tenemos la ruta en la tabla checkeamos su distancia
+            if nodeNum in ownTable:
+                if self.receivedTable[offset+2] < ownTable[ nodeNum ][1]:
+                    # Nueva distancia
+                    ownTable[ nodeNum ][1] = distance + 1
+                    # Nuevo nodo enlace (quizá)
+                    ownTable[ nodeNum ][2] = sender
+            else:
+                # Si no tenemos esa ruta, la agregamos
+                ownTable[ nodeNum ] = [nodeNum, distance, sender]
+
+            offset += 4
+        print("Recibi una tabla de tamaño: ", items, " del vecino ", sender)
+    
+    def _receiveRelocatedProcess(self, package):
+        '''
+        Recibir un proceso reanudable.
+        '''
+        pass
+    
     def _updateRoutingTable(self, requestPack):
+        '''
+        Actualiza entradas de la tabla de enrutamiento segun nuevos datos
+        enviados por un vecino.
+        '''
         pass
 
     def imprimirListVecinos(self):
@@ -374,6 +332,7 @@ class GreenNode:
             print("°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°")
         print("--------------------------Aqui termina la tabla de adyacencias-----------------------")
 
+
     '''  # # #  # # #  # # #  Solicitudes de/ a naranjas  # # #  # # #  # # #  '''
 
     '''
@@ -385,67 +344,4 @@ class GreenNode:
         pass
 
 
-    ''' ### ### ### Procedimientos dentro del mismo nodo ### ### ### '''
-
-    ''' ¿Debería estar en esta sección? '''
-    '''
-    Envía un mensaje saludando a un vecino instanciado
-    '''
-    def _greetNeighbor(self, requestNumber, beginConfirmationAnswer, ipPort):
-        self.neighboursTable[beginConfirmationAnswer].ip = ipPort[0]
-        self.neighboursTable[beginConfirmationAnswer].port = ipPort[1]
-        package = self.assemblePackage.assemblePackageGreetNeighborACK(requestNumber)
-        self.tcpl.sendPackage(package, ipPort[0], ipPort[1])
-
-    '''
-    Determina si contiene un archivo o sus fragmentos.
-    '''
-    def _fileExistInSelf(self, requestNum, data, ipPort):
-        # Hay que convertir los bytes al identificador.
-        name = ''
-
-        # Pregunta por un archivo entero:
-        answer = self.fileSystem.findFile(name) 
-        # Pregunta por fragmentos de un archivo:
-        answer = self.fileSystem.findFragments(name)
-
-        package = self.assemblePackage.assemblePackageFileExistACK(requestNum, answer)
-        self.tcpl.sendPackage(package, ipPort[0], ipPort[1])
-
-    '''
-    Elimina un archivo o sus fragmentos.
-    '''
-    def _removeFileInSelf(self, requesNum, data):
-        #todo Obtener el nombre a partir de data
-        name = ''
-
-        # Se elimina el archivo
-        self.fileSystem.deleteFile(name)
-
-        # Se eliminan fragmentos del archivo
-        self.fileSystem.deleteFragment(name)
-
-        # Se crea ACK
-        package = self.assemblePackage.assmblePackageRemoveFileACK(requesNum)
-        self.tcpl.sendPackage()
-
-    # todo Acordar estos metodos
-    def _extractPortAndIp(self, data):
-        '''
-        Subrutina que extrae el puerto e ip de un bytearray
-        :param datos: datos de los que se va a extraer la informacion
-        :return: retorna el numero de puerto y la ip.
-        '''
-        ip = ""
-        ip += str(data[0]) + "."
-        ip += str(data[1]) + "."
-        ip += str(data[2]) + "."
-        ip += str(data[3])
-        port = str(int.from_bytes(data[4:6], byteorder='big'))
-        return port, ip
-
-    #def splitFile(self, fileToSplit):
-    #def buildFile(self, filePiecesList):
-    #def findFile(self, fileName):
-    #def findFragments(self, fileName):
-
+    
