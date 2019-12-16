@@ -4,7 +4,9 @@ import random
 class AssemblePackageFactory:
 
     def __init__(self):
+
         self.DATA_MAX_SIZE = 1015
+
         #Posiciones
         self.numberRequestPos = 0
         self.inicioConfirmacionRespuestaPos = 4
@@ -96,6 +98,7 @@ class AssemblePackageFactory:
         numeroDeServicio = 201
         listaDePaquetesConnectACK = []
         numeroRequest, inicioConfirmacionRespuesta, tareaARealizar, prioridad, ttl, fuente, destino,  datos = self.unpackPackage(paqueteConnect)
+
         # Despues de realizar to do el proceso de de reserve de nodos, para este punto debo contar con el ip y el ppuerto del verde, ademas del ID que se negocio con los demas naranjas.
         paquete = bytearray(8)
         for vecino in listaVecinos:
@@ -139,6 +142,9 @@ class AssemblePackageFactory:
         numeroDeServicio = 200
         return self.assemblePackage(random.randint(0,self.randomMaximo), 1, numeroDeServicio, 0, 50, 0, 0, int(0).to_bytes(1, byteorder='big'))
 
+    def assemblePackageRouteACK(self, numeroDeRequest):
+        numeroDeServicio = 119
+        return self.assemblePackage(numeroDeRequest, 0, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
 
     def packIP(self, ip):
         arrayIP = bytearray(4)

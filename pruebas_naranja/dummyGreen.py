@@ -13,7 +13,11 @@ def recibirInfo():
         numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamCuerpoPrioridad, datos = factoria.unpackPackage(
             packet)
         print("Vecino = ", int.from_bytes(datos[0:2], byteorder='big'))
-
+        ipValue = int.from_bytes(datos[2:6], byteorder='big')
+        if ipValue != 0:
+            print("IP:", datos[2], ".", datos[3], ".", datos[4], ".", datos[5], "Puerto:", int.from_bytes(datos[6:8], byteorder='big'))
+        else:
+            print("No esta instanciado")
 puerto = input("Ingrese su puerto: ")
 ipNaranja = input("Ingrese IP naranja: ")
 puertoNaranja = input("Ingrese puerto naranja: ")

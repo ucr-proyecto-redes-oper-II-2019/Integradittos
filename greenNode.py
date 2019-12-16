@@ -1,44 +1,51 @@
 # greenNode.py
 import random
 import threading
-from functools import partial
+import time
 
+from functools import partial
 from tcpl.tcpl import TCPL # en carpeta inferior
 from orangeNode import GreenNodeToken
 from fileSystem import FileSystem
 from AssemblePackagesFactory import AssemblePackageFactory
-import time
+from processSystem import ProcessSystem
+
 
 class GreenNode:
+    ''' CÓDIGOS DE MENSAJES '''
+	ROUTING_MESSAGE = 80
+	GREET_NEIGHBOR = 100
+	GREET_NEIGHBOR_ACK = 101
+	FILE_EXISTS = 102
+	FILE_EXISTS_ACK = 103
+	FILE_COMPLETE = 104
+	FILE_COMPLETE_ACK = 105
+	LOCATE_FILE = 106
+	LOCATE_FILE_ACK = 107
+	REMOVE_FILE = 108
+	REMOVE_FILE_ACK = 109
+	PUT_FILE = 110
+	PUT_FILE_ACK = 111
+	GET_FILE = 112
+	GET_FILE_ACK = 113
+	EXEC = 114
+	EXEC_ACK = 115
+	EXEC_STOP = 116
+	EXEC_STOP_ACK = 117
+	SEND_ROUTE = 118
+	SEND_ROUTE_ACK = 119
+	CONNECT_ACK = 201
 
-    #FILE_FRAGMENT_MAX_SIZE = 1000
-    ROUTING_MESSAGE = 80
-    GREET_NEIGHBOR = 100
-    GREET_NEIGHBOR_ACK = 101
-    FILE_EXISTS = 102
-    FILE_EXISTS_ACK = 103
-    FILE_COMPLETE = 104
-    FILE_COMPLETE_ACK = 105
-    LOCATE_FILE = 106
-    LOCATE_FILE_ACK = 107
-    REMOVE_FILE = 108
-    REMOVE_FILE_ACK = 109
-    PUT_FILE = 110
-    PUT_FILE_ACK = 111
-    GET_FILE = 112
-    GET_FILE_ACK = 113
-    EXEC = 114
-    EXEC_ACK = 115
-    EXEC_STOP = 116
-    EXEC_STOP_ACK = 117
-    SEND_ROUTE = 118
-    SEND_ROUTE_ACK = 119
-    CONNECT_ACK = 201
-    WAITFORACKTIMEOUT = 5
-    DATA_MAX_SIZE = 1009
-    MAX_RANDOM = 65000
-    FILE_NAME_SIZE = 32
+	SEND_PROCESS = 50
+	RUN_PROCESS = 51
+	ASK_FOR_PROCESS = 52
+	PROCESS_OUTPUT = 53
+	# ...
 
+	WAITFORACKTIMEOUT = 5
+	DATA_MAX_SIZE = 1015
+	MAX_RANDOM = 65000
+	FILE_NAME_SIZE = 32
     '''  # # #  # # #  # # #  Procedimientos dentro del mismo nodo  # # #  # # #  # # #  '''
 
     def __init__(self, myPortNumber, orangeIP, orangePortNumber):
@@ -58,6 +65,7 @@ class GreenNode:
         self.tcpl = TCPL()
 
         self.tcpl.startService(self.myPort)
+        self.processSystem = ProcessSystem(self.myPort , True)
 
         # Diccionario con GreenNodeToken
         self.neighboursTable = dict()
@@ -107,15 +115,6 @@ class GreenNode:
         self._execution()
         self._termination()
 
-    def popPackage(self):
-        '''
-        ¿?
-        '''
-        while 1:
-            #print("Pop package...")
-            package, address = self.tcpl.receivePackage()
-            hiloDeAtencionRequest = threading.Thread(target=self._attendRequests, args=(package, address))
-            hiloDeAtencionRequest.start()
 
     def _extractPortAndIp(self, data):
         ''' la informacion
@@ -213,15 +212,54 @@ class GreenNode:
             pass
         elif serviceNumber == self.EXEC: # Se me indica que debo correr un proceso.
             pass
+		elif serviceNumber == self.SEND_PROCESS:
+			print ("Recibi una solicitud para recibir proceso.")
+			# Acá se pueden poner condiciones para recibir el proceso o no
+			if True:
+				answer = bytearray(package)
+				# Activamos trans conf por medio del sistema de procesos
+				receiveProcessThread = threading.Thread(target=self._receiveProcess, args=(bytes(package),))
+				receiveProcessThread.start()
+				# Aceptamos la solicitud
+				answer[15] = 1
+			else:
+				# Denegamos la solicitud
+				answer[15] = 0
+			self.tcpl.sendPackage(answer, ipPort[0], ipPort[1])
+		elif serviceNumber == self.RUN_PROCESS:
+			print ("Recibi una solicitud para correr proceso:", package[15:75].decode(), ".")
+			runProcessThread = threading.Thread(target=self._runProcess, args=(bytes(package),))
+			runProcessThread.start()
+			self.tcpl.sendPackage(package, ipPort[0], ipPort[1])
+		elif serviceNumber == self.ASK_FOR_PROCESS:
+			procName = package[15:75].decode().strip('\x00')
+			print("Se me consultó el estado del proceso:", procName, ".")
+			answer = bytearray(package)
+			state = self.processSystem.isProcessDone(str(procName))
+			answer[15] = state
+			# Enviamos la respuesta
+			print("El proceso:", procName, "está en estado", state, ".")
+			self.tcpl.sendPackage(answer, ipPort[0], ipPort[1])
+
 
 
 
     '''  # # #  # # #  # # #  Solicitudes de azules  # # #  # # #  # # #  '''
 
+    def _receiveProcess(self, requestPack):
+        '''
+        Recibe un proceso de un nodo azul.
+        '''
+        program = requestPack[15:75].decode('utf-8').strip('\x00')
+        executable = requestPack[75:125].decode('utf-8').strip('\x00')
+        print("Proceso:", program, ", ejecutable:", executable)
+        # Recibimos el archivo por trans confiable
+        self.processSystem.receiveProcess(program, executable, self.myPort)
 
     def _migrateProcess(self, requestPack):
         '''
-        Migrar un proceso reanudable a otro nodo.
+        Migrar un proces 3 en la lista de adyacencias
+    o reanudable a otro nodo.
         '''
         pass
 
@@ -229,7 +267,9 @@ class GreenNode:
         '''
         Ejecutar un proceso.
         '''
-        pass
+        program = requestPack[15:75].decode('utf-8').strip('\x00')
+        self.processSystem.executeProcess(program)
+
 
 
     '''  # # #  # # #  # # #  Transacciones con otros verdes  # # #  # # #  # # #  '''
