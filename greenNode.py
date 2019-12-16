@@ -83,10 +83,10 @@ class GreenNode:
             package, address = self.tcpl.receivePackage()
             requestNumber, beginConfirmationAnswer, serviceNumber, sizeBodyPriority, ttl, fuente, destino,  data = self.assemblePackage.unpackPackage(package)
             self.myID = int.from_bytes(data[0:2], byteorder='big')
-            threadReceiving = threading.Thread(target = self._receiveMessages())
-            threadReceiving.start()
-            threadRouting = threading.Thread(target= self._routingThread())
+            threadReceiving = threading.Thread(target = self._receiveMessages)
+            threadRouting = threading.Thread(target = self._routingThread)
             threadRouting.start()
+            threadReceiving.start()
         else:
             print("No fue posible enviar el paquete para solicitar ID al nodo Naranja")
             return -1
@@ -118,9 +118,7 @@ class GreenNode:
             hiloDeAtencionRequest.start()
 
     def _extractPortAndIp(self, data):
-        '''
-        Subrutina que extrae el puerto e ip de un bytearray
-        :param datos: datos de los que se va a extraer la informacion
+        ''' la informacion
         :return: retorna el numero de puerto y la ip.
         '''
         ip = ""
@@ -249,9 +247,11 @@ class GreenNode:
 
     def _routingThread(self):
         #Hilo que se va a encargar de enviar la tabla de ruteo cada 1 segundo.
-        while(self.isRunning):
+        while(1):
+            print("Esoty enviando la tabla de enrutamiento")
+            self.imprimirTablaDeEnrutamiento()
             self._sendRouteTable()
-            time.sleep(1)
+            time.sleep(40)
 
     def _sendRouteTable(self):
         '''
@@ -264,15 +264,16 @@ class GreenNode:
         table = bytearray(1000)
         offset = 0
         for node in routingTable:
-            table[offset] = routingTable[node][0].to_bytes(2, byteorder='big') # nodo
-            table[offset+2] = routingTable[node][1].to_bytes(2, byteorder='big') # distancia
+            print("Tupla del routing table ", routingTable[node][0])
+            table[offset:offset+1] = routingTable[node][0].to_bytes(2, byteorder='big') # nodo
+            table[offset+2:offset+4] = routingTable[node][1].to_bytes(2, byteorder='big') # distancia
             offset += 4
 
         # Se envían los mensajes a los vecinos
         tableMessage = bytearray(self.DATA_MAX_SIZE)
 
         # ToDo: Agregar código de enviar la tabla
-        tableMessage[0:4] = random.randrange(self.MAX_RANDOM)
+        tableMessage[0:4] = random.randrange(self.MAX_RANDOM).to_bytes(4, byteorder='big')
         tableMessage[4:6] = bytearray(2)  # 0
         tableMessage[6] = 80
         tableMessage[7:9] = bytearray(2)  # sin prioridad
@@ -285,7 +286,7 @@ class GreenNode:
             tableMessage[13:15] = int(neighbour).to_bytes(2, byteorder='big')
             ip = neighboursTable[neighbour][0]
             port = neighboursTable[neighbour][1]
-            self.tcpl.sendPackage(tableMessage, port, port)
+            self.tcpl.sendPackage(tableMessage, ip, port)
 
     def _checkRouteTable(self, receivedTable, sender):
         '''
@@ -372,8 +373,14 @@ class GreenNode:
             else:
                 self.neighboursTable[neighbourID] = neighbourNode
             # Siempre añadimos a nuestra tabla de ruteo al vecino aunque no este instanciado.
-            arrayTable = {neighbourID, 1, neighbourID}
+            arrayTable = [neighbourID, 1, neighbourID]
             self.routingTable[neighbourID] = arrayTable
             self.imprimirListVecinos()
         else:  # Guardamos cual es nuestro ID.
             self.myID = beginConfirmationAnswer
+
+    def imprimirTablaDeEnrutamiento(self):
+        tabla = self.routingTable
+        print("Esta es la tabla de enrutamiento actual: ")
+        for indice  in tabla:
+            print (tabla[indice])
