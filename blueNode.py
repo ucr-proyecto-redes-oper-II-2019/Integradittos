@@ -4,6 +4,7 @@ import os
 import os.path
 import shutil
 import random
+import sys
 
 from threading import Lock
 from tcpl.tcpl import TCPL # en carpeta inferior
@@ -43,7 +44,7 @@ class BlueNode:
         while True:
             print("1. Enviar un programa.")
             print("2. Ejecutar un programa.")
-            print("3. Ver estado de los procesos.")
+            print("3. Preguntar el estado de un proceso.")
             print("4. Salir.")
 
             try:
@@ -91,9 +92,11 @@ class BlueNode:
                     print ("Por favor revise las rutas e intente de nuevo.")
 
             elif option is 2:
-                self.sendExecutionToGreen(processName)
+                pName = input("Ingrese el nombre del proceso a ejecutar: ")
+                self.sendExecutionToGreen(pName)
             elif option is 3:
-                self.askForProcessToGreen(processName)
+                pName = input("Ingrese el nombre del proceso a consultar: ")
+                self.askForProcessToGreen(pName)
             else: # option is 4:
                 pass
 
@@ -110,6 +113,7 @@ class BlueNode:
         # Agregamos el nombre del proceso y los archivos que necesita
         message[15:75] = processName.encode()
         message[75:125] = filesRoutes[0].encode() # el primero es el ejecutable
+        print("Proceso:", processName, ", ejecutable:", filesRoutes)
         # Enviamos la solicitud
         self._tcpl.sendPackage(message, self._greenIp, self._greenPort)
         # Esperamos la respuesta
@@ -128,7 +132,7 @@ class BlueNode:
         message = bytearray(self.MESSAGE_MAX_SIZE)
         message[0:4] = int(random.randrange(self.MAX_RANDOM)).to_bytes(4, byteorder='big')
         message[4:6] = bytearray(2)  # 0
-        message[6] = self.ASK_FOR_PROCESS
+        message[6] = self.RUN_PROCESS
         message[7:9] = bytearray(2)  # sin prioridad
         message[9:11] = int(10).to_bytes(2, byteorder='big') # TTL irrelevante
         message[11:13] = bytearray(2) # sin fuente
@@ -161,13 +165,14 @@ class BlueNode:
         answer, ipPort = self._tcpl.receivePackage()
         # Si la respuesta es positiva, el verde activó trans confiable
         if answer[15] == 0:
-            print("El programa no ha sido ejecutado")
+            print("\n***El programa", processName, "no ha sido ejecutado***\n")
         elif answer[15] == 1:
-            print("El programa esta corriendo")
+            print("El programa", processName, " esta corriendo***\n")
         elif answer[15] == 2:
-            print("El programa ya terminó")
+            print("\n***El programa", processName, " ya terminó***\n")
         else:
-            print("El programa no se encuentra en el nodo verde")
+            print("\n***El programa", processName, " no se encuentra en el nodo verde***\n")
 
-node = BlueNode(5, "127.0.0.1", 6666, 7777)
+# id nodo verde, ip verde, puerto verde, puerto propio
+node = BlueNode(int(sys.argv[1]), sys.argv[2], int(sys.argv[3]), int(sys.argv[4]))
 node.menu()

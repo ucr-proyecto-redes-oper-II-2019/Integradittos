@@ -242,13 +242,18 @@ class GreenNode:
 				answer[15] = 0
 			self.tcpl.sendPackage(answer, ipPort[0], ipPort[1])
 		elif serviceNumber == self.RUN_PROCESS:
+			print ("Recibi una solicitud para correr proceso:", package[15:75].decode(), ".")
 			runProcessThread = threading.Thread(target=self._runProcess, args=(bytes(package),))
 			runProcessThread.start()
+			self.tcpl.sendPackage(package, ipPort[0], ipPort[1])
 		elif serviceNumber == self.ASK_FOR_PROCESS:
+			procName = package[15:75].decode().strip('\x00')
+			print("Se me consultó el estado del proceso:", procName, ".")
 			answer = bytearray(package)
-			state = self._processSystem.isProcessDone(package[15:75],decode())
+			state = self.processSystem.isProcessDone(str(procName))
 			answer[15] = state
 			# Enviamos la respuesta
+			print("El proceso:", procName, "está en estado", state, ".")
 			self.tcpl.sendPackage(answer, ipPort[0], ipPort[1])
 
 
@@ -259,7 +264,8 @@ class GreenNode:
 		Recibe un proceso de un nodo azul.
 		'''
 		program = requestPack[15:75].decode('utf-8').strip('\x00')
-		executable = requestPack[15:75].decode('utf-8').strip('\x00')
+		executable = requestPack[75:125].decode('utf-8').strip('\x00')
+		print("Proceso:", program, ", ejecutable:", executable)
 		# Recibimos el archivo por trans confiable
 		self.processSystem.receiveProcess(program, executable, self.myPort)
 

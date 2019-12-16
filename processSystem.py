@@ -22,7 +22,7 @@ class ProcessSystem:
     si subPath es True, el ProcessSystem recibe archivos en sub directorios,
     esto para el caso de los verdes.'''
     def __init__(self, ownPort, subPath):
-        # nombre (key) | ruta concantenado [0] | ruta ejecutable [1] | ruta arch salida [2] | finalizado [3](v,f)
+        # nombre (key) | ruta concantenado [0] | ruta ejecutable [1] | ruta arch salida [2] | finalizado [3](0,1,2)
         self._processList = dict()
         self._ownerNode = -1
         self._savingPath = "./" + ProcessSystem._BASE_FILE_DIRECTORY + "/" + str(ownPort) + "/"
@@ -47,7 +47,7 @@ class ProcessSystem:
         os.makedirs(processDirectory, exist_ok=True)
 
         # Agregamos el proceso a la lista
-        self._processList[programName] = [processDirectory + programName, processDirectory + executableName, processDirectory + programName + "_output.txt", False]
+        self._processList[programName] = [processDirectory + programName, processDirectory + executableName, processDirectory + programName + "_output.txt", 0]
 
         # Recibimos el programa por transmisión confiable
         # Creamos el comando para recibir proceso con syscall
@@ -110,4 +110,4 @@ class ProcessSystem:
             # Retorna 0 si no se ha ejecutado, 1 si esta corriendo y 2 si ya terminó
             return self._processList[programName][3]
         else:
-            return 3 # 3 significa que no esta en el sistema
+            return 4  # 3 significa que no esta en el sistema
