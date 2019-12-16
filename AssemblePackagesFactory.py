@@ -3,7 +3,7 @@ import random
 
 class AssemblePackageFactory:
 
-    def __init__(self): 
+    def __init__(self):
         self.DATA_MAX_SIZE = 1009
         #Posiciones
         self.numberRequestPos = 0
@@ -85,14 +85,14 @@ class AssemblePackageFactory:
             :return: lista de paquetes que se le debe enviar al que solicito el request.
         """
         numeroDeServicio = 201
-        listaDePaquetesConnectACK = [] 
+        listaDePaquetesConnectACK = []
         numeroRequest, inicioConfirmacionRespuesta, tareaARealizar, prioridad, datos = self.unpackPackage(paqueteConnect)
         # Despues de realizar to do el proceso de de reserve de nodos, para este punto debo contar con el ip y el ppuerto del verde, ademas del ID que se negocio con los demas naranjas.
         paquete = bytearray(8)
         for vecino in listaVecinos:
             paquete[0:2] = int(vecino.id).to_bytes(2, byteorder="big") #Id del nodo
             arrayIPandPort = self.packIpPort(vecino.ip, vecino.port)
-            paquete[2:6] = arrayIPandPort[0:4] 
+            paquete[2:6] = arrayIPandPort[0:4]
             paquete[6:8] = arrayIPandPort[4:]
             listaDePaquetesConnectACK.append(self.assemblePackage(numeroRequest, idNodoAInstanciar, numeroDeServicio, self.tamIPyPuerto, paquete)) #Aqui falta que lisrt
         return listaDePaquetesConnectACK
@@ -106,7 +106,7 @@ class AssemblePackageFactory:
     def assemblePackageInstanciado(self):
         pass
 
-    def assemblePackageConfirmPosACK(self, id, requestNum): 
+    def assemblePackageConfirmPosACK(self, id, requestNum):
         numeroDeServicio = 211
         return self.assemblePackage(requestNum, id, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
 
@@ -133,7 +133,6 @@ class AssemblePackageFactory:
     def assemblePackageRouteACK(self, numeroDeRequest):
         numeroDeServicio = 119
         return self.assemblePackage(numeroDeRequest, 0, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
-)
 
     def packIP(self, ip):
         arrayIP = bytearray(4)

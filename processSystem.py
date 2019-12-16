@@ -3,7 +3,7 @@
 # For directory creation
 import os
 
-# For removing non-empty directories 
+# For removing non-empty directories
 import shutil
 
 # For locks
@@ -31,11 +31,11 @@ class ProcessSystem:
                 os.makedirs(self._savingPath)
         ''' Esto pertenece al nodo, no al servicio
         self._ownPort = ownPort
-        self._tcplPort = TCPLPort 
+        self._tcplPort = TCPLPort
         self._reliTransPort = TCPLPort + 1000
         self._greenIp = greenIp
         '''
-        
+
 
     '''Recibe el proceso con ese nombre (programName) por transmisión confiable'''
     def receiveProcess(self, programName, executableName, port):
@@ -45,7 +45,7 @@ class ProcessSystem:
         print("Creando carpeta:", processDirectory)
         # Crear la carpeta para el proceso
         os.makedirs(processDirectory, exist_ok=True)
-        
+
         # Agregamos el proceso a la lista
         self._processList[programName] = [processDirectory + programName, processDirectory + executableName, processDirectory + programName + "_output.txt", False]
 
@@ -69,9 +69,9 @@ class ProcessSystem:
         print(sendComand)
         os.system(sendComand)
 
-    '''Ejecuta un proceso, debería correrse en otro hilo para que sea esperado'''        
+    '''Ejecuta un proceso, debería correrse en otro hilo para que sea esperado'''
     def executeProcess(self, programName):
-        
+
         # Buscamos el proceso en la lista
         if  not programName in self._processList:
             return 0
@@ -88,31 +88,26 @@ class ProcessSystem:
 
             ''' Usando sub procesos python: https://docs.python.org/2/library/subprocess.html '''
 
+            # El proceso entra en estado de corriendo
+            self._processList[programName][3] = 1
             # Archivo de salida
             # archivo output, ver processList en __init__()
-            output = open(self._processList[programName][2], "w") 
+            output = open(self._processList[programName][2], "w")
 
             # ejecutable y output, ver processList en __init__()
-            process = subprocess.Popen(self._processList[programName][1], stdout=output) 
+            process = subprocess.Popen(self._processList[programName][1], stdout=output)
 
             process.wait()
 
             # Determinamos que el proceso ya terminó su ejecución
-            self._processList[programName][3] = True
+            self._processList[programName][3] = 2
             print("Proceso:", programName, "terminó.")
 
 
     def isProcessDone(self, programName):
         # Si el proceso esta en el sistema
         if programName in self._processList:
-            # Si terminó retornamos 1
-            if self._processList[programName][3]:
-                return 1
-            # sino, retornamos 0
-            else:
-                return 0
-        # sino, retornamos 2 (para evitar manipular negativos en bytes)
+            # Retorna 0 si no se ha ejecutado, 1 si esta corriendo y 2 si ya terminó
+            return self._processList[programName][3]
         else:
-            return 2
-    
-        
+            return 3 # 3 significa que no esta en el sistema

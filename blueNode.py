@@ -3,6 +3,7 @@
 import os
 import os.path
 import shutil
+import random
 
 from threading import Lock
 from tcpl.tcpl import TCPL # en carpeta inferior
@@ -11,6 +12,8 @@ from processSystem import ProcessSystem
 
 class BlueNode:
 
+    MESSAGE_MAX_SIZE = 1015
+    MAX_RANDOM = 65000
     SEND_PROCESS = 50
     RUN_PROCESS = 51
     ASK_FOR_PROCESS = 52
@@ -24,9 +27,9 @@ class BlueNode:
         self._ownPort = ownPort
         self._processSystem = ProcessSystem(ownPort, False)
         self._tcpl = TCPL()
-        self._tcpl.startService(self.myPort)
-    
-    '''    
+        self._tcpl.startService(self._ownPort)
+
+    '''
     def start(self):
         pass
 
@@ -42,7 +45,7 @@ class BlueNode:
             print("2. Ejecutar un programa.")
             print("3. Ver estado de los procesos.")
             print("4. Salir.")
-        
+
             try:
                 num = int(input("\nSeleccione una opción: "))
                 if 0 < num and num < 5:
@@ -82,36 +85,36 @@ class BlueNode:
 
                 if allFound:
                     # Run the program sender
-                    sendProcessToGreen(processName, routes)
+                    self.sendProcessToGreen(processName, routes)
                     pass
                 else:
                     print ("Por favor revise las rutas e intente de nuevo.")
-                
+
             elif option is 2:
-                pass
+                self.sendExecutionToGreen(processName)
             elif option is 3:
-                pass
+                self.askForProcessToGreen(processName)
             else: # option is 4:
                 pass
 
     def sendProcessToGreen(self, processName, filesRoutes):
         # Creamos un mensaje de solicitud de enviar proceso a verde
-        message = bytearray(MESSAGE_MAX_SIZE)
-        message[0:4] = random.randrange(self.MAX_RANDOM)
+        message = bytearray(self.MESSAGE_MAX_SIZE)
+        message[0:4] = int(random.randrange(self.MAX_RANDOM)).to_bytes(4, byteorder='big')
         message[4:6] = bytearray(2)  # 0
         message[6] = self.SEND_PROCESS
         message[7:9] = bytearray(2)  # sin prioridad
         message[9:11] = int(10).to_bytes(2, byteorder='big') # TTL irrelevante
         message[11:13] = bytearray(2) # sin fuente
-        message[13:15] = int(self._greenNum).to_bytes(2, byteorder='big')
+        message[13:15] = int(self._greenId).to_bytes(2, byteorder='big')
         # Agregamos el nombre del proceso y los archivos que necesita
         message[15:75] = processName.encode()
         message[75:125] = filesRoutes[0].encode() # el primero es el ejecutable
         # Enviamos la solicitud
-        self._tcpl.sendPackage(tableMessage, ip, port)
+        self._tcpl.sendPackage(message, self._greenIp, self._greenPort)
         # Esperamos la respuesta
         print("Esperando respuesta del verde...")
-        answer = self._tcpl.receivePackage()
+        answer, ipPort = self._tcpl.receivePackage()
         # Si la respuesta es positiva, el verde activó trans confiable
         if answer[15] == 1:
             self._processSystem.sendProcess\
@@ -120,6 +123,51 @@ class BlueNode:
         else:
             print("Error: El nodo verde se niega a recibir el archivo.")
 
+    def sendExecutionToGreen(self, processName):
+        # Creamos un mensaje de solicitud de enviar proceso a verde
+        message = bytearray(self.MESSAGE_MAX_SIZE)
+        message[0:4] = int(random.randrange(self.MAX_RANDOM)).to_bytes(4, byteorder='big')
+        message[4:6] = bytearray(2)  # 0
+        message[6] = self.ASK_FOR_PROCESS
+        message[7:9] = bytearray(2)  # sin prioridad
+        message[9:11] = int(10).to_bytes(2, byteorder='big') # TTL irrelevante
+        message[11:13] = bytearray(2) # sin fuente
+        message[13:15] = int(self._greenId).to_bytes(2, byteorder='big')
+        # Agregamos el nombre del proceso y los archivos que necesita
+        message[15:75] = processName.encode()
+        # Enviamos la solicitud
+        self._tcpl.sendPackage(message, self._greenIp, self._greenPort)
+        # Esperamos la respuesta
+        print("Esperando respuesta del verde...")
+        answer, ipPort = self._tcpl.receivePackage()
+        print("El proceso:", processName, "se mandó a ejecutar.")
 
-node = BlueNode(2, "255.255.255.0", 10000, 10001)
+    def askForProcessToGreen(self, processName):
+        # Creamos un mensaje de solicitud de enviar proceso a verde
+        message = bytearray(self.MESSAGE_MAX_SIZE)
+        message[0:4] = int(random.randrange(self.MAX_RANDOM)).to_bytes(4, byteorder='big')
+        message[4:6] = bytearray(2)  # 0
+        message[6] = self.ASK_FOR_PROCESS
+        message[7:9] = bytearray(2)  # sin prioridad
+        message[9:11] = int(10).to_bytes(2, byteorder='big') # TTL irrelevante
+        message[11:13] = bytearray(2) # sin fuente
+        message[13:15] = int(self._greenId).to_bytes(2, byteorder='big')
+        # Agregamos el nombre del proceso y los archivos que necesita
+        message[15:75] = processName.encode()
+        # Enviamos la solicitud
+        self._tcpl.sendPackage(message, self._greenIp, self._greenPort)
+        # Esperamos la respuesta
+        print("Esperando respuesta del verde...")
+        answer, ipPort = self._tcpl.receivePackage()
+        # Si la respuesta es positiva, el verde activó trans confiable
+        if answer[15] == 0:
+            print("El programa no ha sido ejecutado")
+        elif answer[15] == 1:
+            print("El programa esta corriendo")
+        elif answer[15] == 2:
+            print("El programa ya terminó")
+        else:
+            print("El programa no se encuentra en el nodo verde")
+
+node = BlueNode(5, "127.0.0.1", 6666, 7777)
 node.menu()
