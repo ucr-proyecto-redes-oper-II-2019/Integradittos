@@ -145,8 +145,8 @@ class GreenNode:
             #Si el ID destino del mensaje no coincide con el mio entonces tengo que rutearlo.
             if destination != self.myID:
                 if destination in self.routingTable:
-                    ip = self.neighboursTable[ self.routingTable[destination][2] ].ip
-                    port = self.neighboursTable[ self.routingTable[destination][2] ].port
+                    ip = self.neighboursTable[self.routingTable[destination][2]].ip
+                    port = self.neighboursTable[self.routingTable[destination][2]].port
                     print ("Ruteando paquete hacia ", destination, " por vecino: ", self.routingTable[destination][2], ip, port )
                     self.tcpl.sendPackage(package, ip, port)
                 else:
@@ -174,8 +174,12 @@ class GreenNode:
         if serviceNumber == self.CONNECT_ACK: #Se reciben los vecio
            self._connect(beginConfirmationAnswer, data)
 
-        elif serviceNumber == self.ROUTING_MESSAGE: #Cuando recibo un mensaje de tabla de ruteo.
-            self._checkRouteTable(data[13:15], data[11:13]) # Una vec que actualiza
+        elif serviceNumber == self.SEND_ROUTE:  # Se me envia la tabla de enrutamiento.
+            self._checkRouteTable(data[13:15], data[11:13])  # Una vec que actualiza
+
+        elif serviceNumber == self.SEND_ROUTE_ACK:  # Se me indica que la tabla que mande se recibio correctamente.
+            package = self.assemblePackage.assemblePackageRouteACK(serviceNumber)
+            self.tcpl.sendPackage(package, ipPort[0], ipPort[1])
 
         elif serviceNumber == self.GREET_NEIGHBOR: #Se me informa que tengo un vecino
             print("Mi vecino me saludo y tiene la direccion: ", ipPort)
@@ -183,15 +187,13 @@ class GreenNode:
             self.imprimirListVecinos()
 
         elif serviceNumber == self.GREET_NEIGHBOR_ACK: # recibo un ack de que mi vecino ya sabe que existo
-            pass
+            package = self.assemblePackage.assemblePackageGreetNeighborACK(requestNumber)
+            self.tcpl.sendPackage(package, ipPort[0], ipPort[1])
 
         elif serviceNumber == self.FILE_EXISTS: #Recibo un mensaje de pregunta si un archivo existe
-            self._fileExistInSelf(requestNumber, data, ipPort)
             pass
-
         elif serviceNumber == self.FILE_EXISTS_ACK: #Se medio una respuesta acerca de la existencia de un archivo.
             pass
-
         elif serviceNumber == self.FILE_COMPLETE: #Se me pregunta si un archivo x(viene en los datos) esta completo
             pass
         elif serviceNumber == self.LOCATE_FILE: #Se me pregunta por la lista de nodos que tiene x archivo
@@ -199,7 +201,6 @@ class GreenNode:
         elif serviceNumber == self.LOCATE_FILE_ACK:  # Respuesta con una lista de ids que contienen el archivo.
             pass
         elif serviceNumber == self.REMOVE_FILE:  # Se me indica que debo borrar X archivo de mi almacenamiento
-            #self.removeFile(requestNumber)
             pass
         elif serviceNumber == self.REMOVE_FILE_ACK:  # Respuesta de que un archivo pudo ser borrado.
             pass
@@ -213,10 +214,7 @@ class GreenNode:
             pass
         elif serviceNumber == self.EXEC: # Se me indica que debo correr un proceso.
             pass
-        elif serviceNumber == self.SEND_ROUTE: #Se me envia la tabla de enrutamiento.
-            pass
-        elif serviceNumber == self.SEND_ROUTE_ACK: #Se me indica que la tabla que mande se recibio correctamente.
-            pass
+
 
 
 
@@ -251,7 +249,7 @@ class GreenNode:
         #Hilo que se va a encargar de enviar la tabla de ruteo cada 1 segundo.
         while(self.isRunning):
             self._sendRouteTable()
-            time.sleep(1)
+            time.sleep(45)
 
     def _sendRouteTable(self):
         '''
@@ -274,18 +272,20 @@ class GreenNode:
         # ToDo: Agregar código de enviar la tabla
         tableMessage[0:4] = random.randrange(self.MAX_RANDOM)
         tableMessage[4:6] = bytearray(2)  # 0
-        tableMessage[6] = 80
+        tableMessage[6] = self.SEND_ROUTE
         tableMessage[7:9] = bytearray(2)  # sin prioridad
         tableMessage[9:11] = int(50).to_bytes(2, byteorder='big')
         # ...
 
         for neighbour in neighboursTable:
             # fuente - destino
-            tableMessage[11:13] = int(self.myID).to_bytes(2, byteorder='big')
-            tableMessage[13:15] = int(neighbour).to_bytes(2, byteorder='big')
-            ip = neighboursTable[neighbour][0]
-            port = neighboursTable[neighbour][1]
-            self.tcpl.sendPackage(tableMessage, port, port)
+            #Si la IP del nodo es diferente de 0, quiere decir que este esta instanciado, entonces procedemos armar y enviar nuestra tabla.
+            if neighboursTable[neighbour][0] != 0:
+                tableMessage[11:13] = int(self.myID).to_bytes(2, byteorder='big') #Fuente de quien le esta enviando la tabla.
+                tableMessage[13:15] = int(neighbour).to_bytes(2, byteorder='big')
+                ip = neighboursTable[neighbour][0]
+                port = neighboursTable[neighbour][1]
+                self.tcpl.sendPackage(tableMessage, ip, port)
     
     def _checkRouteTable(self, receivedTable, sender):
         '''
