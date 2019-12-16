@@ -212,7 +212,7 @@ class OrangeNode:
                     self.tcplService.sendPackage(listaPaquetes[indice], ipFuente, puertoFuente)
             else:
                 print("No hay nodos disponibles")
-                self.tcplService.sendPackage(self.assemblePackage.assemblePackage(numeroDeRequest, 0, 201, 0, bytearray(0)), ipFuente, puertoFuente)
+                self.tcplService.sendPackage(self.assemblePackage.assemblePackage(numeroDeRequest, 0, 201, 0, 50, 0, 0, bytearray(0)), ipFuente, puertoFuente)
             #Tenemos que buscar ID
             #Hacemos request pos para los demas
 
