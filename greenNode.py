@@ -1,17 +1,20 @@
 # greenNode.py
 import random
 import threading
-from functools import partial
+import time
 
+from functools import partial 
 from tcpl.tcpl import TCPL # en carpeta inferior
 from orangeNode import GreenNodeToken
 from fileSystem import FileSystem
 from AssemblePackagesFactory import AssemblePackageFactory
-import time
+from processSystem import ProcessSystem
+
 
 class GreenNode:
 
     #FILE_FRAGMENT_MAX_SIZE = 1000
+    ''' CÓDIGOS DE MENSAJES '''
     ROUTING_MESSAGE = 80
     GREET_NEIGHBOR = 100
     GREET_NEIGHBOR_ACK = 101
@@ -34,6 +37,13 @@ class GreenNode:
     SEND_ROUTE = 118
     SEND_ROUTE_ACK = 119
     CONNECT_ACK = 201
+
+    SEND_PROCESS = 50
+   	RUN_PROCESS = 51
+   	ASK_FOR_PROCESS = 52
+   	PROCESS_OUTPUT = 53
+   	# ...
+
     WAITFORACKTIMEOUT = 5
     DATA_MAX_SIZE = 1015
     MAX_RANDOM = 65000
@@ -58,6 +68,8 @@ class GreenNode:
         self.tcpl = TCPL()
 
         self.tcpl.startService(self.myPort)
+
+        self.processSystem = ProcessSystem(self.myPort , True):
 
         # Diccionario con GreenNodeToken
         self.neighboursTable = dict()
@@ -91,6 +103,7 @@ class GreenNode:
         else:
             print("No fue posible enviar el paquete para solicitar ID al nodo Naranja")
             return -1
+
     def _termination(self):
         '''
         Etapa de finalizacion del nodo verde.
@@ -214,11 +227,27 @@ class GreenNode:
             pass
         elif serviceNumber == self.EXEC: # Se me indica que debo correr un proceso.
             pass
-
-
+        elif serviceNumber == self.SEND_PROCESS:
+        	# Acá se pueden poner condiciones para recibir el proceso o no
+        	if True:
+        		# Activamos trans conf por medio del sistema de procesos
+        		receiveProcessThread = threading.Thread(target=self._receiveProcess, args=(package))
+                receiveProcessThread.start()
+                # Aceptamos la solicitud
+                package[15] = 1
+            else:
+            	# Denegamos la solicitud
+            	package[15] = 0
+            self.tcpl.sendPackage(package, ipPort[0], ipPort[1])
 
 
     '''  # # #  # # #  # # #  Solicitudes de azules  # # #  # # #  # # #  '''
+
+    def _receiveProcess(self, requestPack):
+        '''
+        Recibe un proceso de un nodo azul.
+        '''
+        pass
 
     
     def _migrateProcess(self, requestPack):
@@ -245,6 +274,7 @@ class GreenNode:
         self.neighboursTable[beginConfirmationAnswer].port = ipPort[1]
         package = self.assemblePackage.assemblePackageGreetNeighborACK(requestNumber)
         self.tcpl.sendPackage(package, ipPort[0], ipPort[1])
+
     def _routingThread(self):
         #Hilo que se va a encargar de enviar la tabla de ruteo cada 1 segundo.
         while(self.isRunning):

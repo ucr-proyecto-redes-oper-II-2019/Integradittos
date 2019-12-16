@@ -19,7 +19,8 @@ class ProcessSystem:
     _BASE_FILE_DIRECTORY = "greenNodeProcesses"
 
     '''Inicializa el objeto con se respectivo puerto y un booleano subPath,
-    si subPath es True, el ProcessSystem recibe archivos en sub directorios'''
+    si subPath es True, el ProcessSystem recibe archivos en sub directorios,
+    esto para el caso de los verdes.'''
     def __init__(self, ownPort, subPath):
         # nombre (key) | ruta concantenado [0] | ruta ejecutable [1] | ruta arch salida [2] | finalizado [3](v,f)
         self._processList = dict()

@@ -3,22 +3,36 @@
 import os
 import os.path
 import shutil
+
 from threading import Lock
+from tcpl.tcpl import TCPL # en carpeta inferior
+from AssemblePackagesFactory import AssemblePackageFactory
+from processSystem import ProcessSystem
 
 class BlueNode:
 
-    def __init__(self, greenIp, greenPort, ownPort):
+    SEND_PROCESS = 50
+    RUN_PROCESS = 51
+    ASK_FOR_PROCESS = 52
+    PROCESS_OUTPUT = 53
+
+    def __init__(self, greenNum, greenIp, greenPort, ownPort):
+        self._greenId = greenNum
         self._greenIp = greenIp
         self._greenPort = greenPort # TCPL
         self._greenReliTransPort = greenPort + 1000
         self._ownPort = ownPort
-        #self._processSystem = ProcessSystem(grennIp, greenPort, ownPort)
-        
+        self._processSystem = ProcessSystem(ownPort, False)
+        self._tcpl = TCPL()
+        self._tcpl.startService(self.myPort)
+    
+    '''    
     def start(self):
         pass
 
     def runInterface(self):
         pass
+    '''
 
     def displayMenuOptions(self):
         print("\n\n # # #   # # #   # # #  Nodo azul  # # #   # # #  # # # \n")
@@ -48,6 +62,7 @@ class BlueNode:
 
             if option is 1:
                 print ("\n\n # # # Envío de un programa # # #")
+                processName = input ("Ingrese el nombre del proceso que quiere enviar al nodo verde:\n")
                 print ("Ingrese la ruta del archivo ejecutable que desea correr, seguido por")
                 print ("las rutas de los demás archivos necesarios para la ejecución, separadas")
                 print ("por espacios.")
@@ -67,10 +82,7 @@ class BlueNode:
 
                 if allFound:
                     # Run the program sender
-                    # here
-                    # and erase these comments
-                    # please
-                    # :)
+                    sendProcessToGreen(processName, routes)
                     pass
                 else:
                     print ("Por favor revise las rutas e intente de nuevo.")
@@ -82,6 +94,32 @@ class BlueNode:
             else: # option is 4:
                 pass
 
+    def sendProcessToGreen(self, processName, filesRoutes):
+        # Creamos un mensaje de solicitud de enviar proceso a verde
+        message = bytearray(MESSAGE_MAX_SIZE)
+        message[0:4] = random.randrange(self.MAX_RANDOM)
+        message[4:6] = bytearray(2)  # 0
+        message[6] = self.SEND_PROCESS
+        message[7:9] = bytearray(2)  # sin prioridad
+        message[9:11] = int(10).to_bytes(2, byteorder='big') # TTL irrelevante
+        message[11:13] = bytearray(2) # sin fuente
+        message[13:15] = int(self._greenNum).to_bytes(2, byteorder='big')
+        # Agregamos el nombre del proceso y los archivos que necesita
+        message[15:75] = processName.encode()
+        message[75:125] = filesRoutes[0].encode() # el primero es el ejecutable
+        # Enviamos la solicitud
+        self._tcpl.sendPackage(tableMessage, ip, port)
+        # Esperamos la respuesta
+        print("Esperando respuesta del verde...")
+        answer = self._tcpl.receivePackage()
+        # Si la respuesta es positiva, el verde activó trans confiable
+        if answer[15] == 1:
+            self._processSystem.sendProcess\
+            (processName, filesRoutes, self._greenIp, self._greenPort, self._ownPort)
+            print("Proceso enviado.")
+        else:
+            print("Error: El nodo verde se niega a recibir el archivo.")
 
-node = BlueNode("255.255.255.0", 10000, 10001)
+
+node = BlueNode(2, "255.255.255.0", 10000, 10001)
 node.menu()
