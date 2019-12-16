@@ -4,7 +4,7 @@ import random
 class AssemblePackageFactory:
 
     def __init__(self):
-        self.DATA_MAX_SIZE = 1009
+        self.DATA_MAX_SIZE = 1015
         #Posiciones
         self.numberRequestPos = 0
         self.inicioConfirmacionRespuestaPos = 4
@@ -38,7 +38,7 @@ class AssemblePackageFactory:
         paquete[9:11] = TTL.to_bytes(self.tamTTL, byteorder='big')
         paquete[11:13] = fuente.to_bytes(self.tamFuente, byteorder='big')
         paquete[13:15] = destino.to_bytes(self.TamDestino, byteorder='big')
-        datos[15:] = datos
+        paquete[15:] = datos
         return paquete
 
     def unpackPackage(self, paquete):
@@ -55,7 +55,7 @@ class AssemblePackageFactory:
         fuente = int.from_bytes(paquete[11:13], byteorder='big')
         destino = int.from_bytes(paquete[13:15], byteorder='big')
         datos = paquete[15:]
-        return numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamanoCuerpoPrioridad, ttl, fuente, detino, datos
+        return numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamanoCuerpoPrioridad, ttl, fuente, destino, datos
 
     def assemblePackageRequestPos(self, numeroDeNodoAInstanciar, nodoNaranjaID):
         """

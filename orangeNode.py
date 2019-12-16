@@ -112,7 +112,7 @@ class OrangeNode:
         graphDictionary = dict()
 
         while readLine:
-            # Separa la línea leída usando comas
+            # Separa la línea leída usando co
             splitLine = readLine.split(",")
             # El nodo actual es el primero en la línea
             currentNodeId = int(splitLine[0])

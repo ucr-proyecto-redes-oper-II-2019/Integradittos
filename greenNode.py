@@ -80,10 +80,9 @@ class GreenNode:
         paquete = self.assemblePackage.assemblePackageConnect()
         #Si logra enviar su paquete connect puede empezar a escuchar request.
         if(self.tcpl.sendPackage(paquete, self.orangeIP, self.orangePort)):
-            '''
             package, address = self.tcpl.receivePackage()
-            requestNumber, beginConfirmationAnswer, serviceNumber, sizeBodyPriority, data = self.assemblePackage.unpackPackage(package)
-            self.myID = int.from_bytes(data[0:2], byteorder='big')'''
+            requestNumber, beginConfirmationAnswer, serviceNumber, sizeBodyPriority, ttl, fuente, destino,  data = self.assemblePackage.unpackPackage(package)
+            self.myID = int.from_bytes(data[0:2], byteorder='big')
             threadReceiving = threading.Thread(target = self._receiveMessages())
             threadReceiving.start()
             threadRouting = threading.Thread(target= self._routingThread())
@@ -99,11 +98,11 @@ class GreenNode:
         # Avisar a un naranja sobre la terminacion
         # Avisar a sus vecinos verdes sobre la finalizacion
         pass
-  
+
     def run(self):
         '''
         Ejecuta toda la funcionalidad del nodo verde, incluyendo las etapas
-        de ejecucion y terminacion.
+        de ejecucion y ,terminacion.
         '''
         self._execution()
         self._termination()
@@ -143,7 +142,7 @@ class GreenNode:
             # Si es el nodo destino se ruteo
             destination = int.from_bytes(package[13:15], byteorder='big')
             #Si el ID destino del mensaje no coincide con el mio entonces tengo que rutearlo.
-            if destination != self.myID:
+            if destination != self.myID and destination != 0:
                 if destination in self.routingTable:
                     ip = self.neighboursTable[ self.routingTable[destination][2] ].ip
                     port = self.neighboursTable[ self.routingTable[destination][2] ].port
@@ -154,7 +153,7 @@ class GreenNode:
             else:
                 hiloDeAtencionRequest = threading.Thread(target=self._attendRequests, args=(package, address))
                 hiloDeAtencionRequest.start()
-     
+
     def sendGreetNeighbor(self, indice):
         '''
             Subrutina que se encarga de saludar a los vecinos de los que se tienen conocimiento de que estan instanciados.
@@ -222,7 +221,7 @@ class GreenNode:
 
     '''  # # #  # # #  # # #  Solicitudes de azules  # # #  # # #  # # #  '''
 
-    
+
     def _migrateProcess(self, requestPack):
         '''
         Migrar un proceso reanudable a otro nodo.
@@ -237,16 +236,17 @@ class GreenNode:
 
 
     '''  # # #  # # #  # # #  Transacciones con otros verdes  # # #  # # #  # # #  '''
-    
-    
+
+
     def _greetNeighbor(self, requestNumber, beginConfirmationAnswer, ipPort):
         '''
         Envía un mensaje saludando a un vecino instanciado.
         '''
         self.neighboursTable[beginConfirmationAnswer].ip = ipPort[0]
         self.neighboursTable[beginConfirmationAnswer].port = ipPort[1]
-        package = self.assemblePackage.assemblePackageGreetNeighborACK(requestNumber, self.myID, self.myID, self.neighboursTable.get(indice).id)
+        package = self.assemblePackage.assemblePackageGreetNeighborACK(requestNumber, self.myID, self.neighboursTable.get(beginConfirmationAnswer).id)
         self.tcpl.sendPackage(package, ipPort[0], ipPort[1])
+
     def _routingThread(self):
         #Hilo que se va a encargar de enviar la tabla de ruteo cada 1 segundo.
         while(self.isRunning):
@@ -286,7 +286,7 @@ class GreenNode:
             ip = neighboursTable[neighbour][0]
             port = neighboursTable[neighbour][1]
             self.tcpl.sendPackage(tableMessage, port, port)
-    
+
     def _checkRouteTable(self, receivedTable, sender):
         '''
         Confirmar que la tabla de enrutamiento está actualizada (tras recibir tabla de enrutamiento)
@@ -315,13 +315,13 @@ class GreenNode:
 
             offset += 4
         print("Recibi una tabla de tamaño: ", items, " del vecino ", sender)
-    
+
     def _receiveRelocatedProcess(self, package):
         '''
         Recibir un proceso reanudable.
         '''
         pass
-    
+
     def _updateRoutingTable(self, requestPack):
         '''
         Actualiza entradas de la tabla de enrutamiento segun nuevos datos
@@ -377,5 +377,3 @@ class GreenNode:
             self.imprimirListVecinos()
         else:  # Guardamos cual es nuestro ID.
             self.myID = beginConfirmationAnswer
-
-    
