@@ -130,6 +130,10 @@ class AssemblePackageFactory:
         numeroDeServicio = 200
         return self.assemblePackage(random.randint(0,self.randomMaximo), 1, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
 
+    def assemblePackageRouteACK(self, numeroDeRequest):
+        numeroDeServicio = 119
+        return self.assemblePackage(numeroDeRequest, 0, numeroDeServicio, 0, int(0).to_bytes(1, byteorder='big'))
+)
 
     def packIP(self, ip):
         arrayIP = bytearray(4)
