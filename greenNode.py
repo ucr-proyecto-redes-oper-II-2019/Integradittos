@@ -171,15 +171,18 @@ class GreenNode:
         if serviceNumber == self.CONNECT_ACK: #Se reciben los vecio
            self._connect(beginConfirmationAnswer, data)
 
-        elif serviceNumber == self.ROUTING_MESSAGE: #Cuando recibo un mensaje de tabla de ruteo.
-            self._checkRouteTable(data[13:15], data[11:13]) # Una vec que actualiza
-
         elif serviceNumber == self.GREET_NEIGHBOR: #Se me informa que tengo un vecino
             print("Mi vecino me saludo y tiene la direccion: ", ipPort)
             self._greetNeighbor(requestNumber, beginConfirmationAnswer, ipPort)
             self.imprimirListVecinos()
 
         elif serviceNumber == self.GREET_NEIGHBOR_ACK: # recibo un ack de que mi vecino ya sabe que existo
+            pass
+
+        elif serviceNumber == self.SEND_ROUTE: #Se me envia la tabla de enrutamiento.
+            self._checkRouteTable(data, fuente)
+
+        elif serviceNumber == self.SEND_ROUTE_ACK: #Se me indica que la tabla que mande se recibio correctamente.
             pass
 
         elif serviceNumber == self.FILE_EXISTS: #Recibo un mensaje de pregunta si un archivo existe
@@ -210,10 +213,6 @@ class GreenNode:
             pass
         elif serviceNumber == self.EXEC: # Se me indica que debo correr un proceso.
             pass
-        elif serviceNumber == self.SEND_ROUTE: #Se me envia la tabla de enrutamiento.
-            pass
-        elif serviceNumber == self.SEND_ROUTE_ACK: #Se me indica que la tabla que mande se recibio correctamente.
-            pass
 
 
 
@@ -242,6 +241,7 @@ class GreenNode:
         '''
         self.neighboursTable[beginConfirmationAnswer].ip = ipPort[0]
         self.neighboursTable[beginConfirmationAnswer].port = ipPort[1]
+        self.neighboursTable[beginConfirmationAnswer].state = True
         package = self.assemblePackage.assemblePackageGreetNeighborACK(requestNumber, self.myID, self.neighboursTable.get(beginConfirmationAnswer).id)
         self.tcpl.sendPackage(package, ipPort[0], ipPort[1])
 
@@ -251,7 +251,7 @@ class GreenNode:
             print("Esoty enviando la tabla de enrutamiento")
             self.imprimirTablaDeEnrutamiento()
             self._sendRouteTable()
-            time.sleep(40)
+            time.sleep(25)
 
     def _sendRouteTable(self):
         '''
@@ -264,29 +264,29 @@ class GreenNode:
         table = bytearray(1000)
         offset = 0
         for node in routingTable:
-            print("Tupla del routing table ", routingTable[node][0])
-            table[offset:offset+1] = routingTable[node][0].to_bytes(2, byteorder='big') # nodo
-            table[offset+2:offset+4] = routingTable[node][1].to_bytes(2, byteorder='big') # distancia
+            table[offset:(offset+2)] = routingTable[node][0].to_bytes(2, byteorder='big') # nodo
+            table[(offset+2):(offset+4)] = routingTable[node][1].to_bytes(2, byteorder='big') # distancia
             offset += 4
 
         # Se envían los mensajes a los vecinos
         tableMessage = bytearray(self.DATA_MAX_SIZE)
-
         # ToDo: Agregar código de enviar la tabla
-        tableMessage[0:4] = random.randrange(self.MAX_RANDOM).to_bytes(4, byteorder='big')
         tableMessage[4:6] = bytearray(2)  # 0
-        tableMessage[6] = 80
+        tableMessage[6] = self.SEND_ROUTE
         tableMessage[7:9] = bytearray(2)  # sin prioridad
         tableMessage[9:11] = int(50).to_bytes(2, byteorder='big')
+        tableMessage[15:] = table
         # ...
 
         for neighbour in neighboursTable:
             # fuente - destino
-            tableMessage[11:13] = int(self.myID).to_bytes(2, byteorder='big')
-            tableMessage[13:15] = int(neighbour).to_bytes(2, byteorder='big')
-            ip = neighboursTable[neighbour][0]
-            port = neighboursTable[neighbour][1]
-            self.tcpl.sendPackage(tableMessage, ip, port)
+            if neighboursTable[neighbour].state is True :
+                tableMessage[0:4] = random.randrange(self.MAX_RANDOM).to_bytes(4, byteorder='big')
+                tableMessage[11:13] = int(self.myID).to_bytes(2, byteorder='big')
+                tableMessage[13:15] = int(neighbour).to_bytes(2, byteorder='big')
+                ip = neighboursTable[neighbour].ip
+                port = neighboursTable[neighbour].port
+                self.tcpl.sendPackage(tableMessage, ip, port)
 
     def _checkRouteTable(self, receivedTable, sender):
         '''
@@ -295,7 +295,7 @@ class GreenNode:
         ownTable = self.routingTable
         items = 0
         offset = 0
-        while receivedTable[offset] != 0 and receivedTable[offset+2] != 0:
+        while int.from_bytes(receivedTable[offset:offset+2], byteorder='big') != 0:
             items  += 1
 
             # 2 bytes de nodo + 2 bytes de distancia = 4 bytes
@@ -305,17 +305,17 @@ class GreenNode:
             # Se compraran los datos con nuestra tabla
             # Si ya tenemos la ruta en la tabla checkeamos su distancia
             if nodeNum in ownTable:
-                if receivedTable[offset+2] < ownTable[ nodeNum ][1]:
+                if int.from_bytes(receivedTable[offset+2:offset+4], byteorder='big') < ownTable[ nodeNum ][1]:
                     # Nueva distancia
                     ownTable[ nodeNum ][1] = distance + 1
                     # Nuevo nodo enlace (quizá)
                     ownTable[ nodeNum ][2] = sender
             else:
                 # Si no tenemos esa ruta, la agregamos
-                ownTable[ nodeNum ] = [nodeNum, distance, sender]
+                ownTable[ nodeNum ] = [nodeNum, distance+1, sender]
 
             offset += 4
-        print("Recibi una tabla de tamaño: ", items, " del vecino ", sender)
+        #print("Recibi una tabla de tamaño: ", items, " del vecino ", sender)
 
     def _receiveRelocatedProcess(self, package):
         '''
@@ -384,3 +384,4 @@ class GreenNode:
         print("Esta es la tabla de enrutamiento actual: ")
         for indice  in tabla:
             print (tabla[indice])
+        print("-------------------------------------------Final Tabla enrutamiento--------------------------------------------")
