@@ -160,7 +160,7 @@ class GreenNode:
             Subrutina que se encarga de saludar a los vecinos de los que se tienen conocimiento de que estan instanciados.
         '''
         if self.neighboursTable.get(indice).ip != "0.0.0.0":
-            package = self.assemblePackage.assemblePackageGreetNeighbor(self.myID)
+            package = self.assemblePackage.assemblePackageGreetNeighbor(self.myID, self.myID, self.neighboursTable.get(indice).id)
             self.tcpl.sendPackage(package, self.neighboursTable.get(indice).ip, self.neighboursTable.get(indice).port)
         pass
 
@@ -169,7 +169,7 @@ class GreenNode:
         '''
         Atiende una solicitud hecha al nodo actual.
         '''
-        requestNumber, beginConfirmationAnswer, serviceNumber, sizeBodyPriority, data = self.assemblePackage.unpackPackage(package)
+        requestNumber, beginConfirmationAnswer, serviceNumber, sizeBodyPriority, ttl, fuente, destino, data = self.assemblePackage.unpackPackage(package)
 
         if serviceNumber == self.CONNECT_ACK: #Se reciben los vecio
            self._connect(beginConfirmationAnswer, data)
@@ -245,7 +245,7 @@ class GreenNode:
         '''
         self.neighboursTable[beginConfirmationAnswer].ip = ipPort[0]
         self.neighboursTable[beginConfirmationAnswer].port = ipPort[1]
-        package = self.assemblePackage.assemblePackageGreetNeighborACK(requestNumber)
+        package = self.assemblePackage.assemblePackageGreetNeighborACK(requestNumber, self.myID, self.myID, self.neighboursTable.get(indice).id)
         self.tcpl.sendPackage(package, ipPort[0], ipPort[1])
     def _routingThread(self):
         #Hilo que se va a encargar de enviar la tabla de ruteo cada 1 segundo.

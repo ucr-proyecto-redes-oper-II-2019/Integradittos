@@ -55,7 +55,7 @@ class AssemblePackageFactory:
         fuente = int.from_bytes(paquete[11:13], byteorder='big')
         destino = int.from_bytes(paquete[13:15], byteorder='big')
         datos = paquete[15:]
-        return numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamanoCuerpoPrioridad, datos
+        return numeroDeRequest, inicioConfirmacionRespuesta, numeroDeServicio, tamanoCuerpoPrioridad, ttl, fuente, detino, datos
 
     def assemblePackageRequestPos(self, numeroDeNodoAInstanciar, nodoNaranjaID):
         """
@@ -119,13 +119,13 @@ class AssemblePackageFactory:
         numeroDeServicio = 211
         return self.assemblePackage(requestNum, id, numeroDeServicio, 0 , 50, 0, 0, int(0).to_bytes(1, byteorder='big'))
 
-    def assemblePackageGreetNeighbor(self, id, destino, fuente):
+    def assemblePackageGreetNeighbor(self, id, fuente, destino):
         numeroDeServicio = 100
-        return self.assemblePackage(random.randint(0,self.randomMaximo), id, numeroDeServicio, 0 , 50, destino, fuenta, int(0).to_bytes(1, byteorder='big'))
+        return self.assemblePackage(random.randint(0,self.randomMaximo), id, numeroDeServicio, 0 , 50, fuente, destino, int(0).to_bytes(1, byteorder='big'))
 
-    def assemblePackageGreetNeighborACK(self, requestNum, destino, fuente):
+    def assemblePackageGreetNeighborACK(self, requestNum, fuente, destino):
         numeroDeServicio = 101
-        return self.assemblePackage(requestNum, 0, numeroDeServicio, 0 , 50, destino, fuente, int(0).to_bytes(1, byteorder='big'))
+        return self.assemblePackage(requestNum, 0, numeroDeServicio, 0 , 50, fuente, destino, int(0).to_bytes(1, byteorder='big'))
 
     def assemblePackageFileExistACK(self, requestNum, answer):
         numeroDeServicio = 103
